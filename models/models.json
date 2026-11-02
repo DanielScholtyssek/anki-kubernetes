@@ -1,0 +1,65 @@
+{
+  "comment": "Note type (model) definitions captured from the live collection via the anki MCP tools (model_field_names / model_templates / model_styling) on 2026-11-02. Used by create_model to recreate types when restoring cards into an empty collection. If a deck gains a new model, re-capture it the same way and add it here.",
+  "models": {
+    "Basic+": {
+      "fields": ["Front", "Back"],
+      "is_cloze": false,
+      "css": ".card {\n    font-family: arial;\n    font-size: 20px;\n    line-height: 1.5;\n    text-align: center;\n    color: black;\n    background-color: white;\n}\n",
+      "templates": [
+        {
+          "Name": "Card 1",
+          "Front": "{{Front}}",
+          "Back": "{{FrontSide}}\n\n<hr id=answer>\n\n{{Back}}"
+        }
+      ]
+    },
+    "Basic++": {
+      "fields": ["Front", "Back"],
+      "is_cloze": false,
+      "css": ".card {\n  font-family: arial;\n  font-size: 20px;\n  text-align: center;\n  color: black;\n  background-color: white;\n}\n",
+      "templates": [
+        {
+          "Name": "Card 1",
+          "Front": "{{Front}}",
+          "Back": "{{FrontSide}}\n\n<hr id=answer>\n\n{{Back}}"
+        }
+      ]
+    },
+    "Basic+++": {
+      "fields": ["Front", "Back"],
+      "is_cloze": false,
+      "css": ".card {\n    font-family: arial;\n    font-size: 20px;\n    text-align: center;\n    color: black;\n    background-color: white;\n}\n",
+      "templates": [
+        {
+          "Name": "Card 1",
+          "Front": "{{Front}}",
+          "Back": "{{FrontSide}}\n\n<hr id=answer>\n\n{{Back}}"
+        }
+      ]
+    },
+    "Basic++++": {
+      "fields": ["Front", "Back"],
+      "is_cloze": false,
+      "css": ".card {\n    font-family: arial;\n    font-size: 20px;\n    line-height: 1.5;\n    text-align: left;\n    color: black;\n    background-color: white;\n}\n\n.answer {\n  text-align: left;\n  white-space: pre-wrap;\n}",
+      "templates": [
+        {
+          "Name": "Card 1",
+          "Front": "{{Front}}",
+          "Back": "{{FrontSide}}\n\n<hr id=answer>\n\n<div class=\"answer\">\n{{Back}}\n</div>"
+        }
+      ]
+    },
+    "Many": {
+      "fields": ["Domain", "Question", "Options", "Answer", "Explanation", "Sources"],
+      "is_cloze": false,
+      "css": ".card {\n    font-family: arial;\n    font-size: 20px;\n    line-height: 1.5;\n    text-align: center;\n    color: black;\n    background-color: white;\n}\n",
+      "templates": [
+        {
+          "Name": "Card 1",
+          "Front": "<div id=\"mcq-root\" style=\"font-family: Arial;\">\n\n  <div style=\"font-size:14px; opacity:0.7;\">\n    <b>Domain:</b> {{Domain}}\n  </div>\n\n  <div style=\"margin-top:10px; font-size:18px; font-weight:bold;\">\n    {{Question}}\n  </div>\n\n  <div id=\"options\" style=\"margin-top:15px;\">\n    {{Options}}\n  </div>\n\n  <div id=\"result\" style=\"margin-top:15px; font-weight:bold;\"></div>\n\n</div>\n\n<style>\n  .option-btn {\n    padding: 10px;\n    border-radius: 8px;\n    margin-bottom: 8px;\n    cursor: pointer;\n    transition: 0.2s;\n    border: 1px solid #888;\n    background-color: rgba(255,255,255,0.05);\n  }\n\n  .option-btn:hover {\n    background-color: rgba(100,100,100,0.15);\n  }\n\n  .correct {\n    background-color: #1e4620 !important;\n    border-color: #28a745 !important;\n    color: #ffffff !important;\n  }\n\n  .wrong {\n    background-color: #5a1a1a !important;\n    border-color: #dc3545 !important;\n    color: #ffffff !important;\n  }\n</style>\n\n<script>\n(function () {\n  // Prevent duplicate execution\n  if (window.__mcqInitialized) {\n    window.__mcqInitialized = false;\n  }\n\n  setTimeout(() => {\n    window.__mcqInitialized = true;\n\n    const optionsDiv = document.getElementById(\"options\");\n    const resultDiv = document.getElementById(\"result\");\n\n    if (!optionsDiv) return;\n\n    resultDiv.innerHTML = \"\";\n    const correctAnswer = \"{{Answer}}\";\n    const correctLetter = correctAnswer.trim().charAt(0);\n    let answered = false;\n\n    const raw = optionsDiv.innerHTML;\n    const lines = raw.split(\"<br>\");\n\n    optionsDiv.innerHTML = \"\";\n    const buttons = [];\n\n    lines.forEach(line => {\n      if (!line.trim()) return;\n\n      const letter = line.trim().charAt(0);\n      const btn = document.createElement(\"div\");\n\n      btn.innerHTML = line;\n      btn.dataset.letter = letter;\n      btn.className = \"option-btn\";\n\n      btn.onclick = () => {\n        if (answered) return;\n        answered = true;\n\n        if (letter === correctLetter) {\n          btn.classList.add(\"correct\");\n          resultDiv.innerHTML = \"✅ Correct!\";\n        } else {\n          btn.classList.add(\"wrong\");\n          resultDiv.innerHTML = \"❌ Wrong! Correct answer: \" + correctLetter;\n\n          buttons.forEach(b => {\n            if (b.dataset.letter === correctLetter) {\n              b.classList.add(\"correct\");\n            }\n          });\n        }\n\n        buttons.forEach(b => b.style.cursor = \"default\");\n      };\n\n      buttons.push(btn);\n      optionsDiv.appendChild(btn);\n    });\n  }, 50);\n})();\n</script>",
+          "Back": "<div style=\"font-family: Arial, sans-serif; line-height:1.6; max-width: 800px; margin:auto;\">\n\n  <!-- Domain -->\n  <div style=\"font-size:13px; opacity:0.7; margin-bottom:6px;\">\n    <b>Domain:</b> {{Domain}}\n  </div>\n\n  <!-- Question -->\n  <div style=\"margin-top:8px; font-size:20px; font-weight:600;\">\n    {{Question}}\n  </div>\n\n  <!-- Correct Answer Box -->\n  <div style=\"\n      margin-top:18px;\n      padding:14px;\n      border-radius:12px;\n      background-color:#1e4620;\n      border:1px solid #28a745;\n      color:#ffffff;\n      box-shadow: 0 4px 12px rgba(0,0,0,0.2);\n  \">\n    <div style=\"font-weight:bold; margin-bottom:6px;\">\n      ✅ Correct Answer\n    </div>\n    <div style=\"font-size:16px;\">\n      {{Answer}}\n    </div>\n  </div>\n\n  <!-- Explanation Box -->\n  <div style=\"\n      margin-top:18px;\n      padding:14px;\n      border-radius:12px;\n      background-color: rgba(0,123,255,0.08);\n      border:1px solid rgba(0,123,255,0.4);\n  \">\n    <div style=\"font-weight:bold; margin-bottom:6px;\">\n      📘 Explanation\n    </div>\n    <div>\n      {{Explanation}}\n    </div>\n  </div>\n\n  <!-- Sources -->\n  <div style=\"\n      margin-top:18px;\n      padding:10px;\n      font-size:13px;\n      opacity:0.8;\n  \">\n    <b>🔗 Sources:</b><br>\n    {{Sources}}\n  </div>\n\n</div>"
+        }
+      ]
+    }
+  }
+}

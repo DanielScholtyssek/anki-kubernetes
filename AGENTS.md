@@ -67,6 +67,11 @@ Existing decks (downloaded from course providers, imported as `.apkg`):
 ## Card authoring rules
 
 - One fact per card. If a card needs "and also", split it.
+- Backs must be self-contained — the answer should teach the fact even
+  with zero surrounding context: name the tool/command, define any term
+  used, and include the "why" in one sentence. The user studies cards
+  standalone; an answer that only makes sense next to the question or
+  the video it came from is a bad card.
 - Front is a real question ("Which command lists all pods in all
   namespaces?"), not a bare topic ("kubectl get pods").
 - Wrap commands, flags, and YAML in `<code>` blocks so they render

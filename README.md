@@ -75,15 +75,82 @@ re-sync the repo. Default DB path is the Windows-side collection
 
 The markdown round-trips losslessly (fields, tags and note types all
 verified against the collection), so `cards/` can rebuild an empty
-Anki — or add authored cards — via the `anki` MCP server:
+Anki collection. Writes always go through the `anki` MCP server — the
+repo scripts never touch `collection.anki2` directly.
 
-1. The agent creates missing decks (`create_deck`) and missing note
-   types (`create_model` from `models/models.json`).
-2. `python3 tools/parse_cards.py cards/` emits one `add_notes`
-   argument set per JSONL line (batches of 50, `--batch N` to change).
-3. Each line is passed to the MCP `add_notes` tool.
-4. After a restore, note IDs change — re-run `export_anki.py` so the
-   `<!-- note:... -->` comments re-anchor.
+### Prerequisites
+
+- Anki installed with a fresh/empty profile (or any collection you want
+  to fill).
+- The [ankimcp](https://ankiweb.net/shared/info/124672614) add-on
+  installed and the `anki` MCP server configured in the client where the
+  agent runs — same setup as the current machine.
+- This repo checked out locally.
+
+### How it works
+
+The restore is agent-driven: the agent reads `cards/`, prepares the
+collection, and feeds parser output to the MCP `add_notes` tool. Tell
+the agent e.g. "restore the repo decks into this Anki" and it does the
+steps below — they are listed explicitly so you can follow or reproduce
+them:
+
+1. **Generate the payloads** (local, no Anki contact):
+
+   ```bash
+   python3 tools/parse_cards.py cards/ > /tmp/payloads.jsonl
+   ```
+
+   Each line is one complete `add_notes` argument set
+   (`{deck_name, model_name, notes: [...], tags}`), grouped by deck+model
+   and capped at 50 notes (`--batch N` to change, `--keep-ids` to carry
+   old note IDs for grepping).
+
+   Restore a subset instead of everything:
+
+   ```bash
+   python3 tools/parse_cards.py cards/ckad/           # one deck
+   python3 tools/parse_cards.py cards/kcsa/compliance.md   # one file
+   ```
+
+2. **Create the note types.** In an empty collection only stock types
+   (`Basic`, `Cloze`, …) exist. The agent calls `create_model` for each
+   definition in `models/models.json` — that rebuilds the bundled types
+   the downloaded decks use (`Basic++++`, `Basic+`, `Basic++`,
+   `Basic+++`) and the interactive MCQ type `Many`, including card
+   templates and CSS.
+
+3. **Create the decks.** `create_deck` for every deck appearing in the
+   payloads (`deck_name` field of each JSONL line).
+
+4. **Load the cards.** For each line of the JSONL the agent calls
+   `add_notes`, then reports per-batch `created` / `skipped` / `failed`.
+   Duplicates are skipped by Anki automatically, so re-running is
+   idempotent.
+
+5. **Re-anchor the mirror.** The new collection assigns fresh note IDs,
+   so afterwards:
+
+   ```bash
+   python3 tools/export_anki.py --db /path/to/new/collection.anki2
+   ```
+
+   regenerates `cards/` with the new `<!-- note:... -->` anchors.
+   `models/models.json` stays valid — note type names don't change.
+
+### Things to know
+
+- **Old note IDs are metadata only.** They are never sent to the new
+  collection; Anki assigns its own.
+- **Scheduling state is not in the markdown.** Review history, intervals
+  and due dates live in Anki only — a restore gives you all cards as
+  *new* cards. Keep AnkiWeb sync/backups for preserving progress.
+- **`kubernetes-for-beginners/` cards are authored content** — they use
+  stock models (`Basic`, `Cloze`, `Basic (and reversed card)`) plus
+  `Many`, so they restore fine once `Many` exists (step 2).
+- **Order matters but is simple:** models before notes, decks before
+  notes. The agent handles it; `add_notes` fails with a clear error if a
+  model or deck is missing.
 
 ## Working with the agent
 

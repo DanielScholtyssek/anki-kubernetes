@@ -31,22 +31,38 @@ Existing decks (downloaded from course providers, imported as `.apkg`):
   a downloaded deck, add to it directly rather than creating a parallel one.
 - For brand-new decks we author, use `Kubernetes::<Name>` (create_deck
   supports max 2 levels of nesting) unless the user says otherwise.
-- When adding cards to a downloaded deck, always use **stock note types**
+- When adding cards to a downloaded deck, use **stock note types**
   (`Basic`, `Cloze`, `Basic (and reversed card)`) — do NOT reuse the
-  deck's bundled custom models (`Basic++++`, `Basic+`, `Many`, …). Those
-  are opaque imports; standard types keep new cards predictable. Only
-  deviate if the user explicitly asks for the deck's format (e.g. the
-  interactive MCQ `Many` for KCSA).
+  deck's bundled clones (`Basic++++`, `Basic+`, …). Those are opaque
+  imports; standard types keep new cards predictable. One exception:
+  `Many` is allowed anywhere for genuine multiple-choice cards (see
+  "Note types").
 
 ## Note types
 
 - Discover available types with `model_names`, and required fields with
   `model_field_names` before first use. Do not assume field names.
-- Defaults:
-  - `Basic` — question/answer cards (most cards).
-  - `Basic (and reversed card)` — only when reverse recall is genuinely
-    useful (e.g. "which flag does X", not for commands).
+- **Mix card types when authoring a batch** — don't produce wall-to-wall
+  `Basic`. Pick per card:
+  - `Basic` — question/answer cards (the default workhorse).
+  - `Basic (and reversed card)` — prefer this over plain `Basic` whenever
+    reverse recall makes sense: definitions↔terms ("which object does X" /
+    "what is X called"), flag→purpose, port↔protocol, acronym expansions.
+    Skip it when the reverse question is meaningless (commands, long
+    explanations, anything where the back can't function as a question).
   - `Cloze` — for `kubectl` commands, YAML keys, and flag values.
+  - `Many` (the interactive MCQ model from the KCSA deck) — for
+    multiple-choice cards with real distractors: "which of these…",
+    "select all that apply", pick-the-right-command. Fields: `Domain`
+    (exam domain/section), `Question`, `Options` (`A. …<br>B. …`),
+    `Answer` (`C (3) – text`), `Explanation`, `Sources`. Exception to the
+    stock-types-only rule — this model is sanctioned for MCQ content.
+    Fallback if `Many` is unavailable: `Basic` with options in `Front`
+    and the answer letter in `Back`.
+- As a rough mix for new decks, aim for ~60-70% `Basic` (using
+  `Basic (and reversed card)` wherever it applies — it counts toward the
+  `Basic` share and produces two cards per note), the rest split between
+  `Cloze` and `Many` depending on the material.
 
 ## Card authoring rules
 

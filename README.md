@@ -1,4 +1,4 @@
-# kubernetes-anki
+# anki-kubernetes
 
 A personal knowledge base for managing [Anki](https://apps.ankiweb.net/)
 flashcards for Kubernetes certification courses (CKAD, CKS, KCSA, KCNA).

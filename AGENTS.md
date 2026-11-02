@@ -1,4 +1,4 @@
-# Kubernetes Anki
+# anki-kubernetes
 
 This repo manages Anki flashcards for Kubernetes certification courses.
 Cards are created and maintained through the **anki MCP server** connected

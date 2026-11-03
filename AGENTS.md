@@ -103,10 +103,20 @@ a remembered list.
     stock-types-only rule — this model is sanctioned for MCQ content.
     Fallback if `Many` is unavailable: `Basic` with options in `Front`
     and the answer letter in `Back`.
-- As a rough mix for new decks, aim for ~60-70% `Basic` (using
-  `Basic (and reversed card)` wherever it applies — it counts toward the
-  `Basic` share and produces two cards per note), the rest split between
-  `Cloze` and `Many` depending on the material.
+- **Match the card mix to the target deck's exam format** (formats are
+  listed in `CERTS.md`, verified against official CNCF pages):
+  - Pure-MCQ cert decks — KCNA, KCSA, PCA, CCA, CAPA, CGOA, CBA, OTCA,
+    KCA, CNPA: **`Many` should be the majority (~50-70%)** since the
+    real exam is multiple choice and MCQ cards rehearse the format.
+    `Basic`/`Cloze` fill in where MCQ doesn't fit (commands, YAML).
+  - Hands-on decks — CKA, CKAD, CKS, ICA, CNPE, LFCS: keep the default
+    mix below — recall of commands/flags/YAML matters more than
+    recognition.
+  - Default mix (foundations/`Kubernetes for Beginners`): aim for
+    ~60-70% `Basic` (using `Basic (and reversed card)` wherever it
+    applies — it counts toward the `Basic` share and produces two
+    cards per note), the rest split between `Cloze` and `Many`
+    depending on the material.
 
 ## Card authoring rules
 

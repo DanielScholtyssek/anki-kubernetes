@@ -1,8 +1,11 @@
 # Golden Kubestronaut — exam formats
 
 Reference for the full Golden Kubestronaut track: pass **all CNCF
-certifications + LFCS**. Verified against official Linux Foundation /
-CNCF pages (Nov 2026). CNCF adds certs over time — re-check the
+certifications + LFCS**. Every exam-format entry below was confirmed on
+the certification's official CNCF page (Nov 2026); durations and pass
+scores come from the same pages, LF exam FAQs, and — where not
+published officially — community-maintained tables. CNCF adds certs
+over time — re-check the
 [official list](https://training.linuxfoundation.org/resources/kubestronaut-program/)
 before relying on this.
 

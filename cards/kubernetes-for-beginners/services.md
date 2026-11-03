@@ -1,6 +1,6 @@
 # Kubernetes for Beginners — services
 
-> Deck: `Kubernetes for Beginners` · Group: `services` · Notes: 15 · Models: Basic, Basic (and reversed card), Cloze, Many
+> Deck: `Kubernetes for Beginners` · Group: `services` · Notes: 22 · Models: Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1793737589629 model:Basic -->
 **Front:** What problem does a Kubernetes Service solve, and how does it enable loose coupling?
@@ -120,5 +120,62 @@
 **Explanation:** ClusterIP is built exactly for this: one stable internal IP + DNS name that load-balances across selector-matched pods, so rescheduling never breaks callers. NodePort/LoadBalancer expose traffic OUTSIDE the cluster — wrong tool for internal calls. Hardcoding pod IPs breaks on every reschedule.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/service/" target="_blank">Kubernetes Documentation - Service</a>
 **Tags:** k8s::beginners topic::networking topic::services src::session
+
+---
+
+<!-- note:1793738827665 model:Basic -->
+**Front:** On a supported cloud platform, what provisions the external load balancer for a <code>type: LoadBalancer</code> Service?
+**Back:** The cloud provider integration (cloud-controller-manager) asynchronously provisions a real external load balancer — e.g. an AWS/GCP/Azure LB — and publishes its public IP/hostname in the Service's <code>.status.loadBalancer.ingress</code>. Under the hood the Service still gets a clusterIP and nodePort first; the cloud LB is then configured to forward to the nodePort (unless <code>spec.allocateLoadBalancerNodePorts: false</code>).
+**Tags:** k8s::beginners topic::networking topic::services src::session
+
+---
+
+<!-- note:1793738827666 model:Basic -->
+**Front:** How can <code>type: LoadBalancer</code> Services work on bare-metal or homelab clusters with no cloud provider?
+**Back:** You must install a tool that fills the cloud provider's role. Options: <b>MetalLB</b> (assigns IPs from a configured pool, announces via ARP/BGP), <b>Cilium LB IPAM</b> (built into the Cilium CNI), kube-vip, or similar. Without one, <code>type: LoadBalancer</code> Services sit at EXTERNAL-IP <code>&lt;pending&gt;</code> forever — Kubernetes itself ships no LB implementation.
+**Tags:** k8s::beginners topic::networking topic::services src::session
+
+---
+
+<!-- note:1793738827667 model:Basic -->
+**Front:** How does Cilium provide <code>type: LoadBalancer</code> Services without a cloud provider?
+**Back:** Two pieces: (1) <b>LB IPAM</b> — the administrator creates <code>CiliumLoadBalancerIPPool</code> CRDs defining allocatable IP blocks (CIDRs or start/stop ranges, optionally scoped by a <code>serviceSelector</code>); Cilium assigns an IP from a matching pool to each LoadBalancer Service. (2) <b>Announcement</b> — Cilium advertises reachability via its BGP Control Plane or L2 announcements (ARP/NDP). The EXTERNAL-IP stays <code>&lt;pending&gt;</code> until a pool matches and assigns.
+**Tags:** k8s::beginners topic::cni topic::networking topic::services src::session
+
+---
+
+<!-- note:1793738827672 model:Basic (and reversed card) -->
+**Front:** A LoadBalancer Service's EXTERNAL-IP stays &lt;pending&gt;. What does that mean?
+**Back:** No load balancer implementation has provisioned one. Kubernetes doesn't include a built-in external LB — <code>type: LoadBalancer</code> only resolves to a real public IP where a supported cloud provider integration exists, or where a tool like MetalLB or Cilium LB IPAM is configured to supply one. On an unsupported cluster the Service works internally (clusterIP+nodePort) but never gets an external address.
+**Tags:** k8s::beginners topic::networking topic::services src::session
+
+---
+
+<!-- note:1793738827720 model:Cloze -->
+**Text:** <code>$ kubectl get svc web-svc<br>NAME&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TYPE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CLUSTER-IP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EXTERNAL-IP<br>web-svc&nbsp;&nbsp;&nbsp;{{c1::LoadBalancer}}&nbsp;&nbsp;&nbsp;10.96.1.5&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{c2::&lt;pending&gt;}}</code><br><br>The {{c2}} EXTERNAL-IP means no load balancer implementation has provisioned an external IP yet.
+**Back Extra:** The clusterIP was still assigned — the Service works inside the cluster and via nodePort even while pending. An external IP appears only when a cloud provider integration (or MetalLB/Cilium LB IPAM on-prem) provisions it; the provider writes it to .status.loadBalancer.ingress.
+**Tags:** k8s::beginners topic::kubectl topic::networking topic::services src::session
+
+---
+
+<!-- note:1793738827768 model:Many -->
+**Domain:** LoadBalancer
+**Question:** On a local test cluster, a Service with type: LoadBalancer shows EXTERNAL-IP &lt;pending&gt; for hours. What's the most likely reason?
+**Options:** A. The manifest is missing a nodePort field<br>B. No load balancer implementation exists to provision the external IP<br>C. LoadBalancer Services need apiVersion apps/v1<br>D. The Service needs a selector to get an external IP
+**Answer:** B (2) – No load balancer implementation exists to provision the external IP
+**Explanation:** type: LoadBalancer delegates to an external implementation: on cloud platforms the cloud-controller-manager, on bare metal a tool like MetalLB or Cilium LB IPAM. Without one, EXTERNAL-IP stays <pending> — the nodePort and selector are fine, nothing is missing in the manifest itself.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/service/" target="_blank">Kubernetes Documentation - Service</a>
+**Tags:** k8s::beginners topic::networking topic::services src::session
+
+---
+
+<!-- note:1793738827769 model:Many -->
+**Domain:** LoadBalancer
+**Question:** What role does a CiliumLoadBalancerIPPool play?
+**Options:** A. It configures which pod CIDRs Cilium routes<br>B. The CiliumLoadBalancerIPPool defines which external IPs Cilium can assign to LoadBalancer Services<br>C. It selects which Services get a clusterIP<br>D. It's required before any CNI plugin can run
+**Answer:** B (2) – The CiliumLoadBalancerIPPool defines which external IPs Cilium can assign to LoadBalancer Services
+**Explanation:** Cilium's LB IPAM draws Service external IPs from CiliumLoadBalancerIPPool CRDs (CIDRs or start/stop ranges, optionally restricted per-Service via serviceSelector). BGP Control Plane or L2 announcements then advertise the assigned IP. No pool → EXTERNAL-IP stays <pending>.
+**Sources:** <a href="https://docs.cilium.io/en/stable/network/lb-ipam/" target="_blank">Cilium Documentation - LoadBalancer IPAM</a>
+**Tags:** k8s::beginners topic::cni topic::networking topic::services src::session
 
 ---

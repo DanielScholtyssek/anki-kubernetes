@@ -1,6 +1,6 @@
 # Kubernetes for Beginners — services
 
-> Deck: `Kubernetes for Beginners` · Group: `services` · Notes: 10 · Models: Basic, Basic (and reversed card), Cloze, Many
+> Deck: `Kubernetes for Beginners` · Group: `services` · Notes: 15 · Models: Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1793737589629 model:Basic -->
 **Front:** What problem does a Kubernetes Service solve, and how does it enable loose coupling?
@@ -79,6 +79,45 @@
 **Options:** A. Only the node running the pods opens the port<br>B. The pod's node IP gets the port; other nodes don't<br>C. Every node opens the same nodePort and forwards to a ready backend pod<br>D. One dedicated ingress node is chosen
 **Answer:** C (3) – Every node opens the same nodePort and forwards to a ready backend pod
 **Explanation:** The nodePort is allocated cluster-wide: each node proxies that port into the Service, so <any-node-IP>:<nodePort> works — the backend pod may even be on another node. The Service also gets a clusterIP (NodePort builds on ClusterIP).
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/service/" target="_blank">Kubernetes Documentation - Service</a>
+**Tags:** k8s::beginners topic::networking topic::services src::session
+
+---
+
+<!-- note:1793738457549 model:Basic -->
+**Front:** A frontend microservice needs to call backend pods whose IPs keep changing. What should it connect to, and why?
+**Back:** It connects to the backend's ClusterIP Service — by its stable name or cluster IP, never to individual pod IPs. Pod IPs change on every reschedule/restart; the Service's clusterIP stays fixed for the Service's lifetime and load-balances across whichever pods currently match its selector. This is THE standard way microservices call each other inside a cluster.
+**Tags:** k8s::beginners topic::networking topic::services src::session
+
+---
+
+<!-- note:1793738457550 model:Basic -->
+**Front:** How does a ClusterIP Service give a group of pods (e.g. all backend pods) a single name?
+**Back:** Creating a Service named <code>backend</code> registers a cluster-internal DNS name for that whole group of selector-matched pods — CoreDNS publishes <code>backend.&lt;namespace&gt;.svc.cluster.local</code>, which resolves to the Service's clusterIP. Pods in the same namespace can just use <code>backend</code>; other namespaces need <code>backend.&lt;namespace&gt;</code>. So one name stands in for the entire, ever-changing pod group.
+**Tags:** k8s::beginners topic::dns topic::networking topic::services src::session
+
+---
+
+<!-- note:1793738457558 model:Basic (and reversed card) -->
+**Front:** What happens if you omit <code>spec.type</code> in a Service manifest?
+**Back:** ClusterIP — it's the default: omitting <code>spec.type</code> is equivalent to <code>type: ClusterIP</code>. The Service gets a stable cluster-internal virtual IP (auto-assigned from the Service CIDR, shown in <code>.spec.clusterIP</code>) reachable only inside the cluster.
+**Tags:** k8s::beginners topic::networking topic::services topic::yaml src::session
+
+---
+
+<!-- note:1793738457566 model:Cloze -->
+**Text:** A Service named <code>backend</code> in namespace <code>web</code> gets the DNS record<br><br><code>{{c1::backend}}.{{c2::web}}.{{c3::svc}}.{{c4::cluster.local}}</code><br><br>which resolves to the Service's {{c5::clusterIP}}.
+**Back Extra:** The clusterIP is auto-assigned from the service-cluster-ip-range CIDR (e.g. 10.96.0.0/12) and never changes for the Service's lifetime. Pods find it via the Service's DNS name (backend.web.svc.cluster.local) — they resolve the name, not the raw IP.
+**Tags:** k8s::beginners topic::dns topic::networking topic::services src::session
+
+---
+
+<!-- note:1793738457574 model:Many -->
+**Domain:** ClusterIP
+**Question:** Frontend pods must reach a backend group of pods inside the cluster. The backend pods are rescheduled frequently. Which object provides a stable internal endpoint, DNS name and load balancing?
+**Options:** A. NodePort Service<br>B. LoadBalancer Service<br>C. ClusterIP Service<br>D. Hardcode the pod IPs in the frontend's config
+**Answer:** C (3) – ClusterIP Service
+**Explanation:** ClusterIP is built exactly for this: one stable internal IP + DNS name that load-balances across selector-matched pods, so rescheduling never breaks callers. NodePort/LoadBalancer expose traffic OUTSIDE the cluster — wrong tool for internal calls. Hardcoding pod IPs breaks on every reschedule.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/service/" target="_blank">Kubernetes Documentation - Service</a>
 **Tags:** k8s::beginners topic::networking topic::services src::session
 

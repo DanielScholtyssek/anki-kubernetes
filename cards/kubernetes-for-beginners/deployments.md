@@ -1,6 +1,6 @@
 # Kubernetes for Beginners — deployments
 
-> Deck: `Kubernetes for Beginners` · Group: `deployments` · Notes: 11 · Models: Basic, Basic (and reversed card), Cloze, Many
+> Deck: `Kubernetes for Beginners` · Group: `deployments` · Notes: 13 · Models: Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1793724714419 model:Basic -->
 **Front:** Why use a Deployment instead of creating a ReplicaSet directly?
@@ -84,5 +84,19 @@
 **Explanation:** A rollout (and a new revision) is triggered if and only if .spec.template changes — e.g. a new container image or template labels. Scaling replicas, renaming the Deployment, or changing spec.replicas only adjusts the current ReplicaSet's count; it does not roll out a new version.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" target="_blank">Kubernetes Documentation - Deployments</a>
 **Tags:** k8s::beginners topic::deployments topic::rollouts src::session
+
+---
+
+<!-- note:1793731963651 model:Basic (and reversed card) -->
+**Front:** What is a revision in a Kubernetes Deployment?
+**Back:** A numbered record of the Deployment's pod template at the moment a rollout was triggered — revision 1, 2, 3… increments each time <code>spec.template</code> changes (visible via <code>kubectl rollout history</code> and the <code>deployment.kubernetes.io/revision</code> annotation). Scaling does not bump it. Each revision corresponds to the old ReplicaSet you can roll back to with <code>--to-revision=N</code>.
+**Tags:** k8s::beginners topic::deployments topic::rollouts src::session
+
+---
+
+<!-- note:1793731963674 model:Basic -->
+**Front:** How do you record WHY a Deployment was changed so it shows up in its rollout history?
+**Back:** Set the <code>kubernetes.io/change-cause</code> annotation — it's copied onto each new revision and shown in the CHANGE-CAUSE column of <code>kubectl rollout history</code>:<br><code>kubectl annotate deployment/web kubernetes.io/change-cause="bump to nginx:1.16"</code><br>(The old <code>--record</code> flag that did this automatically is deprecated.)
+**Tags:** k8s::beginners topic::deployments topic::kubectl src::session
 
 ---

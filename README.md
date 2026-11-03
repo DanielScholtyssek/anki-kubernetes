@@ -1,7 +1,8 @@
 # anki-kubernetes
 
 A personal knowledge base for managing [Anki](https://apps.ankiweb.net/)
-flashcards for Kubernetes certification courses (CKAD, CKS, KCSA, KCNA).
+flashcards for the Golden Kubestronaut certification track — one deck
+per CNCF certification plus LFCS (see `CERTS.md`).
 
 The repo serves two purposes:
 
@@ -48,12 +49,12 @@ kept verbatim for lossless round-tripping.
 
 ## Decks currently tracked
 
-| Deck | Notes | Note type |
-|---|---|---|
-| CKAD - Certified Kubernetes Application Developer | 530 | Basic++++ |
-| CKS - Certified Kubernetes Security Specialist | 993 | Basic+ |
-| KCSA - Kubernetes and Cloud Native Security Associate | 310 | Many (MCQ) |
-| KCNA - Kubernetes and Cloud Native Associate | 166 | Basic++/Basic+++ |
+The target is **one deck per Golden Kubestronaut certification** —
+see `AGENTS.md` for the full deck-name → `cards/` folder mapping and
+`CERTS.md` for exam formats (which exams are hands-on vs multiple
+choice). Four decks are downloaded course decks (CKAD, CKS, KCNA,
+KCSA); the rest are authored decks, plus `Kubernetes for Beginners`
+for general/foundations material.
 
 ## Refreshing the mirror
 

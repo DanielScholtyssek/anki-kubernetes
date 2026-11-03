@@ -1,6 +1,6 @@
 # Kubernetes for Beginners — deployments
 
-> Deck: `Kubernetes for Beginners` · Group: `deployments` · Notes: 19 · Models: Basic, Basic (and reversed card), Cloze, Many
+> Deck: `Kubernetes for Beginners` · Group: `deployments` · Notes: 24 · Models: Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1793724714419 model:Basic -->
 **Front:** Why use a Deployment instead of creating a ReplicaSet directly?
@@ -148,5 +148,48 @@
 **Explanation:** spec.strategy.type accepts only RollingUpdate and Recreate. Canary is a deployment pattern implemented outside the Deployment spec — via multiple ReplicaSets sharing a Service, or progressive-delivery tools like Argo Rollouts — not a value you can set in the manifest.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" target="_blank">Kubernetes Documentation - Deployments</a>
 **Tags:** k8s::beginners topic::deployments topic::strategy src::session
+
+---
+
+<!-- note:1793732401767 model:Basic -->
+**Front:** What does <code>kubectl rollout status</code> do, and when do you use it?
+**Back:** It streams a rollout's progress live — <code>kubectl rollout status deployment/web</code> prints e.g. "2 out of 3 new replicas have been updated" and exits when the rollout finishes. Run it right after <code>kubectl set image</code>/<code>apply</code> to confirm the update actually completed; if it hangs, the rollout is stuck (e.g. bad image → ImagePullBackOff). Ctrl-C stops watching.
+**Tags:** k8s::beginners topic::deployments topic::kubectl src::session
+
+---
+
+<!-- note:1793732401768 model:Basic -->
+**Front:** What does <code>kubectl rollout history</code> show, and what is it used for?
+**Back:** It lists a Deployment's revisions — one per pod-template change (REVISION 1, 2, 3…) plus the CHANGE-CAUSE column fed by the <code>kubernetes.io/change-cause</code> annotation. <code>--revision=N</code> shows the pod template that revision held. It's how you pick a target for <code>kubectl rollout undo --to-revision=N</code>.
+**Tags:** k8s::beginners topic::deployments topic::rollouts src::session
+
+---
+
+<!-- note:1793732401769 model:Basic -->
+**Front:** You update a Deployment's image from nginx:1.14 to nginx:1.16 — what do you see in <code>kubectl get rs</code> during and after the upgrade?
+**Back:** A new ReplicaSet appears — <code>&lt;deploy&gt;-&lt;newhash&gt;</code> — and scales 0→3 while the old one <code>&lt;deploy&gt;-&lt;oldhash&gt;</code> scales 3→0. When done, BOTH remain: the old RS stays at 0 replicas as the rollback target (kept up to <code>revisionHistoryLimit</code>, default 10). Each template version gets its own RS, so a Deployment accumulates one scaled-to-0 RS per past revision.
+**Tags:** k8s::beginners topic::deployments topic::replicasets src::session
+
+---
+
+<!-- note:1793732401782 model:Many -->
+**Domain:** Deployments & Rollouts
+**Question:** You just ran <code>kubectl set image</code> to trigger a rollout. Which command confirms the rollout finished successfully?
+**Options:** A. kubectl get pods<br>B. kubectl rollout status<br>C. kubectl rollout history<br>D. kubectl describe deployment
+**Answer:** B (2) – kubectl rollout status
+**Explanation:** rollout status watches the rollout live and reports when it finishes (or hangs if it's stuck). get pods shows a snapshot — it can't tell you whether the rollout is done; rollout history lists past revisions, not current progress; describe shows events but doesn't wait for completion.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" target="_blank">Kubernetes Documentation - Deployments</a>
+**Tags:** k8s::beginners topic::deployments topic::kubectl src::session
+
+---
+
+<!-- note:1793732401783 model:Many -->
+**Domain:** Deployments & Rollouts
+**Question:** <code>kubectl get rs</code> shows two ReplicaSets for one Deployment — one at 3 replicas, one at 0. Why does the 0-replica one still exist?
+**Options:** A. Leftover garbage — safe to delete<br>B. An error state — a ReplicaSet failed to delete<br>C. It's the previous revision's ReplicaSet, kept as a rollback target<br>D. A standby ReplicaSet waiting to take over on node failure
+**Answer:** C (3) – It's the previous revision's ReplicaSet, kept as a rollback target
+**Explanation:** Each Deployment keeps old ReplicaSets scaled to 0 — that's what makes kubectl rollout undo work; revisionHistoryLimit (default 10) controls how many are retained. It's not an error or leftover garbage: the Deployment manages all ReplicaSets it owns across revisions.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" target="_blank">Kubernetes Documentation - Deployments</a>
+**Tags:** k8s::beginners topic::deployments topic::replicasets src::session
 
 ---

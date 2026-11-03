@@ -14,23 +14,67 @@ for conventions; treat Anki itself as the source of truth for what exists.
 
 ## Decks
 
-Existing decks (downloaded from course providers, imported as `.apkg`):
+Decks come from two sources:
 
-| Deck name in Anki | Notes | Model(s) |
+- **Downloaded decks** — imported from course providers as `.apkg`
+  (e.g. the CKAD / CKS / KCSA / KCNA cert decks). Their bundled note
+  types are opaque clones (`Basic++++`, `Basic+`, …); treat the
+  imported notes as third-party content.
+- **Authored decks** — ones we create ourselves.
+
+### Target layout: one deck per Golden Kubestronaut cert
+
+The goal is **one deck per certification** on the Golden Kubestronaut
+track (all CNCF certs + LFCS). Naming: `<ACRONYM> - <full title>`,
+flat top-level names matching the downloaded-deck style, e.g.
+`PCA - Prometheus Certified Associate`.
+
+Current set — full deck name → `cards/` folder (acronym slug).
+**(dl)** = deck exists as a downloaded `.apkg` deck that doubles as the
+cert deck; authored cards for those certs go INTO the downloaded deck,
+never into a parallel authored one:
+
+| Deck name in Anki | `cards/` folder | Source |
 |---|---|---|
-| `CKAD - Certified Kubernetes Application Developer` | 530 | Basic++++ |
-| `CKS - Certified Kubernetes Security Specialist` | 993 | Basic+ |
-| `KCSA - Kubernetes and Cloud Native Security Associate` | 310 | Many (MCQ) |
-| `KCNA - Kubernetes and Cloud Native Associate` | 166 | Basic++/Basic+++ |
-| `Kubernetes for Beginners` | 0 | — |
+| `CKA - Certified Kubernetes Administrator` | `cards/cka/` | authored |
+| `CKAD - Certified Kubernetes Application Developer` | `cards/ckad/` | **(dl)** |
+| `CKS - Certified Kubernetes Security Specialist` | `cards/cks/` | **(dl)** |
+| `KCNA - Kubernetes and Cloud Native Associate` | `cards/kcna/` | **(dl)** |
+| `KCSA - Kubernetes and Cloud Native Security Associate` | `cards/kcsa/` | **(dl)** |
+| `PCA - Prometheus Certified Associate` | `cards/pca/` | authored |
+| `ICA - Istio Certified Associate` | `cards/ica/` | authored |
+| `CCA - Cilium Certified Associate` | `cards/cca/` | authored |
+| `CAPA - Certified Argo Project Associate` | `cards/capa/` | authored |
+| `CGOA - Certified GitOps Associate` | `cards/cgoa/` | authored |
+| `CBA - Certified Backstage Associate` | `cards/cba/` | authored |
+| `OTCA - OpenTelemetry Certified Associate` | `cards/otca/` | authored |
+| `KCA - Kyverno Certified Associate` | `cards/kca/` | authored |
+| `CNPA - Certified Cloud Native Platform Engineering Associate` | `cards/cnpa/` | authored |
+| `CNPE - Certified Cloud Native Platform Engineer` | `cards/cnpe/` | authored |
+| `LFCS - Linux Foundation Certified System Administrator` | `cards/lfcs/` | authored |
 
-- Downloaded decks are **read-only by default**: never edit, move,
-  suspend, or delete their notes unless the user explicitly asks.
-- **Always run `list_decks` before adding notes** — never guess deck names.
-- New content the user asks for goes into the deck they name. If they name
-  a downloaded deck, add to it directly rather than creating a parallel one.
-- For brand-new decks we author, use `Kubernetes::<Name>` (create_deck
-  supports max 2 levels of nesting) unless the user says otherwise.
+General/foundations material goes to `Kubernetes for Beginners`
+(`cards/kubernetes-for-beginners/`). CNCF adds certs over time —
+re-check the official list before creating a new cert deck + folder.
+- Cert attribution also lives in `k8s::<cert>` tags so content stays
+  searchable across decks.
+
+Deck names and note counts change over time — **always run `list_decks`
+before adding notes** and resolve the live name; never guess or rely on
+a remembered list.
+
+- Notes that came from a downloaded deck are **read-only**: never edit,
+  move, suspend, or delete them unless the user explicitly asks.
+- Adding NEW cards to a downloaded deck is welcome whenever the user
+  asks — e.g. extra material for a cert course. Those decks already
+  carry hundreds of cards, so before adding, check for overlap:
+  `find_notes` with `deck:<name>` + topic terms, and report similar
+  existing cards rather than stacking near-duplicates (see "Adding
+  cards — required workflow").
+- For brand-new NON-cert decks we author, use `Kubernetes::<Name>`
+  (create_deck supports max 2 levels of nesting) unless the user says
+  otherwise. Cert decks always follow the `<ACRONYM> - <title>` naming
+  above.
 - When adding cards to a downloaded deck, use **stock note types**
   (`Basic`, `Cloze`, `Basic (and reversed card)`) — do NOT reuse the
   deck's bundled clones (`Basic++++`, `Basic+`, …). Those are opaque
@@ -79,8 +123,13 @@ Existing decks (downloaded from course providers, imported as `.apkg`):
 - Prefer practical, exam-relevant cards: imperative `kubectl` commands,
   YAML field names, troubleshooting steps, and concept distinctions
   (e.g. Deployment vs StatefulSet) over trivia.
-- Cards must be accurate for current Kubernetes. If unsure about a flag,
-  API version, or deprecated feature, verify before creating the card.
+- Cards must be accurate for current Kubernetes. Use the `fetch` MCP
+  server liberally when authoring: verify concrete details (flags, API
+  versions, deprecated features) AND pull general background info
+  (concepts, terminology, how pieces relate) from authoritative sources
+  like the kubernetes.io concepts/tasks/reference pages. Prefer fetched
+  docs over memory so card backs carry correct, well-sourced "why"
+  explanations.
 
 ## Tagging
 
@@ -90,6 +139,15 @@ Tag every note we create so content stays attributable and searchable
 - `k8s::<cert>` — e.g. `k8s::cka`
 - `topic::<area>` — e.g. `topic::rbac`, `topic::networking`, `topic::etcd`
 - `src::<origin>` — e.g. `src::course-udemy`, `src::docs`, `src::session`
+
+**Minimum 2 content tags per note.** Beyond the bookkeeping tags
+(`k8s::`, `src::`), every note needs at least two `topic::` tags: one
+for the broader topic area and one for the specific technology/term it
+teaches (e.g. `topic::replicasets` + `topic::ha`, `topic::yaml` +
+`topic::api`). The collection already has many tags — reuse existing
+ones (check with `find_notes`/`tag` tools or the `cards/` mirror)
+rather than inventing near-duplicate spellings like `topic::pod` vs
+`topic::pods`.
 
 ## Adding cards — required workflow
 
@@ -129,10 +187,13 @@ tools/parse_cards.py   cards/*.md -> add_notes JSONL (repo -> Anki input)
 tools/resplit.py       re-splits decks thematically (CKS/KCNA exam domains)
 models/models.json     note type defs (fields/templates/css) for restore
 cards/                 markdown mirror of every deck. THEMATIC/TOPIC
-  ckad/<topic>.md      SPLIT IS PREFERRED — one file per topic:
-  kcsa/<domain>.md     ckad::* tag -> file per topic; KCSA 'Domain' field;
-  cks/<domain>.md      CKS -> CKS exam domain files (tools/resplit.py);
-  kcna/<domain>.md     KCNA -> KCNA exam domain files (tools/resplit.py).
+  <cert>/<topic>.md    SPLIT IS PREFERRED — one folder per cert acronym
+  kcsa/<domain>.md     (cka/, ckad/, pca/, lfcs/, …), one file per topic:
+  cks/<domain>.md      ckad::* tag -> file per topic; KCSA 'Domain' field;
+  kcna/<domain>.md     CKS -> CKS exam domain files (tools/resplit.py);
+                       KCNA -> KCNA exam domain files (tools/resplit.py);
+                       cert decks for other certs = topic files like
+                       kubernetes-for-beginners/.
 downloads/             (gitignored) original .apkg files / import notes
 ```
 
@@ -170,6 +231,14 @@ override with `--db` if it moves.
   stays a restorable record — or re-run the export to re-sync
   everything. Never start a new `part-NN` file for authored content when
   a topic file fits.
+- **Session deck → folder mapping:** the user names the target deck at
+  the start of a session. Mirror new notes into
+  `cards/<deck-folder>/<topic>.md` where `<deck-folder>` is the
+  slugified deck name — lowercase acronym for cert decks
+  (`CKA - Certified Kubernetes Administrator` → `cards/cka/`,
+  `Kubernetes for Beginners` → `cards/kubernetes-for-beginners/`), same
+  `slugify()` logic as `tools/export_anki.py`. Create the folder (with
+  `.gitkeep`) for decks that have no cards yet.
 - For decks that lack a topic signal, `tools/resplit.py` derives topics:
   CKS notes are scored per lecture segment into the six CKS exam domains
   (+ fundamentals/exam-prep), KCNA notes per card into the five KCNA

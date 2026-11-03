@@ -1,6 +1,6 @@
 # Kubernetes for Beginners — deployments
 
-> Deck: `Kubernetes for Beginners` · Group: `deployments` · Notes: 13 · Models: Basic, Basic (and reversed card), Cloze, Many
+> Deck: `Kubernetes for Beginners` · Group: `deployments` · Notes: 19 · Models: Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1793724714419 model:Basic -->
 **Front:** Why use a Deployment instead of creating a ReplicaSet directly?
@@ -98,5 +98,55 @@
 **Front:** How do you record WHY a Deployment was changed so it shows up in its rollout history?
 **Back:** Set the <code>kubernetes.io/change-cause</code> annotation — it's copied onto each new revision and shown in the CHANGE-CAUSE column of <code>kubectl rollout history</code>:<br><code>kubectl annotate deployment/web kubernetes.io/change-cause="bump to nginx:1.16"</code><br>(The old <code>--record</code> flag that did this automatically is deprecated.)
 **Tags:** k8s::beginners topic::deployments topic::kubectl src::session
+
+---
+
+<!-- note:1793732015305 model:Basic -->
+**Front:** What is a blue/green deployment in Kubernetes?
+**Back:** Two complete environments run side by side: 'blue' = the current live version, 'green' = the new version fully deployed and verified. All traffic switches at once by repointing the Service's pod selector to the green pods. Rollback is instant — flip the selector back to blue. Trade-off: you need capacity for two full copies at once.
+**Tags:** k8s::beginners topic::deployments topic::strategy src::session
+
+---
+
+<!-- note:1793732015306 model:Basic -->
+**Front:** What is a canary deployment, and why use it?
+**Back:** Send the new version to a small slice of traffic first (a few percent of pods/users), watch error rates and metrics, then ramp up gradually until it owns all traffic. It limits blast radius when a bad release ships — unlike RollingUpdate, which swaps pods steadily regardless of correctness. Needs old+new ReplicaSets sharing a Service, or progressive-delivery tooling (Argo Rollouts, Flagger, service mesh) — a native Deployment can't weight traffic percentages.
+**Tags:** k8s::beginners topic::deployments topic::strategy src::session
+
+---
+
+<!-- note:1793732015307 model:Basic -->
+**Front:** Which deployment strategies exist, and which are built into the Deployment object itself?
+**Back:** Only two: <code>RollingUpdate</code> (default — gradually swaps pods, zero downtime) and <code>Recreate</code> (kills all old pods first, then starts new — brief downtime). Blue/green and canary are NOT spec.strategy types; they're patterns built on top via Service selectors or external progressive-delivery tools.
+**Tags:** k8s::beginners topic::deployments topic::strategy src::session
+
+---
+
+<!-- note:1793732015329 model:Basic (and reversed card) -->
+**Front:** Which values are valid for <code>spec.strategy.type</code> in a Deployment manifest?
+**Back:** Only <code>RollingUpdate</code> (default — gradual swap, no downtime) and <code>Recreate</code> (all old pods die, then new ones start — brief downtime).
+**Tags:** k8s::beginners topic::deployments topic::strategy src::session
+
+---
+
+<!-- note:1793732020282 model:Many -->
+**Domain:** Deployment Strategies
+**Question:** A team needs zero downtime AND an instant full rollback of a release, and they can afford running two complete environments. Which strategy fits?
+**Options:** A. RollingUpdate<br>B. Blue/green<br>C. Recreate<br>D. Restart the Deployment
+**Answer:** B (2) – Blue/green
+**Explanation:** Blue/green runs two complete environments and switches all traffic at once via the Service selector — rollback is just flipping the selector back. Canary also limits risk but ramps gradually (not instant-all-at-once); RollingUpdate rolls back pod-by-pod; Recreate kills everything first — the opposite of zero downtime.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/cluster-administration/manage-deployment/" target="_blank">Kubernetes Documentation - Managing Workloads</a>
+**Tags:** k8s::beginners topic::deployments topic::strategy src::session
+
+---
+
+<!-- note:1793732020283 model:Many -->
+**Domain:** Deployment Strategies
+**Question:** Which of these is NOT a valid value for a Deployment's <code>spec.strategy.type</code>?
+**Options:** A. RollingUpdate<br>B. Recreate<br>C. Canary<br>D. RollingUpdate with custom maxSurge/maxUnavailable
+**Answer:** C (3) – Canary
+**Explanation:** spec.strategy.type accepts only RollingUpdate and Recreate. Canary is a deployment pattern implemented outside the Deployment spec — via multiple ReplicaSets sharing a Service, or progressive-delivery tools like Argo Rollouts — not a value you can set in the manifest.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" target="_blank">Kubernetes Documentation - Deployments</a>
+**Tags:** k8s::beginners topic::deployments topic::strategy src::session
 
 ---

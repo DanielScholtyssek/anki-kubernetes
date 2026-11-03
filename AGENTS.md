@@ -140,6 +140,14 @@ a remembered list.
   like the kubernetes.io concepts/tasks/reference pages. Prefer fetched
   docs over memory so card backs carry correct, well-sourced "why"
   explanations.
+- **Always check kubernetes.io docs for extra material.** Beyond
+  verifying what was asked, read the fetched pages actively for better
+  details and NEW question angles the request didn't cover — e.g.
+  defaults, edge cases, related objects, common misconceptions. When a
+  doc detail fits the concept and isn't a near-duplicate of an existing
+  card, turn it into a card (or surface it to the user as a suggested
+  follow-up if it's a stretch beyond the requested scope). The docs
+  often know better what's worth drilling than the course notes do.
 
 ## Tagging
 

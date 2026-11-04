@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Kubernetes Fundamentals
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 147 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 153 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1755878800141 model:Basic++ -->
 **Front:** Which Kubernetes control plane component is responsible for
@@ -1268,5 +1268,59 @@ D. etcd
 **Text:** Container resource stanza — where requests and limits live:<br><br><code>containers:<br>- name: app<br>  {{c1::resources}}:<br>    {{c2::requests}}:<br>      {{c3::cpu}}: "{{c4::250m}}"<br>      {{c5::memory}}: "{{c6::256Mi}}"<br>    {{c7::limits}}:<br>      cpu: "500m"<br>      memory: "512Mi"</code>
 **Back Extra:** Per-CONTAINER field — a pod's effective request is the sum of its containers' requests. requests = scheduling floor, limits = runtime ceiling. Units: m = millicores (250m = 0.25 CPU); Mi/Gi = binary memory (2^20/2^30), M/G = decimal.
 **Tags:** k8s::kcna topic::resources topic::yaml src::session
+
+---
+
+<!-- note:1793821101844 model:Many -->
+**Domain:** Resources - defaulting
+**Question:** A container declares <code>limits: {cpu: 250m}</code> and no requests. What's its effective cpu request?
+**Options:** A. requests.cpu stays unset (0)<br>B. requests.cpu also becomes 250m — the request defaults to the limit<br>C. The pod is rejected as invalid<br>D. The limit is ignored
+**Answer:** B (2) – requests.cpu also becomes 250m — the request defaults to the limit
+**Explanation:** When a container sets a limit but no request, Kubernetes copies the limit value INTO the request. The reverse is not true: a request alone leaves the limit unset (container may burst beyond it). One-directional rule: limit → fills request; request → limit stays empty.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/" target="_blank">Kubernetes Documentation - Resource Management</a>
+**Tags:** k8s::kcna topic::containers topic::resources src::session
+
+---
+
+<!-- note:1793821101845 model:Many -->
+**Domain:** Resources - sizing strategy
+**Question:** What's a common sizing recommendation for Deployments?
+**Options:** A. Set limits on everything, requests optional<br>B. Set neither — Kubernetes handles it<br>C. Requests everywhere, limits carefully — lets pods burst into idle capacity instead of being throttled<br>D. Only limits matter — requests are optional metadata
+**Answer:** C (3) – requests everywhere, limits carefully — lets pods burst into idle capacity instead of being throttled
+**Explanation:** A common recommendation: always set requests (scheduling + guarantees) but leave CPU limits off — a container over its limit gets THROTTLED even while the node sits idle, needlessly slowing bursts. Memory is different: it can't be throttled, only reclaimed by killing (OOMKilled), so memory limits still earn their place. Defaults: no request/no limit = BestEffort, evicted first under pressure.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/" target="_blank">Kubernetes Documentation - Resource Management</a>
+**Tags:** k8s::kcna topic::containers topic::resources src::session
+
+---
+
+<!-- note:1793821101846 model:Many -->
+**Domain:** Resources - quota coupling
+**Question:** A namespace's ResourceQuota covers cpu. What does that force on new pods?
+**Options:** A. Nothing — quota only tracks usage<br>B. Every new pod must specify cpu (request or limit); pods without it are rejected (403)<br>C. Existing pods are rescheduled<br>D. The namespace gets locked
+**Answer:** B (2) – every new pod must specify cpu (request or limit); pods without it are rejected (403)
+**Explanation:** A ResourceQuota covering cpu or memory forces the issue: any new pod lacking a request OR limit for that resource gets rejected with 403 Forbidden at admission — there's nothing to charge the quota against. That's exactly why LimitRange pairs with ResourceQuota: LimitRange injects defaults so manifests still get accepted. Quota violations never affect already-running pods.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/policy/resource-quotas/" target="_blank">Kubernetes Documentation - Resource Quotas</a>
+**Tags:** k8s::kcna topic::namespaces topic::resources src::session
+
+---
+
+<!-- note:1793821101854 model:Basic (and reversed card) -->
+**Front:** What problem do resource requests and limits solve?
+**Back:** Without limits one pod can consume ALL of a node's CPU/memory — starving every other workload on it ('noisy neighbor'). requests fix placement: the scheduler guarantees the pod its share and won't overbook the node. limits fix containment: CPU over-limit → throttled; memory over-limit → OOMKilled, because memory can't be throttled — you can't take RAM back from a process except by killing it.
+**Tags:** k8s::kcna topic::resources topic::scheduling src::session
+
+---
+
+<!-- note:1793821101864 model:Cloze -->
+**Text:** LimitRange manifest — sets defaults + bounds for containers in its namespace:<br><br><code>apiVersion: {{c1::v1}}<br>kind: {{c2::LimitRange}}<br>metadata: {name: limits}<br>spec:<br>  {{c3::limits}}:<br>  - {{c4::default}}: {cpu: 500m}        # default limit<br>    {{c5::defaultRequest}}: {cpu: 100m} # default request<br>    max: {cpu: "1"}<br>    min: {cpu: 100m}<br>    {{c6::type}}: Container</code>
+**Back Extra:** spec.limits[] is a list; each entry has default (default LIMIT), defaultRequest (default request), max, min, and type (Container or PersistentVolumeClaim). Only enforced at admission — existing pods keep their values. Two LimitRanges in one namespace → nondeterministic defaults.
+**Tags:** k8s::kcna topic::resources topic::yaml src::session
+
+---
+
+<!-- note:1793821101865 model:Cloze -->
+**Text:** ResourceQuota manifest — aggregate caps for one namespace:<br><br><code>apiVersion: {{c1::v1}}<br>kind: {{c2::ResourceQuota}}<br>metadata:<br>  name: compute-quota<br>  namespace: {{c3::dev}}<br>spec:<br>  {{c4::hard}}:<br>    {{c5::requests.cpu}}: "4"<br>    requests.memory: 4Gi<br>    {{c6::limits.cpu}}: "8"<br>    pods: "10"</code>
+**Back Extra:** spec.hard maps resource names → totals for the namespace: requests.cpu/requests.memory, limits.cpu/limits.memory, plus object counts (pods, services, persistentvolumeclaims). Exceeding any entry → new object rejected with 403. A cpu/memory quota forces every pod to declare that resource — pair it with LimitRange for defaults.
+**Tags:** k8s::kcna topic::namespaces topic::yaml src::session
 
 ---

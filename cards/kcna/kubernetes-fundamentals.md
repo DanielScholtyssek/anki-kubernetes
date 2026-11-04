@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Kubernetes Fundamentals
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 126 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 132 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1755878800141 model:Basic++ -->
 **Front:** Which Kubernetes control plane component is responsible for
@@ -1073,5 +1073,59 @@ D. etcd
 **Text:** Record a build version on a pod imperatively:<br><br><code>kubectl {{c1::annotate}} pod web {{c2::build-version}}={{c3::v1.4.2}}</code>
 **Back Extra:** Same shape as kubectl label: <resource> <name> <key>=<value>. Re-running with an existing key fails unless you add --overwrite. Remove with a trailing minus: kubectl annotate pod web build-version-. In YAML the same data sits under metadata.annotations.
 **Tags:** k8s::kcna topic::annotations topic::kubectl src::session
+
+---
+
+<!-- note:1793809412430 model:Many -->
+**Domain:** Taints - effects
+**Question:** Which taint effect removes ALREADY-RUNNING pods from a node if they don't tolerate it?
+**Options:** A. NoSchedule<br>B. PreferNoSchedule<br>C. NoExecute<br>D. Evict
+**Answer:** C (3) – NoExecute
+**Explanation:** NoSchedule: no new pods without a matching toleration (existing pods stay). PreferNoSchedule: soft version — scheduler tries to avoid but no guarantee. NoExecute: evicts running pods that don't tolerate it (immediately, or after tolerationSeconds if set) AND blocks new ones.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/" target="_blank">Kubernetes Documentation - Taints and Tolerations</a>
+**Tags:** k8s::kcna topic::scheduling topic::taints src::session
+
+---
+
+<!-- note:1793809412431 model:Many -->
+**Domain:** Taints - toleration semantics
+**Question:** A pod tolerates node1's taint. Is it guaranteed to be scheduled on node1?
+**Options:** A. Yes — a matching toleration binds the pod to that node<br>B. No — a toleration only PERMITS placement; nodeAffinity/nodeSelector attracts pods to nodes<br>C. Yes — but only for NoSchedule taints<br>D. No — tolerations and taints are unrelated
+**Answer:** B (2) – no — a toleration only PERMITS placement; nodeAffinity/nodeSelector attracts pods to nodes
+**Explanation:** Tolerations are a pass, not a magnet: the scheduler may still place the pod on any node — tainted or untainted. Taints REPEL (set on nodes); affinity/nodeSelector ATTRACT (set on pods). For 'must run on node X' you combine them: taint the node to keep others out + nodeAffinity on the pod to pin it there.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/" target="_blank">Kubernetes Documentation - Taints and Tolerations</a>
+**Tags:** k8s::kcna topic::scheduling topic::taints src::session
+
+---
+
+<!-- note:1793809412432 model:Many -->
+**Domain:** Taints - control plane
+**Question:** Why don't regular workload pods land on the control-plane node by default?
+**Options:** A. Pods can't reach the control-plane network<br>B. kubelet refuses to run user pods on it<br>C. The control-plane node carries a default taint (node-role.kubernetes.io/control-plane:NoSchedule) that user pods don't tolerate<br>D. Control-plane nodes only accept static pods
+**Answer:** C (3) – the control-plane node carries a default taint (node-role.kubernetes.io/control-plane:NoSchedule) that user pods don't tolerate
+**Explanation:** kubeadm clusters taint control-plane nodes by default (node-role.kubernetes.io/control-plane:NoSchedule) so workloads stay off them — protection, not magic. DaemonSets and system pods carry matching tolerations. You CAN remove the taint (kubectl taint nodes <cp> node-role.kubernetes.io/control-plane:NoSchedule-) e.g. on single-node labs like minikube — it's just not done on real clusters.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/" target="_blank">Kubernetes Documentation - Taints and Tolerations</a>
+**Tags:** k8s::kcna topic::architecture topic::taints src::session
+
+---
+
+<!-- note:1793809412438 model:Basic (and reversed card) -->
+**Front:** Taints vs tolerations — which object gets which, and what's the pair for?
+**Back:** A scheduling restriction pair: <b>taints on NODES repel</b> pods (the node says 'stay away unless allowed'); <b>tolerations on PODS</b> let them bypass a matching taint. Effect: keeps pods off unsuitable nodes — dedicated hardware, control plane, special workloads. Tolerations permit but never attract — pods can still land anywhere.
+**Tags:** k8s::kcna topic::scheduling topic::taints src::session
+
+---
+
+<!-- note:1793809412490 model:Cloze -->
+**Text:** Taint node1 so only pods tolerating <code>dedicated=gpu</code> may schedule:<br><br><code>kubectl taint nodes node1 {{c1::dedicated=gpu}}:{{c2::NoSchedule}}</code>
+**Back Extra:** Format: kubectl taint nodes <node> <key>=<value>:<effect>. Remove a taint by appending a minus: kubectl taint nodes node1 dedicated=gpu:NoSchedule-. Effects: NoSchedule / PreferNoSchedule / NoExecute.
+**Tags:** k8s::kcna topic::kubectl topic::taints src::session
+
+---
+
+<!-- note:1793809412491 model:Cloze -->
+**Text:** Pod spec tolerating a <code>dedicated=gpu:NoSchedule</code> taint — fields under <code>{{c1::spec.tolerations}}</code>:<br><br><code>tolerations:<br>- key: {{c2::"dedicated"}}<br>  operator: {{c3::"Equal"}}<br>  value: {{c4::"gpu"}}<br>  effect: {{c5::"NoSchedule"}}</code>
+**Back Extra:** operator defaults to Equal (needs a matching value); Exists matches the key regardless of value (omit 'value'). Effect must equal the taint's effect. Add tolerationSeconds: 3600 under a NoExecute toleration to survive the taint for one hour before eviction.
+**Tags:** k8s::kcna topic::taints topic::yaml src::session
 
 ---

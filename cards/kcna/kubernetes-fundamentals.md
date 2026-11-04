@@ -721,8 +721,8 @@ D. etcd
 **Domain:** Cluster Architecture - etcd
 **Question:** What is the role of etcd in a Kubernetes cluster?
 **Options:** A. It implements locks to prevent conflicts between the masters.<br>B. It ensures distributed storage of information across all nodes in the cluster.<br>C. All of the options are correct<br>D. It stores all the data used to manage the cluster.
-**Answer:** D (4) – It stores all the data used to manage the cluster.
-**Explanation:** etcd is the cluster's distributed, consistent key-value store — the single source of truth: every object, its desired and current state, config — all persisted by the API server there. The other options are traps: etcd uses Raft consensus (leader election + quorum), not 'locks between masters'; and it runs only on control-plane nodes, not 'all nodes' — so 'all of the options' can't be right either.
+**Answer:** C (3) – All of the options are correct
+**Explanation:** Per the course framing, all three describe etcd: it stores ALL data used to manage the cluster (D), it keeps that data as distributed replicated storage so control-plane nodes share one consistent view (B), and its distributed consensus — leader election/quorum via Raft, described as 'locks' — prevents conflicting writes between the masters (A). Nuance for the real world: etcd members run only on control-plane nodes ('all nodes' is loose phrasing for the etcd members), and 'locks' really means Raft consensus, not literal locking.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/overview/components/" target="_blank">Kubernetes Documentation - Kubernetes Components</a>
 **Tags:** k8s::kcna topic::architecture topic::etcd src::session
 

@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Kubernetes Fundamentals
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 113 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 118 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1755878800141 model:Basic++ -->
 **Front:** Which Kubernetes control plane component is responsible for
@@ -954,5 +954,52 @@ D. etcd
 **Front:** How do you place a new object into namespace 'dev' instead of 'default' when creating it?
 **Back:** Set its <code>metadata.namespace</code> field (e.g. <code>namespace: dev</code>) — or pass <code>-n dev</code> at creation with an imperative command. If you omit it, the object lands in your current context's namespace (usually <code>default</code>).
 **Tags:** k8s::kcna topic::namespaces topic::yaml src::session
+
+---
+
+<!-- note:1793807595536 model:Many -->
+**Domain:** Scheduling - pod selection
+**Question:** Which pods does the kube-scheduler pick up and try to place?
+**Options:** A. Pods whose spec.nodeName is still unset<br>B. Pods that failed health checks<br>C. Pods on overloaded nodes<br>D. All newly created pods regardless of fields
+**Answer:** A (1) – pods whose spec.nodeName is still unset (unassigned)
+**Explanation:** The scheduler watches for newly created pods that have no node assigned — i.e. spec.nodeName is empty. For each it runs filtering (which nodes are feasible) then scoring (which is best), then binds the pod. Pods already carrying a nodeName never reach the scheduler — that's why manually setting it bypasses scheduling entirely.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/kube-scheduler/" target="_blank">Kubernetes Documentation - kube-scheduler</a>
+**Tags:** k8s::kcna topic::pods topic::scheduling src::session
+
+---
+
+<!-- note:1793807595537 model:Many -->
+**Domain:** Scheduling - nodeName immutability
+**Question:** Can you change spec.nodeName on an already-created pod to move it to another node?
+**Options:** A. Yes — kubectl patch pod --type merge works<br>B. Yes — kubectl edit pod and update the field<br>C. No — nodeName is immutable after creation; recreate the pod to move it<br>D. Only if the pod is restarted first
+**Answer:** C (3) – no — nodeName is immutable after creation; recreate the pod to move it
+**Explanation:** spec.nodeName can only be written at two moments: by you at pod creation, or by the scheduler via a Binding while the pod is still unassigned. Once set it's read-only — kubectl patch/edit on it is rejected. To move a scheduled pod you must delete and recreate it (or let a Deployment do the rollout).
+**Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/kube-scheduler/" target="_blank">Kubernetes Documentation - kube-scheduler</a>
+**Tags:** k8s::kcna topic::pods topic::scheduling src::session
+
+---
+
+<!-- note:1793807595538 model:Many -->
+**Domain:** Scheduling - manual binding
+**Question:** Without kube-scheduler, how do you assign an already-created pod that has no nodeName to a node?
+**Options:** A. kubectl annotate the pod with the target node<br>B. Create a Binding object (POST JSON to the pod's binding subresource naming the target node)<br>C. Patch spec.nodeName directly<br>D. Add the node's name to metadata.labels
+**Answer:** B (2) – create a Binding object (POST JSON to the pod's binding subresource naming the target node)
+**Explanation:** The Binding object is what the scheduler itself creates after picking a node. Doing it manually: POST to /api/v1/namespaces/<ns>/pods/<pod>/binding with a body like {"target": {"kind": "Node", "name": "node2"}} — the API server then writes nodeName and the kubelet takes over. It only works while nodeName is still empty.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/kube-scheduler/" target="_blank">Kubernetes Documentation - kube-scheduler</a>
+**Tags:** k8s::kcna topic::api topic::scheduling src::session
+
+---
+
+<!-- note:1793807595548 model:Basic (and reversed card) -->
+**Front:** What is the <code>spec.nodeName</code> field on a pod?
+**Back:** It holds the name of the node the pod is bound to run on. It's empty when you submit the pod — the scheduler fills it (via a Binding) after choosing a node. If you set <code>spec.nodeName</code> yourself at creation time, the pod skips the scheduler entirely: manual scheduling. Immutable afterwards.
+**Tags:** k8s::kcna topic::pods topic::scheduling src::session
+
+---
+
+<!-- note:1793807595549 model:Basic (and reversed card) -->
+**Front:** Mechanically, what does the kube-scheduler DO once it picks a node for a pod?
+**Back:** The scheduler creates a <code>Binding</code> object — a POST to the pod's <code>binding</code> subresource naming the chosen node. The API server records the decision by writing <code>spec.nodeName</code> on the pod; the kubelet on that node then sees the pod is assigned to it and starts the containers.
+**Tags:** k8s::kcna topic::architecture topic::scheduling src::session
 
 ---

@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Kubernetes Fundamentals
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 98 · Models: Basic++, Basic+++, Basic, Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 104 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1755878800141 model:Basic++ -->
 **Front:** Which Kubernetes control plane component is responsible for
@@ -805,5 +805,63 @@ D. etcd
 **Explanation:** Declarative YAML can be versioned, reviewed and audited in Git (the GitOps model), re-applied safely (idempotent), and apply's last-applied annotation reveals drift. Imperative commands leave no record — nothing to diff, review or re-converge from.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/object-management/" target="_blank">Kubernetes Documentation - Kubernetes Object Management</a>
 **Tags:** k8s::kcna topic::gitops topic::kubectl src::session
+
+---
+
+<!-- note:1793756257574 model:Basic (and reversed card) -->
+**Front:** What is the IMPERATIVE approach to managing infrastructure or Kubernetes objects?
+**Back:** The approach where you spell out WHAT you want AND HOW to get there — every step explicitly, in order (<code>run this</code>, <code>create that</code>, <code>scale this to 5</code>). The tool executes commands; it doesn't reason about an end state. Examples: kubectl run/create/expose/scale/edit/set image — and shell scripts in the DevOps world.
+**Tags:** k8s::kcna topic::declarative topic::kubectl src::session
+
+---
+
+<!-- note:1793756257575 model:Basic (and reversed card) -->
+**Front:** What is the DECLARATIVE approach to managing infrastructure or Kubernetes objects?
+**Back:** The approach where you describe only WHAT the end state should look like — a manifest of desired state — and the system works out the HOW itself (diff, plan, reconcile). Examples: <code>kubectl apply -f</code>, Terraform plans, Kubernetes controllers converging actual→desired state.
+**Tags:** k8s::kcna topic::declarative topic::kubectl src::session
+
+---
+
+<!-- note:1793756257583 model:Many -->
+**Domain:** Imperative vs Declarative - DevOps
+**Question:** You write a Terraform config describing what infrastructure SHOULD exist, and Terraform works out the steps to reach it. Which approach is this?
+**Options:** A. Imperative<br>B. Declarative<br>C. Procedural<br>D. Manual
+**Answer:** B (2) – Declarative
+**Explanation:** Terraform is the classic declarative IaC tool: you write config describing the END state (which resources should exist), and Terraform's engine computes the plan — what to create/change/destroy to get there. Same model as kubectl apply. Imperative tools/scripts instead encode each step to execute.
+**Sources:** <a href="https://developer.hashicorp.com/terraform/intro" target="_blank">HashiCorp Documentation - What is Terraform</a>
+**Tags:** k8s::kcna topic::declarative topic::gitops src::session
+
+---
+
+<!-- note:1793756257584 model:Many -->
+**Domain:** Imperative vs Declarative - set image
+**Question:** <code>kubectl set image deployment/web nginx=nginx:2.0</code> — which management approach is this?
+**Options:** A. A declarative update<br>B. Imperative object configuration<br>C. An imperative command — it directly instructs the cluster to change the image NOW, with no declared desired state<br>D. A GitOps operation
+**Answer:** C (3) – An imperative command — it directly instructs the cluster to change the image NOW, with no declared desired state
+**Explanation:** set image, like run/create/expose/scale/edit/delete, is imperative: one-shot instruction, nothing recorded to converge against. The declarative equivalent is editing the image in the manifest and re-running kubectl apply -f.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/object-management/" target="_blank">Kubernetes Documentation - Kubernetes Object Management</a>
+**Tags:** k8s::kcna topic::declarative topic::kubectl src::session
+
+---
+
+<!-- note:1793756257585 model:Many -->
+**Domain:** Imperative vs Declarative - apply mechanics
+**Question:** You run <code>kubectl apply -f app.yaml</code> on an object that already exists. What does apply do?
+**Options:** A. It fails because the resource already exists<br>B. It compares the manifest, the live object AND last-applied-configuration, then applies only the needed changes (create or patch)<br>C. It deletes and recreates the object from scratch<br>D. It replaces the whole object, losing unmanaged fields
+**Answer:** B (2) – It compares the manifest, the live object AND last-applied-configuration, then applies only the needed changes (create or patch)
+**Explanation:** apply is a three-way merge: file's desired state vs the object's live state vs the recorded last-applied-configuration. Object missing → created; exists → patched to match the declaration. That's why the same file can be applied repeatedly and why it's the declarative workflow.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/object-management/" target="_blank">Kubernetes Documentation - Kubernetes Object Management</a>
+**Tags:** k8s::kcna topic::declarative topic::kubectl src::session
+
+---
+
+<!-- note:1793756257586 model:Many -->
+**Domain:** Imperative vs Declarative - contrast
+**Question:** Which statement correctly contrasts the imperative and declarative approaches?
+**Options:** A. Imperative describes the end state; declarative lists the steps<br>B. Imperative = you specify WHAT you want AND HOW (the steps); declarative = you specify only WHAT the result should be<br>C. They are two names for the same workflow<br>D. Declarative requires typing more commands
+**Answer:** B (2) – Imperative = you specify WHAT you want AND HOW (the steps); declarative = you specify only WHAT the result should be
+**Explanation:** Imperative: the operator encodes the path — every command/step explicitly. Declarative: the operator encodes the destination — the system derives the path (diff + reconcile). Kubernetes manifests+apply and Terraform are declarative; ad-hoc kubectl commands and shell scripts are imperative.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/object-management/" target="_blank">Kubernetes Documentation - Kubernetes Object Management</a>
+**Tags:** k8s::kcna topic::declarative topic::kubectl src::session
 
 ---

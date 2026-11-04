@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Kubernetes Fundamentals
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 105 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 109 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1755878800141 model:Basic++ -->
 **Front:** Which Kubernetes control plane component is responsible for
@@ -874,5 +874,49 @@ D. etcd
 **Explanation:** Each apply writes the applied manifest (as JSON) into the kubectl.kubernetes.io/last-applied-configuration annotation on the object. It's the third leg of apply's three-way merge — file vs live vs last-applied — letting kubectl compute diffs, detect drift, and delete fields removed from the file. kubectl get -o yaml shows LIVE state; this annotation remembers what YOU declared.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/object-management/" target="_blank">Kubernetes Documentation - Kubernetes Object Management</a>
 **Tags:** k8s::kcna topic::declarative topic::kubectl topic::yaml src::session
+
+---
+
+<!-- note:1793756864965 model:Many -->
+**Domain:** Namespaces - defaults
+**Question:** Which namespaces exist in a fresh Kubernetes cluster by default?
+**Options:** A. only 'default'<br>B. default, prod, staging<br>C. default, kube-system, kube-public, kube-node-lease<br>D. master, worker, default
+**Answer:** C (3) – default, kube-system, kube-public, kube-node-lease
+**Explanation:** Every cluster starts with four: 'default' (objects with no namespace set), 'kube-system' (the cluster's own infrastructure — CoreDNS, kube-proxy, control-plane pods in kubeadm clusters), 'kube-public' (publicly readable info, mostly unused), 'kube-node-lease' (node heartbeat Lease objects). Create your own for teams/apps via kubectl create ns.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/" target="_blank">Kubernetes Documentation - Namespaces</a>
+**Tags:** k8s::kcna topic::architecture topic::namespaces src::session
+
+---
+
+<!-- note:1793756864966 model:Many -->
+**Domain:** Namespaces - kubectl
+**Question:** Which kubectl command makes 'dev' your DEFAULT namespace for all subsequent commands?
+**Options:** A. kubectl use namespace dev<br>B. kubectl config set-context --current --namespace=dev<br>C. kubectl set namespace dev<br>D. kubectl switch-context dev
+**Answer:** B (2) – kubectl config set-context --current --namespace=dev
+**Explanation:** set-context --current --namespace=dev writes 'dev' into your kubeconfig's current context — every subsequent kubectl command defaults to it, no -n flag needed. The alternative is passing -n dev (or --namespace=dev) on each command. kubectl get ns lists namespaces; create ns makes one.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/" target="_blank">Kubernetes Documentation - Namespaces</a>
+**Tags:** k8s::kcna topic::kubectl topic::namespaces src::session
+
+---
+
+<!-- note:1793756864967 model:Many -->
+**Domain:** Namespaces - scoping
+**Question:** Which of these resources is cluster-scoped — i.e. does NOT live inside a namespace?
+**Options:** A. Pod<br>B. Service<br>C. Deployment<br>D. Node
+**Answer:** D (4) – Node
+**Explanation:** Nodes, PersistentVolumes, ClusterRoles — and Namespaces themselves — are cluster-scoped: they live outside any namespace (metadata.namespace must be empty). Pods, Services, Deployments, Secrets, ConfigMaps are namespaced. Discover which is which with kubectl api-resources --namespaced=true/false.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/" target="_blank">Kubernetes Documentation - Namespaces</a>
+**Tags:** k8s::kcna topic::api topic::namespaces src::session
+
+---
+
+<!-- note:1793756864968 model:Many -->
+**Domain:** Namespaces - isolation
+**Question:** Do namespaces on their own provide hard isolation between workloads?
+**Options:** A. Yes — namespaces fully isolate workloads from each other<br>B. No — namespaces are logical grouping; real isolation needs NetworkPolicy, RBAC and quotas on top<br>C. Yes — pods cannot communicate across namespaces<br>D. Only if ResourceQuota is configured
+**Answer:** B (2) – No — namespaces are logical grouping; real isolation needs NetworkPolicy, RBAC and quotas on top
+**Explanation:** Namespaces partition names and org ownership — but the pod network stays flat by default: a pod in ns 'dev' can still reach a pod in ns 'prod'. Hard isolation is layered on: NetworkPolicies for traffic, RBAC for API access, ResourceQuota/LimitRange for resources. Namespaces are the boundary those features scope to, not the isolation itself.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/" target="_blank">Kubernetes Documentation - Namespaces</a>
+**Tags:** k8s::kcna topic::namespaces topic::networking src::session
 
 ---

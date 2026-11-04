@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Kubernetes Fundamentals
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 132 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 136 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1755878800141 model:Basic++ -->
 **Front:** Which Kubernetes control plane component is responsible for
@@ -1127,5 +1127,41 @@ D. etcd
 **Text:** Pod spec tolerating a <code>dedicated=gpu:NoSchedule</code> taint — fields under <code>{{c1::spec.tolerations}}</code>:<br><br><code>tolerations:<br>- key: {{c2::"dedicated"}}<br>  operator: {{c3::"Equal"}}<br>  value: {{c4::"gpu"}}<br>  effect: {{c5::"NoSchedule"}}</code>
 **Back Extra:** operator defaults to Equal (needs a matching value); Exists matches the key regardless of value (omit 'value'). Effect must equal the taint's effect. Add tolerationSeconds: 3600 under a NoExecute toleration to survive the taint for one hour before eviction.
 **Tags:** k8s::kcna topic::taints topic::yaml src::session
+
+---
+
+<!-- note:1793810135656 model:Many -->
+**Domain:** NodeSelector - limitations
+**Question:** Can spec.nodeSelector express 'run on nodes labelled size=large OR size=medium'?
+**Options:** A. Yes — separate values with commas<br>B. No — nodeSelector only does equality-AND on labels; OR/prefer logic needs nodeAffinity/nodeAntiAffinity<br>C. Yes — use a YAML list under nodeSelector<br>D. Yes — use two nodeSelector blocks
+**Answer:** B (2) – no — nodeSelector only does equality-AND on labels; OR/prefer logic needs nodeAffinity/nodeAntiAffinity
+**Explanation:** nodeSelector accepts only exact key=value pairs, ANDed together — you can't say 'large OR medium', 'not small', or 'prefer fast'. Node affinity adds expressive rules: the In operator (size In [large, medium]), NotIn, plus requiredDuringScheduling (hard) vs preferredDuringScheduling (soft) terms. Anti-affinity is the inverse — keep pods OFF matching nodes (or spread them).
+**Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/" target="_blank">Kubernetes Documentation - Assign Pods to Nodes</a>
+**Tags:** k8s::kcna topic::nodeselector topic::scheduling src::session
+
+---
+
+<!-- note:1793810135657 model:Many -->
+**Domain:** NodeSelector - hard requirement
+**Question:** A pod has spec.nodeSelector {size: large} but NO node carries that label. What happens?
+**Options:** A. It schedules anyway on a random node<br>B. It's deleted after a timeout<br>C. It stays Pending/unschedulable until a node with matching labels appears<br>D. kubelet runs it on the control-plane node
+**Answer:** C (3) – it stays Pending/unschedulable until a node with matching labels appears
+**Explanation:** nodeSelector is a HARD constraint — the scheduler won't place the pod anywhere else and won't retry-error; the pod just sits unscheduled. Events show '0/N nodes are available'. Fixes: label a node, relax the selector, or switch to nodeAffinity preferredDuringScheduling for a soft preference.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/" target="_blank">Kubernetes Documentation - Assign Pods to Nodes</a>
+**Tags:** k8s::kcna topic::nodeselector topic::scheduling src::session
+
+---
+
+<!-- note:1793810135666 model:Basic (and reversed card) -->
+**Front:** What is <code>spec.nodeSelector</code> on a pod?
+**Back:** A pod-spec field holding key-value pairs that constrain WHERE the pod may run: the scheduler only picks nodes whose labels satisfy ALL listed pairs. <code>spec.nodeSelector: {size: large}</code> = 'nodes labelled size=large only'. It's the simplest node-constraint mechanism — hard equality matching only, no OR/preferences.
+**Tags:** k8s::kcna topic::nodeselector topic::scheduling src::session
+
+---
+
+<!-- note:1793810135683 model:Basic -->
+**Front:** Recipe: pin a pod to SSD nodes using nodeSelector
+**Back:** Two steps, in order: 1) LABEL the node — <code>kubectl label nodes node1 disktype=ssd</code>. 2) Add the selector in the pod spec — <code>spec.nodeSelector: {disktype: ssd}</code>. The nodeSelector never labels anything itself; it only matches labels nodes already carry. Labels on the node, selector on the pod.
+**Tags:** k8s::kcna topic::nodeselector topic::scheduling src::session
 
 ---

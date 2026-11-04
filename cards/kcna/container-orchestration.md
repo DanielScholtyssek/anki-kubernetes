@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Container Orchestration
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Container Orchestration` · Notes: 44 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Container Orchestration` · Notes: 49 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1755878736894 model:Basic++ -->
 **Front:** What is the fundamental reason Kubernetes uses Pods as the
@@ -397,5 +397,52 @@ essential for their function, reducing the potential impact of a compromise.
 **Explanation:** kubectl create deployment makes the Deployment object; --image sets the pod template's container image, --replicas sets the desired count (default 1). Imperative equivalent of a YAML Deployment manifest. (kubectl run creates a bare Pod, not a Deployment.)
 **Sources:** <a href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_deployment/" target="_blank">Kubernetes Documentation - kubectl create deployment</a>
 **Tags:** k8s::kcna topic::deployments topic::kubectl src::session
+
+---
+
+<!-- note:1793822816861 model:Many -->
+**Domain:** DaemonSet - scheduling
+**Question:** How does a DaemonSet actually get its pods onto each node?
+**Options:** A. It sets spec.nodeName directly — no scheduler involved<br>B. The DaemonSet controller creates a pod per node with a nodeAffinity pinning it to that hostname; the default scheduler then binds it<br>C. kubelet on each node pulls the template itself<br>D. The ReplicationController schedules copies to nodes
+**Answer:** B (2) – the DaemonSet controller creates a pod per node with a nodeAffinity pinning it to that hostname; the default scheduler then binds it
+**Explanation:** DaemonSet pods do NOT bypass the scheduler: the controller creates one Pod per eligible node and injects nodeAffinity (matchFields metadata.name In [node]) — the DEFAULT scheduler then binds each pod to its node via spec.nodeName. You can point DS pods at a custom scheduler with spec.template.spec.schedulerName.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/" target="_blank">Kubernetes Documentation - DaemonSet</a>
+**Tags:** k8s::kcna topic::daemonsets topic::scheduling src::session
+
+---
+
+<!-- note:1793822816862 model:Many -->
+**Domain:** DaemonSet - lifecycle
+**Question:** A cluster running a DaemonSet gets a NEW node. What happens?
+**Options:** A. Nothing until the next reconcile<br>B. The DaemonSet must be reapplied<br>C. A pod lands on the new node automatically; pods on removed nodes are garbage-collected<br>D. Only if the DS has replicas: N set
+**Answer:** C (3) – a pod lands on the new node automatically; pods on removed nodes are garbage-collected
+**Explanation:** The DaemonSet controller continuously reconciles: any node joining the cluster that matches the selector gets a pod; nodes leaving take their DS pods with them (garbage collection). That's the whole point vs a Deployment — replica count follows node count, not a fixed number.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/" target="_blank">Kubernetes Documentation - DaemonSet</a>
+**Tags:** k8s::kcna topic::daemonsets topic::scheduling src::session
+
+---
+
+<!-- note:1793822816863 model:Many -->
+**Domain:** DaemonSet - tolerations
+**Question:** Why do DaemonSet pods keep running on nodes that become NotReady or pressure-tainted?
+**Options:** A. They get special scheduler priority only<br>B. Automatic tolerations — the controller adds not-ready/unreachable/pressure tolerations so DS pods survive node problems<br>C. Nothing — DS pods are immune by default<br>D. The nodeName field bypasses taints
+**Answer:** B (2) – automatic tolerations — the controller adds not-ready/unreachable/pressure tolerations so DS pods survive node problems
+**Explanation:** The DaemonSet controller pre-adds tolerations: node.kubernetes.io/not-ready (NoExecute), unreachable (NoExecute), disk/memory/pid-pressure (NoSchedule) — so node agents keep running through failures (when they're needed MOST). To also land on control-plane nodes, the template must tolerate node-role.kubernetes.io/control-plane explicitly.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/" target="_blank">Kubernetes Documentation - DaemonSet</a>
+**Tags:** k8s::kcna topic::daemonsets topic::taints src::session
+
+---
+
+<!-- note:1793822816871 model:Basic (and reversed card) -->
+**Front:** What is a DaemonSet — and which workloads belong in one?
+**Back:** A workload controller that runs ONE copy of a pod on every node (or a subset via nodeSelector/affinity in the template). Replica count follows node count — nodes joining get the pod automatically. Used for node-local agents that must exist everywhere: monitoring exporters, log collectors (fluentd), kube-proxy, CNI plugins like Calico. apiVersion: apps/v1.
+**Tags:** k8s::kcna topic::daemonsets topic::workloads src::session
+
+---
+
+<!-- note:1793822816917 model:Cloze -->
+**Text:** DaemonSet manifest skeleton (fluentd on every node):<br><br><code>apiVersion: {{c1::apps/v1}}<br>kind: {{c2::DaemonSet}}<br>metadata: {name: fluentd}<br>spec:<br>  {{c3::selector}}:<br>    {{c4::matchLabels}}: {name: fluentd}<br>  {{c5::template}}:<br>    metadata: {labels: {name: fluentd}}<br>    spec: {containers: [...], restartPolicy: {{c6::Always}}}</code>
+**Back Extra:** Same skeleton as a Deployment MINUS the replicas field — count is implied (one per node). selector.matchLabels must equal template.metadata.labels and is immutable after creation. Pod template's restartPolicy must be Always (default). Add spec.template.spec.nodeSelector/affinity to cover only a subset of nodes.
+**Tags:** k8s::kcna topic::daemonsets topic::yaml src::session
 
 ---

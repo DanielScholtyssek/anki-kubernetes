@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Kubernetes Fundamentals
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 104 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 105 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1755878800141 model:Basic++ -->
 **Front:** Which Kubernetes control plane component is responsible for
@@ -863,5 +863,16 @@ D. etcd
 **Explanation:** Imperative: the operator encodes the path — every command/step explicitly. Declarative: the operator encodes the destination — the system derives the path (diff + reconcile). Kubernetes manifests+apply and Terraform are declarative; ad-hoc kubectl commands and shell scripts are imperative.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/object-management/" target="_blank">Kubernetes Documentation - Kubernetes Object Management</a>
 **Tags:** k8s::kcna topic::declarative topic::kubectl src::session
+
+---
+
+<!-- note:1793756656941 model:Many -->
+**Domain:** kubectl apply - last-applied
+**Question:** What does the <code>kubectl.kubernetes.io/last-applied-configuration</code> annotation on an object store?
+**Options:** A. The object's current live spec<br>B. The JSON of the manifest most recently applied via kubectl apply<br>C. The default values the API server filled in<br>D. The object's original creation manifest from any tool
+**Answer:** B (2) – The JSON of the manifest most recently applied via kubectl apply
+**Explanation:** Each apply writes the applied manifest (as JSON) into the kubectl.kubernetes.io/last-applied-configuration annotation on the object. It's the third leg of apply's three-way merge — file vs live vs last-applied — letting kubectl compute diffs, detect drift, and delete fields removed from the file. kubectl get -o yaml shows LIVE state; this annotation remembers what YOU declared.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/object-management/" target="_blank">Kubernetes Documentation - Kubernetes Object Management</a>
+**Tags:** k8s::kcna topic::declarative topic::kubectl topic::yaml src::session
 
 ---

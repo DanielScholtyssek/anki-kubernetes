@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Kubernetes Fundamentals
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 86 · Models: Basic++, Basic+++
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 89 · Models: Basic++, Basic+++, Basic, Cloze, Many
 
 <!-- note:1755878800141 model:Basic++ -->
 **Front:** Which Kubernetes control plane component is responsible for
@@ -689,5 +689,30 @@ D. etcd
 <!-- note:1767561230837 model:Basic+++ -->
 **Front:** Which component provides metrics for autoscaling? <br><br><div>A. Kube-scheduler<br> B. Controller Manager<br> C. Metrics Server<br> D. Kubelet</div>
 **Back:** <div>Correct Answer: <b>C</b></div><div><br></div> <div><b>Explanation</b>: Metrics Server collects resource usage metrics used by HPA.</div>
+
+---
+
+<!-- note:1793752906100 model:Many -->
+**Domain:** Cluster Architecture - Control Plane
+**Question:** Which of these components runs ONLY on control-plane nodes, not on worker nodes?
+**Options:** A. kubelet<br>B. container runtime<br>C. kube-apiserver<br>D. kube-proxy
+**Answer:** C (3) – kube-apiserver
+**Explanation:** kube-apiserver, etcd, kube-scheduler and kube-controller-manager run only on control-plane nodes — they manage the cluster. kubelet, kube-proxy and the container runtime run on every node (workers AND control plane) so any node can host pods.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/overview/components/" target="_blank">Kubernetes Documentation - Kubernetes Components</a>
+**Tags:** k8s::kcna topic::architecture topic::control-plane src::session
+
+---
+
+<!-- note:1793752906116 model:Basic -->
+**Front:** What is the difference between a control-plane node and a worker node in Kubernetes?
+**Back:** Control-plane nodes run the cluster's management components — kube-apiserver, etcd, kube-scheduler, kube-controller-manager — and normally run no user workloads (protected by a taint). Worker nodes run the application pods: each has kubelet, kube-proxy and a container runtime. Every node needs the per-node components; only control-plane nodes need the management stack.
+**Tags:** k8s::kcna topic::architecture topic::control-plane src::session
+
+---
+
+<!-- note:1793752918693 model:Cloze -->
+**Text:** Control plane nodes were previously called {{c1::master}} nodes.
+**Back Extra:** The old term 'master node' is still common in older courses, books and docs — e.g. 'master components'. Same thing; 'control plane' is the current name.
+**Tags:** k8s::kcna topic::architecture topic::control-plane src::session
 
 ---

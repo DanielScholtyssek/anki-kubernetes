@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Container Orchestration
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Container Orchestration` · Notes: 33 · Models: Basic++, Basic+++, Basic, Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Container Orchestration` · Notes: 39 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1755878736894 model:Basic++ -->
 **Front:** What is the fundamental reason Kubernetes uses Pods as the
@@ -280,5 +280,67 @@ essential for their function, reducing the potential impact of a compromise.
 **Explanation:** A ReplicaSet counts and manages every pod whose labels satisfy spec.selector.matchLabels — the selector must equal the pod template's labels or the API rejects the object. It can even adopt pre-existing matching pods that have no controller ownerReference.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/" target="_blank">Kubernetes Documentation - ReplicaSet</a>
 **Tags:** k8s::kcna topic::labels topic::replicasets src::session
+
+---
+
+<!-- note:1793752906095 model:Many -->
+**Domain:** Docker vs containerd - dockershim
+**Question:** Why did Kubernetes remove dockershim in v1.24?
+**Options:** A. Docker Inc. changed its license, forcing removal<br>B. Docker Engine is not CRI-compatible; the kubelet-internal dockershim shim was vendor-specific complexity, so Kubernetes standardized on CRI runtimes (containerd, CRI-O)<br>C. Containers were deprecated in favor of VMs<br>D. containerd can only run images built by containerd
+**Answer:** B (2) – Docker Engine is not CRI-compatible; the kubelet-internal dockershim shim was vendor-specific complexity, so Kubernetes standardized on CRI runtimes (containerd, CRI-O)
+**Explanation:** Dockershim let the kubelet talk to Docker Engine, which predates and never implemented the CRI. It was removed in v1.24 to cut maintenance burden and align with open standards. Docker images still work — they follow OCI specs — and Docker Engine can still be used via the cri-dockerd shim.
+**Sources:** <a href="https://kubernetes.io/blog/2022/05/03/dockershim-historical-context/" target="_blank">Kubernetes Blog - Dockershim: The Historical Context</a>
+**Tags:** k8s::kcna topic::cri-oci topic::docker src::session
+
+---
+
+<!-- note:1793752906096 model:Many -->
+**Domain:** Docker vs containerd - cri-dockerd
+**Question:** Can a cluster still use Docker Engine as its container runtime today?
+**Options:** A. No — Docker cannot run containers in Kubernetes anymore<br>B. Yes — natively, because Docker implements CRI<br>C. Yes — via cri-dockerd, a CRI shim maintained by Docker/Mirantis; though most clusters use containerd or CRI-O directly<br>D. Only if containerd is also installed
+**Answer:** C (3) – Yes — via cri-dockerd, a CRI shim maintained by Docker/Mirantis; though most clusters use containerd or CRI-O directly
+**Explanation:** Dockershim removal ended the BUILT-IN Docker path, not Docker itself. cri-dockerd re-adds the CRI bridge outside the kubelet. In practice, managed clusters run containerd or CRI-O — and note Docker Engine itself uses containerd under the hood.
+**Sources:** <a href="https://kubernetes.io/blog/2022/05/03/dockershim-historical-context/" target="_blank">Kubernetes Blog - Dockershim: The Historical Context</a>
+**Tags:** k8s::kcna topic::cri-oci topic::docker src::session
+
+---
+
+<!-- note:1793752906097 model:Many -->
+**Domain:** OCI Image Portability
+**Question:** Why can an image built with Docker run on a different runtime like containerd?
+**Options:** A. Kubernetes converts the image at pull time<br>B. Both follow OCI standards: the image conforms to the image-spec format and containerd follows the runtime-spec<br>C. Docker must be installed on the node<br>D. containerd embeds a Docker engine
+**Answer:** B (2) – Both follow OCI standards: the image conforms to the image-spec format and containerd follows the runtime-spec
+**Explanation:** OCI image-spec standardizes how an image is packaged (manifest, config, layers); runtime-spec standardizes how it's executed. Any OCI-compliant runtime can run any OCI-compliant image — that's why Docker-built images run on containerd, CRI-O, etc. No conversion needed.
+**Sources:** <a href="https://opencontainers.org/" target="_blank">Open Container Initiative</a>
+**Tags:** k8s::kcna topic::cri-oci topic::docker src::session
+
+---
+
+<!-- note:1793752906098 model:Many -->
+**Domain:** Containers vs VMs
+**Question:** How do containers fundamentally differ from virtual machines?
+**Options:** A. Each container boots its own guest OS kernel<br>B. Containers share the host OS kernel (isolated via namespaces/cgroups) with no guest OS — much lighter and faster than VMs<br>C. Containers require a hypervisor while VMs don't<br>D. VMs are lighter because they don't need isolation
+**Answer:** B (2) – Containers share the host OS kernel (isolated via namespaces/cgroups) with no guest OS — much lighter and faster than VMs
+**Explanation:** A VM runs a full guest OS on a hypervisor — heavyweight, slow to boot. A container is just an isolated process set on the host: it shares the host kernel and gets its own view of processes/network/filesystems. That's why containers start in milliseconds and pack denser.
+**Sources:** <a href="https://docs.docker.com/get-started/docker-overview/" target="_blank">Docker Official Documentation - Docker Overview</a>
+**Tags:** k8s::kcna topic::container-orchestration topic::docker src::session
+
+---
+
+<!-- note:1793752906099 model:Many -->
+**Domain:** Image vs Container
+**Question:** What is the difference between a container image and a container?
+**Options:** A. The image is the read-only template/package; the container is a running instance of it<br>B. The container is the template; the image is the running process<br>C. They are two names for the same thing<br>D. Images run on VMs; containers run on bare metal
+**Answer:** A (1) – The image is the read-only template/package; the container is a running instance of it
+**Explanation:** An image packages the app + dependencies as a sharable, versioned artifact (built once, stored in a registry). A container is what runs when you instantiate the image — the live isolated environment with its own processes, network and filesystem. One image → many containers.
+**Sources:** <a href="https://docs.docker.com/get-started/docker-overview/" target="_blank">Docker Official Documentation - Docker Overview</a>
+**Tags:** k8s::kcna topic::cri-oci topic::docker src::session
+
+---
+
+<!-- note:1793752918686 model:Basic (and reversed card) -->
+**Front:** What is the Container Runtime Interface (CRI)?
+**Back:** The standard gRPC plugin interface between the kubelet and the container runtime on each node. Any runtime implementing CRI (containerd, CRI-O) can run containers under Kubernetes — that's what makes runtimes swappable. The CRI-compliant runtimes in turn follow OCI standards (image-spec, runtime-spec).
+**Tags:** k8s::kcna topic::container-orchestration topic::cri-oci src::session
 
 ---

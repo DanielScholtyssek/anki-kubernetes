@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Container Orchestration
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Container Orchestration` · Notes: 39 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Container Orchestration` · Notes: 40 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1755878736894 model:Basic++ -->
 **Front:** What is the fundamental reason Kubernetes uses Pods as the
@@ -341,6 +341,17 @@ essential for their function, reducing the potential impact of a compromise.
 <!-- note:1793752918686 model:Basic (and reversed card) -->
 **Front:** What is the Container Runtime Interface (CRI)?
 **Back:** The standard gRPC plugin interface between the kubelet and the container runtime on each node. Any runtime implementing CRI (containerd, CRI-O) can run containers under Kubernetes — that's what makes runtimes swappable. The CRI-compliant runtimes in turn follow OCI standards (image-spec, runtime-spec).
+**Tags:** k8s::kcna topic::container-orchestration topic::cri-oci src::session
+
+---
+
+<!-- note:1793753618569 model:Many -->
+**Domain:** Container Runtime - CRI benefit
+**Question:** What is the benefit of using container runtimes that support the CRI?
+**Options:** A. It enables automatic scaling of container instances<br>B. It enables container runtimes to be developed independently of Kubernetes<br>C. It provides better compatibility and standardization across container runtimes<br>D. It allows for direct communication between containers
+**Answer:** C (3) – It provides better compatibility and standardization across container runtimes
+**Explanation:** CRI defines one standard interface between the kubelet and any container runtime — that's its core benefit: compliant runtimes (containerd, CRI-O, cri-dockerd) plug in interchangeably. Option B is a consequence of that standardization (runtimes evolve independently since they only need to satisfy the interface), but the course's intended answer is the standardization/compatibility itself. A and D are unrelated to CRI — scaling is an orchestrator's job and CNI, not CRI, handles connectivity.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/architecture/cri/" target="_blank">Kubernetes Documentation - Container Runtime Interface (CRI)</a>
 **Tags:** k8s::kcna topic::container-orchestration topic::cri-oci src::session
 
 ---

@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Container Orchestration
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Container Orchestration` · Notes: 49 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Container Orchestration` · Notes: 54 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1755878736894 model:Basic++ -->
 **Front:** What is the fundamental reason Kubernetes uses Pods as the
@@ -444,5 +444,52 @@ essential for their function, reducing the potential impact of a compromise.
 **Text:** DaemonSet manifest skeleton (fluentd on every node):<br><br><code>apiVersion: {{c1::apps/v1}}<br>kind: {{c2::DaemonSet}}<br>metadata: {name: fluentd}<br>spec:<br>  {{c3::selector}}:<br>    {{c4::matchLabels}}: {name: fluentd}<br>  {{c5::template}}:<br>    metadata: {labels: {name: fluentd}}<br>    spec: {containers: [...], restartPolicy: {{c6::Always}}}</code>
 **Back Extra:** Same skeleton as a Deployment MINUS the replicas field — count is implied (one per node). selector.matchLabels must equal template.metadata.labels and is immutable after creation. Pod template's restartPolicy must be Always (default). Add spec.template.spec.nodeSelector/affinity to cover only a subset of nodes.
 **Tags:** k8s::kcna topic::daemonsets topic::yaml src::session
+
+---
+
+<!-- note:1793823868597 model:Many -->
+**Domain:** Static Pods - mirror pods
+**Question:** kubectl get pods shows 'static-web-my-node1' — you kubectl delete it and it instantly reappears. What is it and how do you actually remove it?
+**Options:** A. The pod is stuck terminating<br>B. RBAC is blocking the delete<br>C. It's a mirror of a static pod — the kubelet manages it from a manifest file on the node; delete the file, not the object<br>D. The pod has a finalizer
+**Answer:** C (3) – it's a mirror of a static pod — the kubelet manages it from a manifest file on the node; delete the file, not the object
+**Explanation:** The kubelet creates a read-only MIRROR of each static pod in the API server (named <pod>-<nodename>) so kubectl visibility works. Deleting the mirror does nothing — kubelet's source of truth is the manifest file in staticPodPath (e.g. /etc/kubernetes/manifests). To change/kill the pod: edit or remove the file ON THE NODE.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/" target="_blank">Kubernetes Documentation - Create static Pods</a>
+**Tags:** k8s::kcna topic::pods topic::staticpods src::session
+
+---
+
+<!-- note:1793823868598 model:Many -->
+**Domain:** Static Pods - limitations
+**Question:** Which object kinds can a kubelet create from the static pod manifest directory?
+**Options:** A. Any workload object<br>B. Only Pods — kubelet understands no other kind; no Deployments, ReplicaSets or Services<br>C. Pods and Services only<br>D. Pods and ConfigMaps
+**Answer:** B (2) – only Pods — kubelet understands no other kind; no Deployments, ReplicaSets or Services
+**Explanation:** Static manifests must be kind: Pod, apiVersion: v1 — nothing else exists without the API server. There's no controller to honor replicas, no scheduler (the pod lands on this node, period), no etcd. The kubelet alone watches the directory, creates the pod, and restarts it on failure — a one-node control loop.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/" target="_blank">Kubernetes Documentation - Create static Pods</a>
+**Tags:** k8s::kcna topic::kubelet topic::staticpods src::session
+
+---
+
+<!-- note:1793823868599 model:Many -->
+**Domain:** Static Pods - control plane
+**Question:** In a kubeadm cluster, how do kube-apiserver, etcd and friends actually run on the control-plane node?
+**Options:** A. As a Deployment in kube-system<br>B. As systemd services only<br>C. As static pods — kubelet runs them from manifests in /etc/kubernetes/manifests, no API server dependency<br>D. As DaemonSet pods
+**Answer:** C (3) – as static pods — kubelet runs them from manifests in /etc/kubernetes/manifests, no API server dependency
+**Explanation:** Kubeadm clusters bootstrap the control plane via static pods: manifests for kube-apiserver, etcd, kube-controller-manager and kube-scheduler sit in /etc/kubernetes/manifests and the kubelet runs them. Elegant because the control plane can't be hosted by the cluster it's bootstrapping — kubelet is the only piece that must exist first.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/" target="_blank">Kubernetes Documentation - Create static Pods</a>
+**Tags:** k8s::kcna topic::architecture topic::staticpods src::session
+
+---
+
+<!-- note:1793823868607 model:Basic (and reversed card) -->
+**Front:** What is a static pod?
+**Back:** A pod created and managed directly by the kubelet — no API server, no scheduler, no controller. The kubelet periodically scans a configured directory (staticPodPath in the KubeletConfiguration, commonly /etc/kubernetes/manifests; deprecated flag: --pod-manifest-path) and runs every pod manifest found there, restarting them on failure. For visibility it mirrors each into the API server as a read-only object.
+**Tags:** k8s::kcna topic::pods topic::staticpods src::session
+
+---
+
+<!-- note:1793823868617 model:Cloze -->
+**Text:** Enable static pods via kubelet config file:<br><br><code>apiVersion: {{c1::kubelet.config.k8s.io/v1beta1}}<br>kind: {{c2::KubeletConfiguration}}<br>{{c3::staticPodPath}}: {{c4::/etc/kubernetes/manifests}}</code><br><br>then <code>systemctl {{c5::restart}} kubelet</code>
+**Back Extra:** staticPodPath points kubelet at a directory it scans periodically — pod YAMLs appearing there get created, files removed get their pods deleted. Deprecated alternative: --pod-manifest-path flag. Web-hosted variant: staticPodURL / --manifest-url. Check the live kubelet's config on the node (e.g. /var/lib/kubelet/config.yaml) or ps aux | grep kubelet for the flag.
+**Tags:** k8s::kcna topic::kubelet topic::staticpods src::session
 
 ---

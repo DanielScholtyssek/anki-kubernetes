@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Kubernetes Fundamentals
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 90 · Models: Basic++, Basic+++, Basic, Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 95 · Models: Basic++, Basic+++, Basic, Cloze, Many
 
 <!-- note:1755878800141 model:Basic++ -->
 **Front:** Which Kubernetes control plane component is responsible for
@@ -725,5 +725,52 @@ D. etcd
 **Explanation:** Per the course framing, all three describe etcd: it stores ALL data used to manage the cluster (D), it keeps that data as distributed replicated storage so control-plane nodes share one consistent view (B), and its distributed consensus — leader election/quorum via Raft, described as 'locks' — prevents conflicting writes between the masters (A). Nuance for the real world: etcd members run only on control-plane nodes ('all nodes' is loose phrasing for the etcd members), and 'locks' really means Raft consensus, not literal locking.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/overview/components/" target="_blank">Kubernetes Documentation - Kubernetes Components</a>
 **Tags:** k8s::kcna topic::architecture topic::etcd src::session
+
+---
+
+<!-- note:1793754672883 model:Many -->
+**Domain:** kubectl explain
+**Question:** Which kubectl command shows documentation for a resource's fields, e.g. <code>kubectl explain pod.spec.containers</code>?
+**Options:** A. kubectl describe<br>B. kubectl explain<br>C. kubectl doc<br>D. kubectl get -o yaml
+**Answer:** B (2) – kubectl explain
+**Explanation:** kubectl explain prints the schema/documentation for a resource's fields — e.g. kubectl explain deployment.spec.strategy describes every field, its type and meaning. It's the built-in way to answer 'what does this manifest field do' without leaving the terminal.
+**Sources:** <a href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_explain/" target="_blank">Kubernetes Documentation - kubectl explain</a>
+**Tags:** k8s::kcna topic::kubectl topic::yaml src::session
+
+---
+
+<!-- note:1793754672884 model:Many -->
+**Domain:** Manifest Structure
+**Question:** Which four top-level fields are required in every Kubernetes object manifest?
+**Options:** A. name, image, replicas, port<br>B. apiVersion, metadata, spec, status<br>C. apiVersion, kind, metadata and spec<br>D. kind, spec, status, data
+**Answer:** C (3) – apiVersion, kind, metadata and spec
+**Explanation:** Every manifest needs all four top-level fields: apiVersion (API group+version, e.g. apps/v1), kind (object type → its schema), metadata (name/namespace/labels), spec (the desired state — its contents depend on the kind). status exists too but is written by Kubernetes, not required in your file.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/" target="_blank">Kubernetes Documentation - Objects In Kubernetes</a>
+**Tags:** k8s::kcna topic::api topic::yaml src::session
+
+---
+
+<!-- note:1793754672885 model:Many -->
+**Domain:** kubectl run
+**Question:** Which command creates a pod named 'nginx' running the nginx image?
+**Options:** A. kubectl create pod nginx<br>B. kubectl run nginx --image=nginx<br>C. kubectl deploy nginx --image=nginx<br>D. kubectl start nginx --image=nginx
+**Answer:** B (2) – kubectl run nginx --image=nginx
+**Explanation:** kubectl run creates a single pod; --image names the container image to pull (Docker Hub by default — use a full registry path for private repos). kubectl create pod is also valid; deploy/start are not pod commands. Deployments come from kubectl create deployment.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/pods/" target="_blank">Kubernetes Documentation - Pods</a>
+**Tags:** k8s::kcna topic::kubectl topic::pods src::session
+
+---
+
+<!-- note:1793754672890 model:Cloze -->
+**Text:** Minimal pod manifest:<br><br><code>apiVersion: {{c1::v1}}<br>kind: {{c2::Pod}}<br>metadata:<br>&nbsp;&nbsp;{{c3::name}}: nginx<br>spec:<br>&nbsp;&nbsp;{{c4::containers}}:<br>&nbsp;&nbsp;- name: nginx<br>&nbsp;&nbsp;&nbsp;&nbsp;{{c5::image}}: nginx</code>
+**Back Extra:** v1 = core API group (named groups use group/version, e.g. apps/v1 for Deployments). metadata.name is how you identify the pod; spec.containers is a LIST (note the dash) — even a single-container pod needs the list item.
+**Tags:** k8s::kcna topic::pods topic::yaml src::session
+
+---
+
+<!-- note:1793754672900 model:Basic -->
+**Front:** How do you list pods with kubectl, and what do the flags <code>-o wide</code>, <code>-A</code> and <code>-w</code> add?
+**Back:** <code>kubectl get pods</code> lists pods in the current namespace with status. Useful variants: <code>-o wide</code> (adds pod IPs + which node each runs on), <code>-A</code>/<code>--all-namespaces</code> (every namespace), <code>-w</code> (watch for changes). For detail on one pod incl. events: <code>kubectl describe pod &lt;name&gt;</code>.
+**Tags:** k8s::kcna topic::kubectl topic::pods src::session
 
 ---

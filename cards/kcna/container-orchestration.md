@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Container Orchestration
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Container Orchestration` · Notes: 40 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Container Orchestration` · Notes: 44 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1755878736894 model:Basic++ -->
 **Front:** What is the fundamental reason Kubernetes uses Pods as the
@@ -353,5 +353,49 @@ essential for their function, reducing the potential impact of a compromise.
 **Explanation:** CRI defines one standard interface between the kubelet and any container runtime — that's its core benefit: compliant runtimes (containerd, CRI-O, cri-dockerd) plug in interchangeably. Option B is a consequence of that standardization (runtimes evolve independently since they only need to satisfy the interface), but the course's intended answer is the standardization/compatibility itself. A and D are unrelated to CRI — scaling is an orchestrator's job and CNI, not CRI, handles connectivity.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/architecture/cri/" target="_blank">Kubernetes Documentation - Container Runtime Interface (CRI)</a>
 **Tags:** k8s::kcna topic::container-orchestration topic::cri-oci src::session
+
+---
+
+<!-- note:1793754672879 model:Many -->
+**Domain:** ReplicaSet Self-healing
+**Question:** A pod managed by a ReplicaSet is deleted (or its node fails). What happens?
+**Options:** A. Nothing — the pod is gone permanently<br>B. The ReplicaSet controller notices actual < desired and creates a replacement pod to restore the count<br>C. The kubelet restarts the deleted pod's containers<br>D. The Deployment re-creates the ReplicaSet
+**Answer:** B (2) – The ReplicaSet controller notices actual < desired and creates a replacement pod to restore the count
+**Explanation:** A ReplicaSet's reconcile loop continuously compares spec.replicas to the number of matching pods alive. Delete a pod (or lose a node) and the count drops — the controller immediately creates a new pod from spec.template to restore it. That's the self-healing/HA behavior ReplicaSets provide.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/" target="_blank">Kubernetes Documentation - ReplicaSet</a>
+**Tags:** k8s::kcna topic::pods topic::replicasets src::session
+
+---
+
+<!-- note:1793754672880 model:Many -->
+**Domain:** Deployment Rolling Update Internals
+**Question:** You change a Deployment's pod template (e.g. new image). What happens internally during the rolling update?
+**Options:** A. The existing ReplicaSet edits its pods in place<br>B. A new ReplicaSet is created for the new pod template and scaled up while the old one scales down<br>C. All pods are deleted, then recreated<br>D. The Service is re-pointed first, then pods update
+**Answer:** B (2) – A new ReplicaSet is created for the new pod template and scaled up while the old one scales down
+**Explanation:** Every change to .spec.template creates a new ReplicaSet — during a RollingUpdate the new RS scales up gradually as the old scales down (maxSurge/maxUnavailable control the pace). Old RSs stay at 0 replicas so kubectl rollout undo can scale one back up.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" target="_blank">Kubernetes Documentation - Deployment</a>
+**Tags:** k8s::kcna topic::deployments topic::rollouts src::session
+
+---
+
+<!-- note:1793754672881 model:Many -->
+**Domain:** Rollout & Rollback
+**Question:** A Deployment's latest rollout is broken. Which command rolls it back to the previous pod-template version?
+**Options:** A. kubectl rollout restart deployment/web<br>B. kubectl rollout undo deployment/web<br>C. kubectl delete deployment/web<br>D. kubectl scale deployment/web --replicas=0
+**Answer:** B (2) – kubectl rollout undo deployment/web
+**Explanation:** kubectl rollout undo scales an OLD ReplicaSet back up — the pod template returns to the previous revision (kubectl rollout history lists them; --to-revision=N picks a specific one). Only the pod template rolls back; scaling/config changes aren't revisions.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" target="_blank">Kubernetes Documentation - Deployment</a>
+**Tags:** k8s::kcna topic::deployments topic::kubectl src::session
+
+---
+
+<!-- note:1793754672882 model:Many -->
+**Domain:** kubectl create deployment
+**Question:** Which command creates a Deployment named web running 3 replicas of nginx?
+**Options:** A. kubectl run web --image=nginx --replicas=3<br>B. kubectl new deployment web --image=nginx<br>C. kubectl create deployment web --image=nginx --replicas=3<br>D. kubectl apply deployment web --image=nginx --replicas=3
+**Answer:** C (3) – kubectl create deployment web --image=nginx --replicas=3
+**Explanation:** kubectl create deployment makes the Deployment object; --image sets the pod template's container image, --replicas sets the desired count (default 1). Imperative equivalent of a YAML Deployment manifest. (kubectl run creates a bare Pod, not a Deployment.)
+**Sources:** <a href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_deployment/" target="_blank">Kubernetes Documentation - kubectl create deployment</a>
+**Tags:** k8s::kcna topic::deployments topic::kubectl src::session
 
 ---

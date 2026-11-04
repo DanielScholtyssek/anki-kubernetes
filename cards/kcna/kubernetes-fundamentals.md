@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Kubernetes Fundamentals
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 95 · Models: Basic++, Basic+++, Basic, Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 98 · Models: Basic++, Basic+++, Basic, Cloze, Many
 
 <!-- note:1755878800141 model:Basic++ -->
 **Front:** Which Kubernetes control plane component is responsible for
@@ -772,5 +772,38 @@ D. etcd
 **Front:** How do you list pods with kubectl, and what do the flags <code>-o wide</code>, <code>-A</code> and <code>-w</code> add?
 **Back:** <code>kubectl get pods</code> lists pods in the current namespace with status. Useful variants: <code>-o wide</code> (adds pod IPs + which node each runs on), <code>-A</code>/<code>--all-namespaces</code> (every namespace), <code>-w</code> (watch for changes). For detail on one pod incl. events: <code>kubectl describe pod &lt;name&gt;</code>.
 **Tags:** k8s::kcna topic::kubectl topic::pods src::session
+
+---
+
+<!-- note:1793755549227 model:Many -->
+**Domain:** Imperative vs Declarative - apply
+**Question:** Which of these is the DECLARATIVE object-management approach in Kubernetes?
+**Options:** A. kubectl create deployment web --image=nginx<br>B. kubectl replace -f deployment.yaml<br>C. kubectl apply -f deployment.yaml<br>D. kubectl edit deployment web
+**Answer:** C (3) – kubectl apply -f deployment.yaml
+**Explanation:** apply -f is the DECLARATIVE path: it merges the file's desired state into the live object and records last-applied-configuration to compute future diffs. create/replace -f are the middle tier ('imperative object configuration' — file-driven but verb-led: create fails if it exists, replace swaps the whole object). create/edit/run/expose are pure imperative commands.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/object-management/" target="_blank">Kubernetes Documentation - Kubernetes Object Management</a>
+**Tags:** k8s::kcna topic::kubectl topic::yaml src::session
+
+---
+
+<!-- note:1793755549228 model:Many -->
+**Domain:** Imperative vs Declarative - commands
+**Question:** Which group contains ONLY imperative commands (no manifest file involved)?
+**Options:** A. kubectl run, kubectl create deployment, kubectl expose<br>B. kubectl apply -f, kubectl diff<br>C. kubectl create -f, kubectl replace -f<br>D. kubectl get, kubectl describe
+**Answer:** A (1) – kubectl run, kubectl create deployment, kubectl expose
+**Explanation:** Imperative commands tell the cluster WHAT to do right now: run, create deployment, expose, scale, delete — no file, no recorded desired state. The -f variants of create/replace are imperative object configuration (middle tier); apply -f is the declarative tier. get/describe are read-only, not management.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/object-management/" target="_blank">Kubernetes Documentation - Kubernetes Object Management</a>
+**Tags:** k8s::kcna topic::kubectl topic::yaml src::session
+
+---
+
+<!-- note:1793755549229 model:Many -->
+**Domain:** Imperative vs Declarative - why
+**Question:** Why is the declarative approach preferred for production and GitOps workflows?
+**Options:** A. It executes faster than imperative commands<br>B. Manifests live in Git as a reviewable source of truth, and apply is idempotent and detects drift via last-applied-configuration<br>C. Imperative commands cannot create objects<br>D. The API server only accepts YAML
+**Answer:** B (2) – Manifests live in Git as a reviewable source of truth, and apply is idempotent and detects drift via last-applied-configuration
+**Explanation:** Declarative YAML can be versioned, reviewed and audited in Git (the GitOps model), re-applied safely (idempotent), and apply's last-applied annotation reveals drift. Imperative commands leave no record — nothing to diff, review or re-converge from.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/object-management/" target="_blank">Kubernetes Documentation - Kubernetes Object Management</a>
+**Tags:** k8s::kcna topic::gitops topic::kubectl src::session
 
 ---

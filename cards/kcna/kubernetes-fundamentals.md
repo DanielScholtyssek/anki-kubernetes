@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Kubernetes Fundamentals
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 136 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 142 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1755878800141 model:Basic++ -->
 **Front:** Which Kubernetes control plane component is responsible for
@@ -1163,5 +1163,63 @@ D. etcd
 **Front:** Recipe: pin a pod to SSD nodes using nodeSelector
 **Back:** Two steps, in order: 1) LABEL the node — <code>kubectl label nodes node1 disktype=ssd</code>. 2) Add the selector in the pod spec — <code>spec.nodeSelector: {disktype: ssd}</code>. The nodeSelector never labels anything itself; it only matches labels nodes already carry. Labels on the node, selector on the pod.
 **Tags:** k8s::kcna topic::nodeselector topic::scheduling src::session
+
+---
+
+<!-- note:1793810943058 model:Many -->
+**Domain:** NodeAffinity - types
+**Question:** Which node affinity type schedules the pod ANYWAY when no node satisfies the rule?
+**Options:** A. requiredDuringSchedulingIgnoredDuringExecution<br>B. preferredDuringSchedulingIgnoredDuringExecution<br>C. requiredDuringSchedulingRequiredDuringExecution<br>D. softDuringScheduling
+**Answer:** B (2) – preferredDuringSchedulingIgnoredDuringExecution
+**Explanation:** requiredDuringSchedulingIgnoredDuringExecution is the HARD type: no matching node = pod stays Pending (like nodeSelector but expressive). preferredDuringSchedulingIgnoredDuringExecution is SOFT: scheduler scores matching nodes higher using weight 1-100, but schedules anyway if none match. The 'IgnoredDuringExecution' suffix on BOTH means label changes after scheduling don't evict the pod.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/" target="_blank">Kubernetes Documentation - Assign Pods to Nodes</a>
+**Tags:** k8s::kcna topic::affinity topic::scheduling src::session
+
+---
+
+<!-- note:1793810943059 model:Many -->
+**Domain:** NodeAffinity - IgnoredDuringExecution
+**Question:** A pod required a node label via nodeAffinity, gets scheduled, then the node's label is REMOVED. What does 'IgnoredDuringExecution' mean happens?
+**Options:** A. The pod is evicted when the label changes<br>B. The pod reschedules to a compliant node<br>C. Nothing — node label changes after scheduling don't evict the pod<br>D. The pod enters a failed state
+**Answer:** C (3) – nothing — node label changes after scheduling don't evict the pod
+**Explanation:** Affinity rules are evaluated only at SCHEDULING time. Once bound, the pod is immune to node-label changes: if the node loses its 'size=large' label later, the pod keeps running. (Contrast: NoExecute taints DO evict.) The never-implemented RequiredDuringExecution variant would have evicted — hence the verbose naming.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/" target="_blank">Kubernetes Documentation - Assign Pods to Nodes</a>
+**Tags:** k8s::kcna topic::affinity topic::scheduling src::session
+
+---
+
+<!-- note:1793810943060 model:Many -->
+**Domain:** NodeAffinity - match logic
+**Question:** How are nodeSelectorTerms and the matchExpressions inside them logically combined?
+**Options:** A. Both ORed<br>B. Terms ORed, expressions ANDed — pod needs any ONE term fully satisfied<br>C. Both ANDed<br>D. Terms ANDed, expressions ORed
+**Answer:** B (2) – terms ORed, expressions ANDed — pod needs any ONE term fully satisfied
+**Explanation:** Two levels of logic inside requiredDuringScheduling...: the list nodeSelectorTerms[] is ORed (match ANY term); the matchExpressions[] inside ONE term are ANDed (ALL expressions in that term must match). Bonus: if both nodeSelector AND nodeAffinity are set on a pod, BOTH must be satisfied.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/" target="_blank">Kubernetes Documentation - Assign Pods to Nodes</a>
+**Tags:** k8s::kcna topic::affinity topic::scheduling src::session
+
+---
+
+<!-- note:1793810943061 model:Many -->
+**Domain:** NodeAffinity - operators
+**Question:** With nodeAffinity matchExpressions, how do you require a pod to avoid nodes labelled zone=east?
+**Options:** A. operator: NotIn (or DoesNotExist for 'label absent' — anti-affinity behavior)<br>B. operator: Exclude<br>C. operator: NotEqual<br>D. operator: Neq
+**Answer:** A (1) – operator: NotIn (or DoesNotExist for 'label absent' — anti-affinity behavior)
+**Explanation:** matchExpressions operators: In (value in list — this gives the OR nodeSelector lacks: size In [large, medium]), NotIn (value NOT in list), Exists (key present, any value), DoesNotExist (key absent), Gt/Lt (integer compare). NotIn and DoesNotExist are how you express node ANTI-affinity — keep pods off matching nodes.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/" target="_blank">Kubernetes Documentation - Assign Pods to Nodes</a>
+**Tags:** k8s::kcna topic::affinity topic::scheduling src::session
+
+---
+
+<!-- note:1793810943068 model:Basic (and reversed card) -->
+**Front:** What is node affinity — and what does it add over nodeSelector?
+**Back:** The expressive version of nodeSelector — pod-specified rules under <code>spec.affinity.nodeAffinity</code> that attract pods to (or repel from) nodes based on node labels. Adds what nodeSelector lacks: OR logic (values lists, multiple terms), NOT operators (NotIn/DoesNotExist = anti-affinity), and SOFT preferences (preferredDuringScheduling... with weights). Exists purely to control pod placement.
+**Tags:** k8s::kcna topic::affinity topic::scheduling src::session
+
+---
+
+<!-- note:1793810943076 model:Cloze -->
+**Text:** Require the pod on large-or-medium nodes via affinity:<br><br><code>spec:<br>  affinity:<br>    {{c1::nodeAffinity}}:<br>      {{c2::requiredDuringSchedulingIgnoredDuringExecution}}:<br>        {{c3::nodeSelectorTerms}}:<br>        - {{c4::matchExpressions}}:<br>          - {key: size, operator: {{c5::In}}, values: [large, medium]}</code>
+**Back Extra:** Hierarchy: spec.affinity.nodeAffinity.<type>.nodeSelectorTerms[].matchExpressions[] — each expression is {key, operator, values[]}. values is a LIST (In = OR across values). Preferred type uses - weight: N / preference: matchExpressions instead of plain terms.
+**Tags:** k8s::kcna topic::affinity topic::yaml src::session
 
 ---

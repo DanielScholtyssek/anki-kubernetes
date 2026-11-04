@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Kubernetes Fundamentals
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 118 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 122 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1755878800141 model:Basic++ -->
 **Front:** Which Kubernetes control plane component is responsible for
@@ -1001,5 +1001,41 @@ D. etcd
 **Front:** Mechanically, what does the kube-scheduler DO once it picks a node for a pod?
 **Back:** The scheduler creates a <code>Binding</code> object — a POST to the pod's <code>binding</code> subresource naming the chosen node. The API server records the decision by writing <code>spec.nodeName</code> on the pod; the kubelet on that node then sees the pod is assigned to it and starts the containers.
 **Tags:** k8s::kcna topic::architecture topic::scheduling src::session
+
+---
+
+<!-- note:1793808319432 model:Many -->
+**Domain:** Labels - multi-criteria
+**Question:** What does <code>kubectl get pods -l 'app=web,env=prod'</code> return?
+**Options:** A. Pods matching ANY of the criteria<br>B. Only pods matching ALL criteria — multiple -l requirements are ANDed<br>C. Pods matching the first criterion only<br>D. Pods in the 'prod' namespace labelled web
+**Answer:** B (2) – only pods matching ALL criteria — multiple -l requirements are ANDed
+**Explanation:** Comma-separated selector requirements must ALL be satisfied — it's an AND, not OR. Equality selectors match exact values (app=web, env!=dev); set-based selectors match membership (env in (prod,qa), tier notin (cache), !key = absence). Everything from kubectl -l to NetworkPolicy podSelector uses the same requirement logic.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/" target="_blank">Kubernetes Documentation - Labels and Selectors</a>
+**Tags:** k8s::kcna topic::kubectl topic::labels src::session
+
+---
+
+<!-- note:1793808319433 model:Many -->
+**Domain:** Labels - manifest placement
+**Question:** Where in a pod/Deployment manifest do an object's OWN labels always go?
+**Options:** A. spec.labels<br>B. spec.selector.labels<br>C. metadata.labels<br>D. status.labels
+**Answer:** C (3) – metadata.labels — the object's own label set
+**Explanation:** Labels always go under metadata.labels on the object itself: metadata: {labels: {app: web, tier: frontend}}. The consumers live elsewhere in OTHER objects' specs: Service spec.selector, ReplicaSet/Deployment spec.selector.matchLabels, NetworkPolicy podSelector. 'Label everything, select from outside' is the pattern.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/" target="_blank">Kubernetes Documentation - Labels and Selectors</a>
+**Tags:** k8s::kcna topic::labels topic::yaml src::session
+
+---
+
+<!-- note:1793808323513 model:Cloze -->
+**Text:** List only pods labelled <code>app=web</code>:<br><br><code>kubectl get pods {{c1::-l}} {{c2::app=web}}</code><br><br>(<code>-l</code> is short for <code>{{c3::--selector}}</code>)
+**Back Extra:** The flag works on most list commands (get pods, get svc, get all, delete). Multiple requirements AND together: -l 'app=web,env=prod'. Set-based form: -l 'env in (prod,qa)'. Combine with --show-labels to see each object's full label set.
+**Tags:** k8s::kcna topic::kubectl topic::labels src::session
+
+---
+
+<!-- note:1793808319514 model:Basic (and reversed card) -->
+**Front:** Labels vs selectors — which side does what?
+**Back:** Labels are key-value pairs ATTACHED to objects under <code>metadata.labels</code> — the grouping side (tag by app, tier, env, version…). Selectors are QUERIES that filter objects by their labels — the selection side (<code>kubectl -l</code>, Service <code>spec.selector</code>, ReplicaSet <code>matchLabels</code>, NetworkPolicy). Labels tag things; selectors find them.
+**Tags:** k8s::kcna topic::api topic::labels src::session
 
 ---

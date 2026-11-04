@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Kubernetes Fundamentals
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 153 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 158 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1755878800141 model:Basic++ -->
 **Front:** Which Kubernetes control plane component is responsible for
@@ -1322,5 +1322,52 @@ D. etcd
 **Text:** ResourceQuota manifest — aggregate caps for one namespace:<br><br><code>apiVersion: {{c1::v1}}<br>kind: {{c2::ResourceQuota}}<br>metadata:<br>  name: compute-quota<br>  namespace: {{c3::dev}}<br>spec:<br>  {{c4::hard}}:<br>    {{c5::requests.cpu}}: "4"<br>    requests.memory: 4Gi<br>    {{c6::limits.cpu}}: "8"<br>    pods: "10"</code>
 **Back Extra:** spec.hard maps resource names → totals for the namespace: requests.cpu/requests.memory, limits.cpu/limits.memory, plus object counts (pods, services, persistentvolumeclaims). Exceeding any entry → new object rejected with 403. A cpu/memory quota forces every pod to declare that resource — pair it with LimitRange for defaults.
 **Tags:** k8s::kcna topic::namespaces topic::yaml src::session
+
+---
+
+<!-- note:1793835711168 model:Many -->
+**Domain:** Schedulers - selection
+**Question:** How does a pod say 'schedule me with my-scheduler, not the default'?
+**Options:** A. A label on the pod<br>B. spec.schedulerName must equal the scheduler's unique name<br>C. An annotation requesting it<br>D. The pod's namespace
+**Answer:** B (2) – spec.schedulerName must equal the scheduler's unique name
+**Explanation:** Each scheduler owns a unique name cluster-wide (the default is 'default-scheduler'). A pod opts in via spec.schedulerName: my-scheduler — unset means the default scheduler claims it. Two schedulers never fight over a pod: each only watches unbound pods bearing its own name.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/" target="_blank">Kubernetes Documentation - Configure Multiple Schedulers</a>
+**Tags:** k8s::kcna topic::pods topic::scheduling src::session
+
+---
+
+<!-- note:1793835711169 model:Many -->
+**Domain:** Schedulers - profiles
+**Question:** How can one kube-scheduler process act as several different schedulers?
+**Options:** A. It can't — you must run separate binaries<br>B. --replicas flag on kube-scheduler<br>C. KubeSchedulerConfiguration profiles[] — one process, multiple profiles, each with its own schedulerName<br>D. Namespaces scope the schedulers
+**Answer:** C (3) – KubeSchedulerConfiguration profiles[] — one process, multiple profiles, each with its own schedulerName
+**Explanation:** Profiles let ONE kube-scheduler binary wear multiple hats: the config's profiles[] list gives each profile a distinct schedulerName + its own plugin config, and pods pick a profile via spec.schedulerName — but only a single scheduler process runs. Alternative: separate scheduler PROCESSES (e.g. a second kube-scheduler Deployment with its own config/name). Both patterns give 'multiple schedulers'.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/" target="_blank">Kubernetes Documentation - Configure Multiple Schedulers</a>
+**Tags:** k8s::kcna topic::api topic::scheduling src::session
+
+---
+
+<!-- note:1793835711170 model:Many -->
+**Domain:** Schedulers - naming
+**Question:** What constraint applies to a scheduler's name in the cluster?
+**Options:** A. Must equal the pod's name<br>B. Unique per scheduler cluster-wide — it's the identity pods reference in spec.schedulerName<br>C. Can be shared across schedulers<br>D. Is always 'default-scheduler'
+**Answer:** B (2) – unique per scheduler cluster-wide — it's the identity pods reference in spec.schedulerName
+**Explanation:** The schedulerName is how kube-scheduler instances/profile claim ownership of pods — collisions mean two processes racing to bind the same pods. The stock scheduler answers to 'default-scheduler'; your second scheduler (or profile) needs its own name like 'my-scheduler', set in KubeSchedulerConfiguration profiles[].schedulerName.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/" target="_blank">Kubernetes Documentation - Configure Multiple Schedulers</a>
+**Tags:** k8s::kcna topic::api topic::scheduling src::session
+
+---
+
+<!-- note:1793835711180 model:Basic -->
+**Front:** Can a cluster run more than one scheduler — and why would it?
+**Back:** Yes — a cluster can run several schedulers side by side. Each has a unique name and only watches unbound pods whose <code>spec.schedulerName</code> matches it; pods default to 'default-scheduler'. Use cases: custom placement logic, batch/ML schedulers, testing new scheduling behavior. Deploy one as a Deployment running a second kube-scheduler binary with its own config.
+**Tags:** k8s::kcna topic::architecture topic::scheduling src::session
+
+---
+
+<!-- note:1793835711181 model:Basic -->
+**Front:** How do you deploy a second scheduler (e.g. 'my-scheduler') into a cluster?
+**Back:** The docs' recipe: 1) containerize kube-scheduler, 2) Deployment (kube-system, replicas:1) running <code>kube-scheduler --config=&lt;file&gt;</code>, 3) a ConfigMap holding a <code>KubeSchedulerConfiguration</code> with <code>profiles: [{schedulerName: my-scheduler}]</code> and <code>leaderElect: false</code>, 4) a ServiceAccount bound to <code>system:kube-scheduler</code> ClusterRole so it can watch/bind pods. Pods opt in via <code>spec.schedulerName: my-scheduler</code>.
+**Tags:** k8s::kcna topic::scheduling topic::yaml src::session
 
 ---

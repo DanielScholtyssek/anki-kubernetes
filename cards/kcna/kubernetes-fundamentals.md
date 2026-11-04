@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Kubernetes Fundamentals
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 142 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 147 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1755878800141 model:Basic++ -->
 **Front:** Which Kubernetes control plane component is responsible for
@@ -1221,5 +1221,52 @@ D. etcd
 **Text:** Require the pod on large-or-medium nodes via affinity:<br><br><code>spec:<br>  affinity:<br>    {{c1::nodeAffinity}}:<br>      {{c2::requiredDuringSchedulingIgnoredDuringExecution}}:<br>        {{c3::nodeSelectorTerms}}:<br>        - {{c4::matchExpressions}}:<br>          - {key: size, operator: {{c5::In}}, values: [large, medium]}</code>
 **Back Extra:** Hierarchy: spec.affinity.nodeAffinity.<type>.nodeSelectorTerms[].matchExpressions[] — each expression is {key, operator, values[]}. values is a LIST (In = OR across values). Preferred type uses - weight: N / preference: matchExpressions instead of plain terms.
 **Tags:** k8s::kcna topic::affinity topic::yaml src::session
+
+---
+
+<!-- note:1793820261525 model:Many -->
+**Domain:** Resources - units
+**Question:** In a container spec, what does <code>cpu: 250m</code> request?
+**Options:** A. 250 CPU cores<br>B. 250 megahertz<br>C. 0.25 of one CPU core<br>D. 250 megabytes of RAM
+**Answer:** C (3) – 0.25 of one CPU core
+**Explanation:** CPU is measured in cores: 1 = one full (v)CPU/hyperthread, and m = millicores (1/1000) — 250m = 0.25 core, 500m = half. Memory uses bytes with suffixes: Mi/Gi = mebibytes/gibibytes (2^20, 2^30 — binary), M/G = megabytes/gigabytes (10^6, 10^9 — decimal). Requests/limits accept either but Mi/Gi is the convention.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/" target="_blank">Kubernetes Documentation - Resource Management for Pods and Containers</a>
+**Tags:** k8s::kcna topic::resources topic::scheduling src::session
+
+---
+
+<!-- note:1793820261526 model:Many -->
+**Domain:** Resources - scheduler accounting
+**Question:** Every node's allocatable CPU minus existing pods' requests is BELOW a new pod's request. What happens?
+**Options:** A. Schedules anyway — limits are what count<br>B. Stays Pending — scheduler sums requests already on each node against node allocatable; nowhere fits<br>C. Schedules on the least-loaded node regardless<br>D. Kubernetes reduces the request automatically
+**Answer:** B (2) – stays Pending — scheduler sums requests already on each node against node allocatable; nowhere fits
+**Explanation:** The scheduler filters on REQUESTS (not limits, not actual usage): a node fits if allocatable − sum(existing pod requests) ≥ new pod's request. 4-CPU allocatable with 3.5 CPU already requested leaves 0.5 — a 1-CPU request fails the filter everywhere → pod Pending until capacity frees or a node is added. Limits don't factor into this math.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/" target="_blank">Kubernetes Documentation - Resource Management for Pods and Containers</a>
+**Tags:** k8s::kcna topic::resources topic::scheduling src::session
+
+---
+
+<!-- note:1793820261527 model:Many -->
+**Domain:** Resources - LimitRange defaulting
+**Question:** A pod manifest sets NO resources, but its namespace has a LimitRange with defaults. What happens at creation?
+**Options:** A. The pod is rejected<br>B. The LimitRange admission controller injects the namespace's default requests/limits<br>C. It gets zero resources<br>D. kubelet assigns values at runtime
+**Answer:** B (2) – the LimitRange admission controller injects the namespace's default requests/limits
+**Explanation:** LimitRange does double duty in a namespace: it VALIDATES min/max bounds and supplies DEFAULTS. A pod omitting resources gets the LimitRange defaults patched in at admission time — so quota accounting works even for lazy manifests. If the defaults don't exist either, the pod gets no requests (scheduler treats it as ~0 → QoS BestEffort).
+**Sources:** <a href="https://kubernetes.io/docs/concepts/policy/limit-range/" target="_blank">Kubernetes Documentation - Limit Ranges</a>
+**Tags:** k8s::kcna topic::resources topic::namespaces src::session
+
+---
+
+<!-- note:1793820261535 model:Basic (and reversed card) -->
+**Front:** resources.requests vs resources.limits — what does each actually do?
+**Back:** <b>requests</b> = the reservation — what the scheduler assumes the container needs, used to pick a node (guaranteed share at runtime). <b>limits</b> = the ceiling — how much it may use AT MOST. Exceed the CPU limit → throttled; exceed the memory limit → the container is killed (OOMKilled) and restarted per restartPolicy. Rule: requests for scheduling, limits for containment.
+**Tags:** k8s::kcna topic::resources topic::containers src::session
+
+---
+
+<!-- note:1793820261547 model:Cloze -->
+**Text:** Container resource stanza — where requests and limits live:<br><br><code>containers:<br>- name: app<br>  {{c1::resources}}:<br>    {{c2::requests}}:<br>      {{c3::cpu}}: "{{c4::250m}}"<br>      {{c5::memory}}: "{{c6::256Mi}}"<br>    {{c7::limits}}:<br>      cpu: "500m"<br>      memory: "512Mi"</code>
+**Back Extra:** Per-CONTAINER field — a pod's effective request is the sum of its containers' requests. requests = scheduling floor, limits = runtime ceiling. Units: m = millicores (250m = 0.25 CPU); Mi/Gi = binary memory (2^20/2^30), M/G = decimal.
+**Tags:** k8s::kcna topic::resources topic::yaml src::session
 
 ---

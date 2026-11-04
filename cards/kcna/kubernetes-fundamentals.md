@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Kubernetes Fundamentals
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 158 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 165 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1755878800141 model:Basic++ -->
 **Front:** Which Kubernetes control plane component is responsible for
@@ -1368,6 +1368,71 @@ D. etcd
 <!-- note:1793835711181 model:Basic -->
 **Front:** How do you deploy a second scheduler (e.g. 'my-scheduler') into a cluster?
 **Back:** The docs' recipe: 1) containerize kube-scheduler, 2) Deployment (kube-system, replicas:1) running <code>kube-scheduler --config=&lt;file&gt;</code>, 3) a ConfigMap holding a <code>KubeSchedulerConfiguration</code> with <code>profiles: [{schedulerName: my-scheduler}]</code> and <code>leaderElect: false</code>, 4) a ServiceAccount bound to <code>system:kube-scheduler</code> ClusterRole so it can watch/bind pods. Pods opt in via <code>spec.schedulerName: my-scheduler</code>.
+**Tags:** k8s::kcna topic::scheduling topic::yaml src::session
+
+---
+
+<!-- note:1793836413421 model:Many -->
+**Domain:** Scheduling - filter phase
+**Question:** Which scheduling step eliminates nodes that CAN'T run the pod (resources, taints, selectors)?
+**Options:** A. QueueSort — orders the queue<br>B. Filter — every plugin marks each node feasible or infeasible; survivors move on<br>C. Score — ranks nodes<br>D. Bind — writes the decision
+**Answer:** B (2) – Filter — every plugin marks each node feasible or infeasible; survivors move on
+**Explanation:** Filter plugins eliminate nodes that CANNOT run the pod: insufficient resources vs requests, taints without tolerations, nodeSelector/affinity mismatch, port conflicts. Each node is evaluated until one plugin rejects it (short-circuit); anything surviving is 'feasible'. If zero nodes pass → PostFilter kicks in (preemption: evict lower-priority pods to make room) or the pod stays Pending.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/" target="_blank">Kubernetes Documentation - Scheduling Framework</a>
+**Tags:** k8s::kcna topic::pods topic::scheduling src::session
+
+---
+
+<!-- note:1793836413422 model:Many -->
+**Domain:** Scheduling - score phase
+**Question:** Filtering left 5 feasible nodes. How does the scheduler pick ONE?
+**Options:** A. Filter plugins re-run<br>B. First feasible node wins<br>C. Score plugins rank the feasible nodes (weighted scores); highest wins, ties broken randomly<br>D. kubelet picks
+**Answer:** C (3) – Score plugins rank the feasible nodes (weighted scores); highest wins, ties broken randomly
+**Explanation:** After filtering leaves multiple feasible nodes, each Score plugin (e.g. NodeResourcesFit, ImageLocality) assigns every node a number; NormalizeScore scales them, weights combine them into a total per node. The pod binds to the highest total — equal scores → random choice. This is the 'prefer' side of scheduling: all surviving nodes CAN run it, scoring picks the best.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/" target="_blank">Kubernetes Documentation - Scheduling Framework</a>
+**Tags:** k8s::kcna topic::pods topic::scheduling src::session
+
+---
+
+<!-- note:1793836413423 model:Many -->
+**Domain:** Scheduling - queue sort
+**Question:** How does the scheduler order pods waiting in its internal scheduling queue?
+**Options:** A. FIFO — creation time<br>B. By pod priority — the QueueSort plugin (default PrioritySort) orders the queue, high-priority pods first<br>C. Alphabetically by namespace<br>D. By resource size, smallest first
+**Answer:** B (2) – by pod priority — the QueueSort plugin (default PrioritySort) orders the queue, high-priority pods first
+**Explanation:** Before anything else, pods wait in the scheduler's internal queue. The QueueSort extension point decides order — only ONE QueueSort plugin may be enabled — and the default, PrioritySort, sorts by pod priority so important workloads get scheduled first. That's why PriorityClass exists: it moves pods up the queue AND drives preemption.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/" target="_blank">Kubernetes Documentation - Scheduling Framework</a>
+**Tags:** k8s::kcna topic::pods topic::scheduling src::session
+
+---
+
+<!-- note:1793836413424 model:Many -->
+**Domain:** Scheduling - profiles rationale
+**Question:** Why did Kubernetes add scheduling PROFILES instead of just recommending multiple scheduler deployments?
+**Options:** A. Profiles are faster<br>B. Two schedulers double throughput<br>C. Separate scheduler processes can race each other on the same node; profiles give one process multiple configured personalities<br>D. Profiles enable leader election
+**Answer:** C (3) – separate scheduler processes can race each other on the same node; profiles give one process multiple configured personalities
+**Explanation:** Multiple scheduler PROCESSES each see only their own queue and can pick the same node concurrently — the loser discovers the conflict at bind time (retry, wasted work). Profiles (stable since v1.19) let ONE kube-scheduler expose several schedulerNames, each with its own plugin config — variety without a second process and without the race window.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/scheduling-framework/" target="_blank">Kubernetes Documentation - Scheduling Framework</a>
+**Tags:** k8s::kcna topic::api topic::scheduling src::session
+
+---
+
+<!-- note:1793836413442 model:Basic (and reversed card) -->
+**Front:** How does the kube-scheduler place a pod, step by step?
+**Back:** Two cycles: the <b>scheduling cycle</b> (serial — one pod at a time) runs QueueSort → Filter → Score and PICKS a node; the <b>binding cycle</b> (concurrent) applies it via a Binding object → writes <code>spec.nodeName</code>. Between them sits Reserve — marks the node's resources as taken so concurrent binds can't collide. Failed/aborted cycles return the pod to the queue for a retry.
+**Tags:** k8s::kcna topic::pods topic::scheduling src::session
+
+---
+
+<!-- note:1793836413443 model:Basic (and reversed card) -->
+**Front:** What are scheduler plugins in kube-scheduler?
+**Back:** Pluggable extension points in the scheduling framework, compiled into kube-scheduler: QueueSort (queue order), PreFilter/Filter (eliminate infeasible nodes), PostFilter (runs only if nothing fits — e.g. preemption), PreScore/Score (rank feasible nodes), Reserve (claim node before bind), Permit (approve/deny/wait), PreBind/Bind/PostBind (write the assignment). You can compile in your own and toggle them per profile.
+**Tags:** k8s::kcna topic::api topic::scheduling src::session
+
+---
+
+<!-- note:1793836413464 model:Cloze -->
+**Text:** Second profile with customized plugins:<br><br><code>apiVersion: {{c1::kubescheduler.config.k8s.io/v1}}<br>kind: {{c2::KubeSchedulerConfiguration}}<br>{{c3::profiles}}:<br>- {{c4::schedulerName}}: default-scheduler<br>- schedulerName: no-scoring<br>  {{c5::plugins}}:<br>    {{c6::score}}:<br>      {{c7::disabled}}: [{name: NodeResourcesFit}]<br>      {{c8::enabled}}: [{name: MyScorer}]</code>
+**Back Extra:** Each profile = its own schedulerName (pods select via spec.schedulerName) + plugin config. plugins.<extensionPoint>.disabled removes stock plugins (name: '*' disables all at that point); enabled adds custom ones (compiled into the scheduler). Extension points: queueSort, preFilter, filter, postFilter, preScore, score, reserve, permit, preBind, bind, postBind.
 **Tags:** k8s::kcna topic::scheduling topic::yaml src::session
 
 ---

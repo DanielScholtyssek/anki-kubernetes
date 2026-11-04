@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Container Orchestration
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Container Orchestration` · Notes: 26 · Models: Basic++, Basic+++
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Container Orchestration` · Notes: 33 · Models: Basic++, Basic+++, Basic, Cloze, Many
 
 <!-- note:1755878736894 model:Basic++ -->
 **Front:** What is the fundamental reason Kubernetes uses Pods as the
@@ -211,5 +211,74 @@ essential for their function, reducing the potential impact of a compromise.
 <!-- note:1767561150983 model:Basic+++ -->
 **Front:** What is true about a PersistentVolumeClaim? <br><br><div>A. Deletes the PV automatically<br> B. Is a storage request<br> C. Requires admin attachment<br> D. Describes access methods</div>
 **Back:** <div>Correct Answer: <b>B</b></div><div><br></div> <div><b>Explanation</b>: A PVC is a user request for storage resources.</div>
+
+---
+
+<!-- note:1793752347323 model:Basic -->
+**Front:** Which kubectl command exposes a Deployment named <code>web</code> as a NodePort Service on port 80?
+**Back:** <code>kubectl expose deployment web --type=NodePort --port=80</code> — <code>--port</code> is the port the Service listens on; <code>--type=NodePort</code> makes it open a 30000-32767 port on every node. Alternative: <code>kubectl create service nodeport web --tcp=80:8080</code> (servicePort:targetPort). To convert an existing service: <code>kubectl patch svc web -p '{"spec":{"type":"NodePort"}}'</code>.
+**Tags:** k8s::kcna topic::kubectl topic::services src::session
+
+---
+
+<!-- note:1793752347334 model:Cloze -->
+**Text:** A Service named <code>backend</code> in namespace <code>prod</code> gets the in-cluster DNS name<br><br><code>{{c1::backend}}.{{c2::prod}}.{{c3::svc}}.{{c4::cluster.local}}</code><br><br>resolving to the Service's {{c5::clusterIP}}.
+**Back Extra:** CoreDNS publishes <service>.<namespace>.svc.cluster.local for every Service; it resolves to the clusterIP. Inside the same namespace the short name (backend) is enough; from another namespace you need backend.<ns>.
+**Tags:** k8s::kcna topic::dns topic::services src::session
+
+---
+
+<!-- note:1793752354576 model:Many -->
+**Domain:** Service Types - ClusterIP
+**Question:** Which Service type is the default when <code>spec.type</code> is not specified, and is reachable only inside the cluster?
+**Options:** A. NodePort<br>B. ClusterIP<br>C. LoadBalancer<br>D. ExternalName
+**Answer:** B (2) – ClusterIP
+**Explanation:** ClusterIP is the default Service type: a stable virtual IP reachable only inside the cluster — used for internal pod-to-pod / microservice traffic. NodePort and LoadBalancer build on it to expose traffic externally; ExternalName is pure DNS.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/service/" target="_blank">Kubernetes Documentation - Service</a>
+**Tags:** k8s::kcna topic::networking topic::services src::session
+
+---
+
+<!-- note:1793752354577 model:Many -->
+**Domain:** Service Types - NodePort
+**Question:** Which Service type opens the same port (e.g. 30080) on EVERY node's IP so external clients can reach the service?
+**Options:** A. ClusterIP<br>B. ExternalName<br>C. NodePort<br>D. Ingress
+**Answer:** C (3) – NodePort
+**Explanation:** A NodePort Service allocates the same static port (default range 30000-32767) on EVERY node — each node proxies <node-IP>:<nodePort> into the Service, which forwards to a ready backend pod. It's the simplest built-in way to accept outside traffic.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/service/" target="_blank">Kubernetes Documentation - Service</a>
+**Tags:** k8s::kcna topic::networking topic::services src::session
+
+---
+
+<!-- note:1793752354578 model:Many -->
+**Domain:** Service Types - LoadBalancer
+**Question:** Which Service type asks the cloud provider (or an LB implementation like MetalLB/Cilium) to provision an external load balancer with a public IP?
+**Options:** A. NodePort<br>B. LoadBalancer<br>C. ClusterIP<br>D. ExternalName
+**Answer:** B (2) – LoadBalancer
+**Explanation:** type: LoadBalancer delegates to an external implementation — the cloud-controller-manager on AWS/GCP/Azure, or tools like MetalLB/Cilium LB IPAM on bare metal. The provisioned IP lands in .status.loadBalancer.ingress. With no implementation, EXTERNAL-IP stays <pending>.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/service/" target="_blank">Kubernetes Documentation - Service</a>
+**Tags:** k8s::kcna topic::networking topic::services src::session
+
+---
+
+<!-- note:1793752354579 model:Many -->
+**Domain:** Service Port Fields
+**Question:** In a Service manifest, which field specifies the port ON THE BACKEND PODS that traffic is forwarded to?
+**Options:** A. port<br>B. nodePort<br>C. targetPort<br>D. hostPort
+**Answer:** C (3) – targetPort
+**Explanation:** port = what the Service itself listens on (clients connect to clusterIP:port); targetPort = the port on the backend pods traffic is forwarded to (defaults to the port value); nodePort = the per-node external port for NodePort Services.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/service/" target="_blank">Kubernetes Documentation - Service</a>
+**Tags:** k8s::kcna topic::networking topic::services topic::yaml src::session
+
+---
+
+<!-- note:1793752354580 model:Many -->
+**Domain:** ReplicaSet Selectors
+**Question:** How does a ReplicaSet identify which pods it manages and counts toward spec.replicas?
+**Options:** A. Pods register themselves with the ReplicaSet via the API<br>B. Its spec.selector.matchLabels must match the labels in spec.template.metadata.labels<br>C. The kubelet reports pod names to the ReplicaSet<br>D. Namespaces define which pods belong to a ReplicaSet
+**Answer:** B (2) – Its spec.selector.matchLabels must match the labels in spec.template.metadata.labels
+**Explanation:** A ReplicaSet counts and manages every pod whose labels satisfy spec.selector.matchLabels — the selector must equal the pod template's labels or the API rejects the object. It can even adopt pre-existing matching pods that have no controller ownerReference.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/" target="_blank">Kubernetes Documentation - ReplicaSet</a>
+**Tags:** k8s::kcna topic::labels topic::replicasets src::session
 
 ---

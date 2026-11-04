@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Kubernetes Fundamentals
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 89 · Models: Basic++, Basic+++, Basic, Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 90 · Models: Basic++, Basic+++, Basic, Cloze, Many
 
 <!-- note:1755878800141 model:Basic++ -->
 **Front:** Which Kubernetes control plane component is responsible for
@@ -714,5 +714,16 @@ D. etcd
 **Text:** Control plane nodes were previously called {{c1::master}} nodes.
 **Back Extra:** The old term 'master node' is still common in older courses, books and docs — e.g. 'master components'. Same thing; 'control plane' is the current name.
 **Tags:** k8s::kcna topic::architecture topic::control-plane src::session
+
+---
+
+<!-- note:1793753105610 model:Many -->
+**Domain:** Cluster Architecture - etcd
+**Question:** What is the role of etcd in a Kubernetes cluster?
+**Options:** A. It implements locks to prevent conflicts between the masters.<br>B. It ensures distributed storage of information across all nodes in the cluster.<br>C. All of the options are correct<br>D. It stores all the data used to manage the cluster.
+**Answer:** D (4) – It stores all the data used to manage the cluster.
+**Explanation:** etcd is the cluster's distributed, consistent key-value store — the single source of truth: every object, its desired and current state, config — all persisted by the API server there. The other options are traps: etcd uses Raft consensus (leader election + quorum), not 'locks between masters'; and it runs only on control-plane nodes, not 'all nodes' — so 'all of the options' can't be right either.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/overview/components/" target="_blank">Kubernetes Documentation - Kubernetes Components</a>
+**Tags:** k8s::kcna topic::architecture topic::etcd src::session
 
 ---

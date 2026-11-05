@@ -1580,3 +1580,86 @@ D. etcd
 **Tags:** k8s::kcna topic::security topic::authentication topic::serviceaccounts src::session
 
 ---
+<!-- note:1793913972240 model:Many -->
+**Domain:** TLS Certificates
+**Question:** What is a Certificate Authority (CA) and what does it do?
+**Options:** A. A service that stores certificates for retrieval<br>B. The trusted issuer that signs certificates; everything trusts certs signed by it<br>C. A load balancer that terminates TLS<br>D. An etcd key that encrypts secrets
+**Answer:** B – the trusted issuer that signs certificates; everything trusts certs signed by it
+**Explanation:** A CA is the root of trust: it holds a key pair (ca.key private + ca.crt public cert). It validates CSRs and signs them with ca.key — the signature is what makes a certificate trustworthy. Every client/server carries a copy of ca.crt and accepts any cert signed by that CA. In a cluster the CA is how all components verify each other's identity; keep ca.key private on the signing host — whoever has it can mint identities.
+**Sources:** <a href="https://kubernetes.io/docs/setup/best-practices/certificates/" target="_blank">Kubernetes Docs - PKI certificates and requirements</a>
+**Tags:** k8s::kcna topic::security topic::tls topic::certificates src::session
+
+---
+
+<!-- note:1793913972241 model:Many -->
+**Domain:** TLS Certificates
+**Question:** To mint a cluster-admin user cert for kubectl access, what must the certificate subject contain?
+**Options:** A. CN=system:masters<br>B. O=system:masters — the O field carries the group<br>C. OU=admin plus CN=system:masters<br>D. A special flag in the CSR's extensions
+**Answer:** B – the O (Organization) field carries group membership; O=system:masters grants cluster-admin
+**Explanation:** Groups come from the cert's O field — 'openssl req -subj "/CN=kube-admin/O=system:masters"' makes an identity that authenticates as user 'kube-admin' in group 'system:masters'. system:masters is bound to the cluster-admin ClusterRole out of the box, which is what actually grants full control — the cert just proves membership.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authentication/" target="_blank">Kubernetes Docs - Authentication</a>
+**Tags:** k8s::kcna topic::security topic::tls topic::certificates topic::rbac src::session
+
+---
+
+<!-- note:1793913972242 model:Many -->
+**Domain:** TLS Certificates
+**Question:** Which identity mappings do Kubernetes component certificates require? (Select all that apply)
+**Options:** A. kube-proxy cert must carry CN=system:kube-proxy<br>B. Each kubelet cert must carry CN=system:node:<nodename> with O=system:nodes<br>C. Admin users need O=system:masters in their cert<br>D. Any CN works — RBAC ignores certificate subjects
+**Answer:** A, B, C – system:kube-proxy for kube-proxy, system:node:<nodename>+O=system:nodes for each kubelet, O=system:masters for admin users
+**Explanation:** Component identities are fixed names the control plane expects: kube-proxy authenticates as 'system:kube-proxy' (CN), each kubelet as 'system:node:<nodeName>' (CN) plus group 'system:nodes' (O) — Node authorizer relies on that mapping; an admin user is 'kube-admin' (or any CN) in group 'system:masters'. Certificates without the right CN/O authenticate as someone else entirely and get rejected by authorization.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authentication/" target="_blank">Kubernetes Docs - Authentication</a>
+**Tags:** k8s::kcna topic::security topic::tls topic::certificates topic::control-plane src::session
+
+---
+
+<!-- note:1793913972243 model:Many -->
+**Domain:** TLS Certificates
+**Question:** Why does the kube-apiserver certificate need an openssl.cnf with an [alt_names] section?
+**Options:** A. openssl.cnf encrypts the private key<br>B. alt_names lists every DNS name and IP clients use to reach the apiserver — required or hostname verification fails<br>C. It's only needed to set the certificate expiry date<br>D. SANs are for encrypting etcd at rest
+**Answer:** B – SANs let one cert be valid for every name/IP clients dial the apiserver by (kubernetes, .svc FQDNs, internal + external IPs)
+**Explanation:** The apiserver is reachable under several names: the 'kubernetes' Service name (kubernetes, kubernetes.default, kubernetes.default.svc, kubernetes.default.svc.cluster.local), plus node/public IPs. TLS hostname verification fails if the dialed name isn't in the cert — so the openssl.cnf used to generate the apiserver cert carries an [alt_names] section listing every DNS name and IP (internal + external) that will reach it.
+**Sources:** <a href="https://kubernetes.io/docs/setup/best-practices/certificates/" target="_blank">Kubernetes Docs - PKI certificates and requirements</a>
+**Tags:** k8s::kcna topic::security topic::tls topic::certificates topic::api src::session
+
+---
+
+<!-- note:1793913972244 model:Many -->
+**Domain:** TLS Certificates
+**Question:** How is TLS handled between etcd cluster members?
+**Options:** A. etcd doesn't support TLS — it relies on NetworkPolicies<br>B. Peer certs authenticate etcd members to each other; client certs authenticate the apiserver — both set via etcd config flags<br>C. etcd certs are stored as Kubernetes Secrets and mounted at runtime<br>D. Peer certs are only for etcd backups
+**Answer:** B – etcd members authenticate each other with peer certificates; apiserver↔etcd uses client certs, all configured via etcd flags
+**Explanation:** etcd runs its own PKI within the cluster's: member-to-member (peer) traffic uses --peer-cert-file/--peer-key-file/--peer-trusted-ca-file, and clients (kube-apiserver) use --cert-file/--key-file/--trusted-ca-file. These paths are set in the etcd static pod manifest (/etc/kubernetes/manifests/etcd.yaml on kubeadm) — usually under /etc/kubernetes/pki/etcd/.
+**Sources:** <a href="https://kubernetes.io/docs/setup/best-practices/certificates/" target="_blank">Kubernetes Docs - PKI certificates and requirements</a>
+**Tags:** k8s::kcna topic::security topic::tls topic::certificates topic::etcd src::session
+
+---
+
+<!-- note:1793913972245 model:Many -->
+**Domain:** TLS Certificates
+**Question:** Who needs the CA certificate, and who needs the CA private key?
+**Options:** A. Distribute ca.crt to every component for verification; keep ca.key private on the signing host<br>B. Distribute ca.key so components can verify certs<br>C. Copy both key and cert everywhere — they're a pair<br>D. Neither — verification uses the etcd root
+**Answer:** A – everyone gets a COPY of the CA certificate to verify peers; ca.key never leaves the signing host
+**Explanation:** Verification is asymmetric: to trust a peer's certificate you only need the CA's public cert — so ca.crt is distributed to every node, component config, and kubeconfig (certificate-authority field). The ca.key is what mints identities, so it stays private on the control-plane/signing host: whoever holds it can forge any identity in the cluster.
+**Sources:** <a href="https://kubernetes.io/docs/setup/best-practices/certificates/" target="_blank">Kubernetes Docs - PKI certificates and requirements</a>
+**Tags:** k8s::kcna topic::security topic::tls topic::certificates src::session
+
+---
+
+<!-- note:1793913972246 model:Many -->
+**Domain:** TLS Certificates
+**Question:** What is a Certificate Signing Request (CSR)?
+**Options:** A. A certificate backup for disaster recovery<br>B. An unsigned request containing the public key + subject details the CA signs into a certificate<br>C. A certificate that failed hostname verification<br>D. The CA's own self-signed root
+**Answer:** B – an unsigned request: public key + subject details (CN, O, SANs) packaged for the CA to sign into a certificate
+**Explanation:** A CSR is your key pair's PUBLIC half plus identity details (CN username, O groups, SANs) wrapped into a signing request — a certificate-to-be minus the signature. You hand it to a CA (openssl req -new -key x.key -out x.csr), it verifies and stamps 'signed by me' (openssl x509 -req -in x.csr -CA ca.crt -CAkey ca.key -out x.crt). The private key never leaves your side.
+**Sources:** <a href="https://kubernetes.io/docs/setup/best-practices/certificates/" target="_blank">Kubernetes Docs - PKI certificates and requirements</a>
+**Tags:** k8s::kcna topic::security topic::tls topic::certificates src::session
+
+---
+
+<!-- note:1793913979368 model:Cloze -->
+**Text:** Build a cluster CA with openssl — private key, signing request, then self-signed root:<br><br>{{c1::openssl genrsa -out ca.key 2048}}  # CA private key<br>{{c2::openssl req -new -key ca.key -subj "/CN=KUBERNETES-CA" -out ca.csr}}  # CSR: public key + subject, unsigned<br>{{c3::openssl x509 -req -in ca.csr -signkey ca.key -days 1000 -out ca.crt}}  # CA signs its OWN cert with its own key<br><br>Every other cert swaps '-signkey ca.key' for '-CA ca.crt -CAkey ca.key' — issued by the CA.
+**Back Extra:** The self-sign trick: -signkey uses the SAME ca.key that generated the CSR — only the root CA self-signs. Downstream certs get -CA/-CAkey instead, tying their trust back to ca.crt.
+**Tags:** k8s::kcna topic::security topic::tls topic::certificates src::session
+
+---

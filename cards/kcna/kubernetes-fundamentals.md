@@ -1519,3 +1519,64 @@ D. etcd
 **Tags:** k8s::kcna topic::security topic::networking src::session
 
 ---
+<!-- note:1793913170420 model:Many -->
+**Domain:** Authentication
+**Question:** In X.509 client-certificate authentication, how does Kubernetes map a certificate's subject to a user identity?
+**Options:** A. The Issuer field becomes the username<br>B. CN maps to the username; O entries map to groups<br>C. The certificate serial number becomes the UID<br>D. Validity dates decide the session timeout
+**Answer:** B – the Common Name (CN) maps to the username and Organization (O) entries map to groups
+**Explanation:** Certificate attributes become identity: CN → username, each O → a group (order doesn't matter). So a cert with subject '/CN=alice/O=devs/O=ops' authenticates as user 'alice' in groups 'devs'+'ops' — plus everyone authentic'd also joins 'system:authenticated'. Signed by the cluster's client CA, the identity is then passed to authorization (RBAC) for permission checks.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authentication/" target="_blank">Kubernetes Docs - Authentication</a>
+**Tags:** k8s::kcna topic::security topic::authentication topic::tls src::session
+
+---
+
+<!-- note:1793913170421 model:Many -->
+**Domain:** Authentication
+**Question:** How does the static token file authentication method work?
+**Options:** A. A ConfigMap listing users and passwords<br>B. A Secret of type kubernetes.io/service-account-token<br>C. CSV rows of 'token,user,uid,"groups"' served by --token-auth-file<br>D. A users.yaml inside /etc/kubernetes/manifests
+**Answer:** C – CSV rows of 'token,user,uid,"group1,group2"' served by the apiserver flag --token-auth-file
+**Explanation:** The static token file is a CSV on the control-plane node passed via '--token-auth-file=/path/file.csv'; each row is token,user,uid,"groups". Callers present the token as 'Authorization: Bearer <token>'. It's simple but static — changing users means editing the file and restarting kube-apiserver, and tokens are plaintext on disk, so it's discouraged for production.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authentication/" target="_blank">Kubernetes Docs - Authentication</a>
+**Tags:** k8s::kcna topic::security topic::authentication topic::api src::session
+
+---
+
+<!-- note:1793913170422 model:Many -->
+**Domain:** Authentication
+**Question:** What happens to an API request that presents NO credentials at all?
+**Options:** A. They are rejected with 403 Forbidden<br>B. They map to system:anonymous in group system:unauthenticated (if anonymous auth is on)<br>C. They get read-only guest permissions<br>D. They retry after a backoff
+**Answer:** B – unauthenticated calls map to system:anonymous / system:unauthenticated (401 if disabled)
+**Explanation:** Requests that pass no credentials don't automatically get rejected: if anonymous auth is enabled they become 'system:anonymous' in group 'system:unauthenticated' and RBAC decides if that identity may act (usually it can't). Disable with '--anonymous-auth=false' on kube-apiserver. Every request is thus either an authenticated identity (users get 'system:authenticated' added) or the anonymous identity.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authentication/" target="_blank">Kubernetes Docs - Authentication</a>
+**Tags:** k8s::kcna topic::security topic::authentication topic::api src::session
+
+---
+
+<!-- note:1793913170423 model:Many -->
+**Domain:** Authentication
+**Question:** How can external identity systems like LDAP or Kerberos authenticate Kubernetes users? (Select all that apply)
+**Options:** A. LDAP via a built-in --ldap-server flag<br>B. An authenticating proxy that forwards identity headers<br>C. An authentication webhook (TokenReview API)<br>D. Kerberos tickets passed directly to the apiserver
+**Answer:** B, C – authenticating proxy or authentication webhook; native OIDC is the built-in IdP path
+**Explanation:** There is no native LDAP/Kerberos/SAML plugin: Kubernetes natively supports client certs, bearer tokens (incl. ServiceAccount JWTs), and OIDC. To reach LDAP/Kerberos/etc. you front the API with an authenticating proxy that maps headers to user identity, or use an authentication webhook — the apiserver calls your token-review service which returns the user info. OIDC (e.g. Dex/Keycloak/Entra) is the one external-identity mechanism the API server supports natively.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authentication/" target="_blank">Kubernetes Docs - Authentication</a>
+**Tags:** k8s::kcna topic::security topic::authentication topic::api src::session
+
+---
+
+<!-- note:1793913170424 model:Many -->
+**Domain:** Authentication
+**Question:** After 'kubectl create serviceaccount jenkins', what username does the API server assign that identity?
+**Options:** A. system:serviceaccount:<namespace>:jenkins<br>B. jenkins@<namespace>.svc<br>C. system:user:jenkins<br>D. user:jenkins:service
+**Answer:** A – kubectl create serviceaccount jenkins produces identity 'system:serviceaccount:<namespace>:jenkins'
+**Explanation:** ServiceAccounts ARE API objects — namespaced and creatable via kubectl or YAML (unlike normal users). Pods mount the SA's token, and in-cluster processes authenticate as 'system:serviceaccount:<ns>:<name>' in groups 'system:serviceaccounts' and 'system:serviceaccounts:<ns>'; the signed JWT also works for clients outside the cluster. Because SA tokens can be stored in Secrets, be careful who can read them.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authentication/" target="_blank">Kubernetes Docs - Authentication</a>
+**Tags:** k8s::kcna topic::security topic::authentication topic::serviceaccounts src::session
+
+---
+
+<!-- note:1793913173620 model:Basic (and reversed card) -->
+**Front:** Users vs ServiceAccounts in Kubernetes — which ones can you 'kubectl create'?
+**Back:** Only ServiceAccounts — they ARE API objects (namespaced, kubectl-creatable). Normal users are NOT Kubernetes objects at all: 'Kubernetes does not have objects which represent normal user accounts.' Humans/automation get identity from an external source — a client cert signed by the cluster CA, an OIDC/IdP login, a static token file — and the apiserver just validates it. Rule of thumb: humans = external user identity; in-cluster processes = ServiceAccount.
+**Tags:** k8s::kcna topic::security topic::authentication topic::serviceaccounts src::session
+
+---

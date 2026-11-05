@@ -150,6 +150,14 @@ a remembered list.
   card, turn it into a card (or surface it to the user as a suggested
   follow-up if it's a stretch beyond the requested scope). The docs
   often know better what's worth drilling than the course notes do.
+- **MCQ design (`Many`):** the template supports multi-select — when a
+  question's material has more than one genuinely correct option, write
+  it as a select-all/multi-answer question ("Which of the following are
+  true? (Select all that apply)") and list EVERY correct letter in
+  `Answer` (`A, C, D – text`). Never mark a single letter when the
+  explanation validates several — the card evaluates the exact set.
+  Keep single-letter answers only for genuinely single-best-answer
+  questions, and make sure distractors are actually wrong.
 
 ## Tagging
 

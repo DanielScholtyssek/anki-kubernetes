@@ -223,7 +223,7 @@ essential for their function, reducing the potential impact of a compromise.
 
 <!-- note:1793752347334 model:Cloze -->
 **Text:** A Service named <code>backend</code> in namespace <code>prod</code> gets the in-cluster DNS name<br><br><code>{{c1::backend}}.{{c2::prod}}.{{c3::svc}}.{{c4::cluster.local}}</code><br><br>resolving to the Service's {{c5::clusterIP}}.
-**Back Extra:** CoreDNS publishes <service>.<namespace>.svc.cluster.local for every Service; it resolves to the clusterIP. Inside the same namespace the short name (backend) is enough; from another namespace you need backend.<ns>.
+**Back Extra:** CoreDNS publishes &lt;service&gt;.&lt;namespace&gt;.svc.cluster.local for every Service; it resolves to the clusterIP. Inside the same namespace the short name (backend) is enough; from another namespace you need backend.&lt;ns&gt;.
 **Tags:** k8s::kcna topic::dns topic::services src::session
 
 ---
@@ -244,7 +244,7 @@ essential for their function, reducing the potential impact of a compromise.
 **Question:** Which Service type opens the same port (e.g. 30080) on EVERY node's IP so external clients can reach the service?
 **Options:** A. ClusterIP<br>B. ExternalName<br>C. NodePort<br>D. Ingress
 **Answer:** C (3) – NodePort
-**Explanation:** A NodePort Service allocates the same static port (default range 30000-32767) on EVERY node — each node proxies <node-IP>:<nodePort> into the Service, which forwards to a ready backend pod. It's the simplest built-in way to accept outside traffic.
+**Explanation:** A NodePort Service allocates the same static port (default range 30000-32767) on EVERY node — each node proxies &lt;node-IP&gt;:&lt;nodePort&gt; into the Service, which forwards to a ready backend pod. It's the simplest built-in way to accept outside traffic.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/service/" target="_blank">Kubernetes Documentation - Service</a>
 **Tags:** k8s::kcna topic::networking topic::services src::session
 
@@ -255,7 +255,7 @@ essential for their function, reducing the potential impact of a compromise.
 **Question:** Which Service type asks the cloud provider (or an LB implementation like MetalLB/Cilium) to provision an external load balancer with a public IP?
 **Options:** A. NodePort<br>B. LoadBalancer<br>C. ClusterIP<br>D. ExternalName
 **Answer:** B (2) – LoadBalancer
-**Explanation:** type: LoadBalancer delegates to an external implementation — the cloud-controller-manager on AWS/GCP/Azure, or tools like MetalLB/Cilium LB IPAM on bare metal. The provisioned IP lands in .status.loadBalancer.ingress. With no implementation, EXTERNAL-IP stays <pending>.
+**Explanation:** type: LoadBalancer delegates to an external implementation — the cloud-controller-manager on AWS/GCP/Azure, or tools like MetalLB/Cilium LB IPAM on bare metal. The provisioned IP lands in .status.loadBalancer.ingress. With no implementation, EXTERNAL-IP stays &lt;pending&gt;.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/service/" target="_blank">Kubernetes Documentation - Service</a>
 **Tags:** k8s::kcna topic::networking topic::services src::session
 
@@ -372,7 +372,7 @@ essential for their function, reducing the potential impact of a compromise.
 **Question:** You change a Deployment's pod template (e.g. new image). What happens internally during the rolling update?
 **Options:** A. The existing ReplicaSet edits its pods in place<br>B. A new ReplicaSet is created for the new pod template and scaled up while the old one scales down<br>C. All pods are deleted, then recreated<br>D. The Service is re-pointed first, then pods update
 **Answer:** B (2) – A new ReplicaSet is created for the new pod template and scaled up while the old one scales down
-**Explanation:** Every change to .spec.template creates a new ReplicaSet — during a RollingUpdate the new RS scales up gradually as the old scales down (maxSurge/maxUnavailable control the pace). Old RSs stay at 0 replicas so kubectl rollout undo can scale one back up.
+**Explanation:** Every change to .spec.template creates a new ReplicaSet — during a RollingUpdate the new RS scales up gradually as the old scales down (maxSurge/maxUnavailable control the pace). Old RSs stay at 0 replicas so <code>kubectl rollout undo</code> can scale one back up.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" target="_blank">Kubernetes Documentation - Deployment</a>
 **Tags:** k8s::kcna topic::deployments topic::rollouts src::session
 
@@ -381,9 +381,9 @@ essential for their function, reducing the potential impact of a compromise.
 <!-- note:1793754672881 model:Many -->
 **Domain:** Rollout & Rollback
 **Question:** A Deployment's latest rollout is broken. Which command rolls it back to the previous pod-template version?
-**Options:** A. kubectl rollout restart deployment/web<br>B. kubectl rollout undo deployment/web<br>C. kubectl delete deployment/web<br>D. kubectl scale deployment/web --replicas=0
-**Answer:** B (2) – kubectl rollout undo deployment/web
-**Explanation:** kubectl rollout undo scales an OLD ReplicaSet back up — the pod template returns to the previous revision (kubectl rollout history lists them; --to-revision=N picks a specific one). Only the pod template rolls back; scaling/config changes aren't revisions.
+**Options:** A. <code>kubectl rollout restart deployment/web</code><br>B. <code>kubectl rollout undo deployment/web</code><br>C. <code>kubectl delete deployment/web</code><br>D. <code>kubectl scale deployment/web --replicas=0</code>
+**Answer:** B (2) – <code>kubectl rollout undo deployment/web</code>
+**Explanation:** <code>kubectl rollout undo</code> scales an OLD ReplicaSet back up — the pod template returns to the previous revision (<code>kubectl rollout history</code> lists them; <code>--to-revision=N</code> picks a specific one). Only the pod template rolls back; scaling/config changes aren't revisions.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" target="_blank">Kubernetes Documentation - Deployment</a>
 **Tags:** k8s::kcna topic::deployments topic::kubectl src::session
 
@@ -392,9 +392,9 @@ essential for their function, reducing the potential impact of a compromise.
 <!-- note:1793754672882 model:Many -->
 **Domain:** kubectl create deployment
 **Question:** Which command creates a Deployment named web running 3 replicas of nginx?
-**Options:** A. kubectl run web --image=nginx --replicas=3<br>B. kubectl new deployment web --image=nginx<br>C. kubectl create deployment web --image=nginx --replicas=3<br>D. kubectl apply deployment web --image=nginx --replicas=3
-**Answer:** C (3) – kubectl create deployment web --image=nginx --replicas=3
-**Explanation:** kubectl create deployment makes the Deployment object; --image sets the pod template's container image, --replicas sets the desired count (default 1). Imperative equivalent of a YAML Deployment manifest. (kubectl run creates a bare Pod, not a Deployment.)
+**Options:** A. <code>kubectl run web --image=nginx --replicas=3</code><br>B. kubectl new deployment web <code>--image=nginx</code><br>C. <code>kubectl create deployment web --image=nginx --replicas=3</code><br>D. <code>kubectl apply deployment web --image=nginx --replicas=3</code>
+**Answer:** C (3) – <code>kubectl create deployment web --image=nginx --replicas=3</code>
+**Explanation:** <code>kubectl create deployment</code> makes the Deployment object; <code>--image</code> sets the pod template's container image, <code>--replicas</code> sets the desired count (default 1). Imperative equivalent of a YAML Deployment manifest. (<code>kubectl run</code> creates a bare Pod, not a Deployment.)
 **Sources:** <a href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_deployment/" target="_blank">Kubernetes Documentation - kubectl create deployment</a>
 **Tags:** k8s::kcna topic::deployments topic::kubectl src::session
 
@@ -449,10 +449,10 @@ essential for their function, reducing the potential impact of a compromise.
 
 <!-- note:1793823868597 model:Many -->
 **Domain:** Static Pods - mirror pods
-**Question:** kubectl get pods shows 'static-web-my-node1' — you kubectl delete it and it instantly reappears. What is it and how do you actually remove it?
+**Question:** <code>kubectl get pods</code> shows 'static-web-my-node1' — you kubectl delete it and it instantly reappears. What is it and how do you actually remove it?
 **Options:** A. The pod is stuck terminating<br>B. RBAC is blocking the delete<br>C. It's a mirror of a static pod — the kubelet manages it from a manifest file on the node; delete the file, not the object<br>D. The pod has a finalizer
 **Answer:** C (3) – it's a mirror of a static pod — the kubelet manages it from a manifest file on the node; delete the file, not the object
-**Explanation:** The kubelet creates a read-only MIRROR of each static pod in the API server (named <pod>-<nodename>) so kubectl visibility works. Deleting the mirror does nothing — kubelet's source of truth is the manifest file in staticPodPath (e.g. /etc/kubernetes/manifests). To change/kill the pod: edit or remove the file ON THE NODE.
+**Explanation:** The kubelet creates a read-only MIRROR of each static pod in the API server (named &lt;pod&gt;-&lt;nodename&gt;) so kubectl visibility works. Deleting the mirror does nothing — kubelet's source of truth is the manifest file in staticPodPath (e.g. /etc/kubernetes/manifests). To change/kill the pod: edit or remove the file ON THE NODE.
 **Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/" target="_blank">Kubernetes Documentation - Create static Pods</a>
 **Tags:** k8s::kcna topic::pods topic::staticpods src::session
 
@@ -482,14 +482,14 @@ essential for their function, reducing the potential impact of a compromise.
 
 <!-- note:1793823868607 model:Basic (and reversed card) -->
 **Front:** What is a static pod?
-**Back:** A pod created and managed directly by the kubelet — no API server, no scheduler, no controller. The kubelet periodically scans a configured directory (staticPodPath in the KubeletConfiguration, commonly /etc/kubernetes/manifests; deprecated flag: --pod-manifest-path) and runs every pod manifest found there, restarting them on failure. For visibility it mirrors each into the API server as a read-only object.
+**Back:** A pod created and managed directly by the kubelet — no API server, no scheduler, no controller. The kubelet periodically scans a configured directory (staticPodPath in the KubeletConfiguration, commonly /etc/kubernetes/manifests; deprecated flag: <code>--pod-manifest-path</code>) and runs every pod manifest found there, restarting them on failure. For visibility it mirrors each into the API server as a read-only object.
 **Tags:** k8s::kcna topic::pods topic::staticpods src::session
 
 ---
 
 <!-- note:1793823868617 model:Cloze -->
 **Text:** Enable static pods via kubelet config file:<br><br><code>apiVersion: {{c1::kubelet.config.k8s.io/v1beta1}}<br>kind: {{c2::KubeletConfiguration}}<br>{{c3::staticPodPath}}: {{c4::/etc/kubernetes/manifests}}</code><br><br>then <code>systemctl {{c5::restart}} kubelet</code>
-**Back Extra:** staticPodPath points kubelet at a directory it scans periodically — pod YAMLs appearing there get created, files removed get their pods deleted. Deprecated alternative: --pod-manifest-path flag. Web-hosted variant: staticPodURL / --manifest-url. Check the live kubelet's config on the node (e.g. /var/lib/kubelet/config.yaml) or ps aux | grep kubelet for the flag.
+**Back Extra:** staticPodPath points kubelet at a directory it scans periodically — pod YAMLs appearing there get created, files removed get their pods deleted. Deprecated alternative: <code>--pod-manifest-path</code> flag. Web-hosted variant: staticPodURL / <code>--manifest-url</code>. Check the live kubelet's config on the node (e.g. /var/lib/kubelet/config.yaml) or ps aux | grep kubelet for the flag.
 **Tags:** k8s::kcna topic::kubelet topic::staticpods src::session
 
 ---

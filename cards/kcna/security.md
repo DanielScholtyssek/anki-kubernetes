@@ -73,9 +73,9 @@
 <!-- note:1793913170421 model:Many -->
 **Domain:** Authentication
 **Question:** How does the static token file authentication method work?
-**Options:** A. A ConfigMap listing users and passwords<br>B. A Secret of type kubernetes.io/service-account-token<br>C. CSV rows of 'token,user,uid,"groups"' served by --token-auth-file<br>D. A users.yaml inside /etc/kubernetes/manifests
-**Answer:** C – CSV rows of 'token,user,uid,"group1,group2"' served by the apiserver flag --token-auth-file
-**Explanation:** The static token file is a CSV on the control-plane node passed via '--token-auth-file=/path/file.csv'; each row is token,user,uid,"groups". Callers present the token as 'Authorization: Bearer <token>'. It's simple but static — changing users means editing the file and restarting kube-apiserver, and tokens are plaintext on disk, so it's discouraged for production.
+**Options:** A. A ConfigMap listing users and passwords<br>B. A Secret of type kubernetes.io/service-account-token<br>C. CSV rows of 'token,user,uid,"groups"' served by <code>--token-auth-file</code><br>D. A users.yaml inside /etc/kubernetes/manifests
+**Answer:** C – CSV rows of 'token,user,uid,"group1,group2"' served by the apiserver flag <code>--token-auth-file</code>
+**Explanation:** The static token file is a CSV on the control-plane node passed via '--token-auth-file=/path/file.csv'; each row is token,user,uid,"groups". Callers present the token as 'Authorization: Bearer &lt;token&gt;'. It's simple but static — changing users means editing the file and restarting kube-apiserver, and tokens are plaintext on disk, so it's discouraged for production.
 **Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authentication/" target="_blank">Kubernetes Docs - Authentication</a>
 **Tags:** k8s::kcna topic::security topic::authentication topic::api src::session
 
@@ -95,7 +95,7 @@
 <!-- note:1793913170423 model:Many -->
 **Domain:** Authentication
 **Question:** How can external identity systems like LDAP or Kerberos authenticate Kubernetes users? (Select all that apply)
-**Options:** A. LDAP via a built-in --ldap-server flag<br>B. An authenticating proxy that forwards identity headers<br>C. An authentication webhook (TokenReview API)<br>D. Kerberos tickets passed directly to the apiserver
+**Options:** A. LDAP via a built-in <code>--ldap-server</code> flag<br>B. An authenticating proxy that forwards identity headers<br>C. An authentication webhook (TokenReview API)<br>D. Kerberos tickets passed directly to the apiserver
 **Answer:** B, C – authenticating proxy or authentication webhook; native OIDC is the built-in IdP path
 **Explanation:** There is no native LDAP/Kerberos/SAML plugin: Kubernetes natively supports client certs, bearer tokens (incl. ServiceAccount JWTs), and OIDC. To reach LDAP/Kerberos/etc. you front the API with an authenticating proxy that maps headers to user identity, or use an authentication webhook — the apiserver calls your token-review service which returns the user info. OIDC (e.g. Dex/Keycloak/Entra) is the one external-identity mechanism the API server supports natively.
 **Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authentication/" target="_blank">Kubernetes Docs - Authentication</a>
@@ -105,17 +105,17 @@
 
 <!-- note:1793913170424 model:Many -->
 **Domain:** Authentication
-**Question:** After 'kubectl create serviceaccount jenkins', what username does the API server assign that identity?
-**Options:** A. system:serviceaccount:<namespace>:jenkins<br>B. jenkins@<namespace>.svc<br>C. system:user:jenkins<br>D. user:jenkins:service
-**Answer:** A – kubectl create serviceaccount jenkins produces identity 'system:serviceaccount:<namespace>:jenkins'
-**Explanation:** ServiceAccounts ARE API objects — namespaced and creatable via kubectl or YAML (unlike normal users). Pods mount the SA's token, and in-cluster processes authenticate as 'system:serviceaccount:<ns>:<name>' in groups 'system:serviceaccounts' and 'system:serviceaccounts:<ns>'; the signed JWT also works for clients outside the cluster. Because SA tokens can be stored in Secrets, be careful who can read them.
+**Question:** After '<code>kubectl create serviceaccount jenkins</code>', what username does the API server assign that identity?
+**Options:** A. system:serviceaccount:&lt;namespace&gt;:jenkins<br>B. jenkins@&lt;namespace&gt;.svc<br>C. system:user:jenkins<br>D. user:jenkins:service
+**Answer:** A – <code>kubectl create serviceaccount jenkins</code> produces identity 'system:serviceaccount:&lt;namespace&gt;:jenkins'
+**Explanation:** ServiceAccounts ARE API objects — namespaced and creatable via kubectl or YAML (unlike normal users). Pods mount the SA's token, and in-cluster processes authenticate as 'system:serviceaccount:&lt;ns&gt;:&lt;name&gt;' in groups 'system:serviceaccounts' and 'system:serviceaccounts:&lt;ns&gt;'; the signed JWT also works for clients outside the cluster. Because SA tokens can be stored in Secrets, be careful who can read them.
 **Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authentication/" target="_blank">Kubernetes Docs - Authentication</a>
 **Tags:** k8s::kcna topic::security topic::authentication topic::serviceaccounts src::session
 
 ---
 
 <!-- note:1793913173620 model:Basic (and reversed card) -->
-**Front:** Users vs ServiceAccounts in Kubernetes — which ones can you 'kubectl create'?
+**Front:** Users vs ServiceAccounts in Kubernetes — which ones can you '<code>kubectl create</code>'?
 **Back:** Only ServiceAccounts — they ARE API objects (namespaced, kubectl-creatable). Normal users are NOT Kubernetes objects at all: 'Kubernetes does not have objects which represent normal user accounts.' Humans/automation get identity from an external source — a client cert signed by the cluster CA, an OIDC/IdP login, a static token file — and the apiserver just validates it. Rule of thumb: humans = external user identity; in-cluster processes = ServiceAccount.
 **Tags:** k8s::kcna topic::security topic::authentication topic::serviceaccounts src::session
 
@@ -169,7 +169,7 @@
 **Question:** How is TLS handled between etcd cluster members?
 **Options:** A. etcd doesn't support TLS — it relies on NetworkPolicies<br>B. Peer certs authenticate etcd members to each other; client certs authenticate the apiserver — both set via etcd config flags<br>C. etcd certs are stored as Kubernetes Secrets and mounted at runtime<br>D. Peer certs are only for etcd backups
 **Answer:** B – etcd members authenticate each other with peer certificates; apiserver↔etcd uses client certs, all configured via etcd flags
-**Explanation:** etcd runs its own PKI within the cluster's: member-to-member (peer) traffic uses --peer-cert-file/--peer-key-file/--peer-trusted-ca-file, and clients (kube-apiserver) use --cert-file/--key-file/--trusted-ca-file. These paths are set in the etcd static pod manifest (/etc/kubernetes/manifests/etcd.yaml on kubeadm) — usually under /etc/kubernetes/pki/etcd/.
+**Explanation:** etcd runs its own PKI within the cluster's: member-to-member (peer) traffic uses <code>--peer-cert-file</code>/<code>--peer-key-file</code>/<code>--peer-trusted-ca-file</code>, and clients (kube-apiserver) use <code>--cert-file</code>/<code>--key-file</code>/<code>--trusted-ca-file</code>. These paths are set in the etcd static pod manifest (/etc/kubernetes/manifests/etcd.yaml on kubeadm) — usually under /etc/kubernetes/pki/etcd/.
 **Sources:** <a href="https://kubernetes.io/docs/setup/best-practices/certificates/" target="_blank">Kubernetes Docs - PKI certificates and requirements</a>
 **Tags:** k8s::kcna topic::security topic::tls topic::certificates topic::etcd src::session
 
@@ -191,14 +191,14 @@
 **Question:** What is a Certificate Signing Request (CSR)?
 **Options:** A. A certificate backup for disaster recovery<br>B. An unsigned request containing the public key + subject details the CA signs into a certificate<br>C. A certificate that failed hostname verification<br>D. The CA's own self-signed root
 **Answer:** B – an unsigned request: public key + subject details (CN, O, SANs) packaged for the CA to sign into a certificate
-**Explanation:** A CSR is your key pair's PUBLIC half plus identity details (CN username, O groups, SANs) wrapped into a signing request — a certificate-to-be minus the signature. You hand it to a CA (openssl req -new -key x.key -out x.csr), it verifies and stamps 'signed by me' (openssl x509 -req -in x.csr -CA ca.crt -CAkey ca.key -out x.crt). The private key never leaves your side.
+**Explanation:** A CSR is your key pair's PUBLIC half plus identity details (CN username, O groups, SANs) wrapped into a signing request — a certificate-to-be minus the signature. You hand it to a CA (<code>openssl req -new -key x.key -out x.csr</code>), it verifies and stamps 'signed by me' (<code>openssl x509 -req -in x.csr -CA ca.crt -CAkey ca.key -out x.crt</code>). The private key never leaves your side.
 **Sources:** <a href="https://kubernetes.io/docs/setup/best-practices/certificates/" target="_blank">Kubernetes Docs - PKI certificates and requirements</a>
 **Tags:** k8s::kcna topic::security topic::tls topic::certificates src::session
 
 ---
 
 <!-- note:1793913979368 model:Cloze -->
-**Text:** Build a cluster CA with openssl — private key, signing request, then self-signed root:<br><br>{{c1::openssl genrsa -out ca.key 2048}}  # CA private key<br>{{c2::openssl req -new -key ca.key -subj "/CN=KUBERNETES-CA" -out ca.csr}}  # CSR: public key + subject, unsigned<br>{{c3::openssl x509 -req -in ca.csr -signkey ca.key -days 1000 -out ca.crt}}  # CA signs its OWN cert with its own key<br><br>Every other cert swaps '-signkey ca.key' for '-CA ca.crt -CAkey ca.key' — issued by the CA.
+**Text:** Build a cluster CA with openssl — private key, signing request, then self-signed root:<br><br>{{c1::<code>openssl genrsa -out ca.key 2048</code>}}  # CA private key<br>{{c2::<code>openssl req -new -key ca.key -subj "/CN=KUBERNETES-CA" -out ca.csr</code>}}  # CSR: public key + subject, unsigned<br>{{c3::<code>openssl x509 -req -in ca.csr -signkey ca.key -days 1000 -out ca.crt</code>}}  # CA signs its OWN cert with its own key<br><br>Every other cert swaps '-signkey ca.key' for '-CA ca.crt -CAkey ca.key' — issued by the CA.
 **Back Extra:** The self-sign trick: -signkey uses the SAME ca.key that generated the CSR — only the root CA self-signs. Downstream certs get -CA/-CAkey instead, tying their trust back to ca.crt.
 **Tags:** k8s::kcna topic::security topic::tls topic::certificates src::session
 

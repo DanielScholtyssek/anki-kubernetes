@@ -1,9 +1,9 @@
 <!-- note:1793754672883 model:Many -->
 **Domain:** kubectl explain
 **Question:** Which kubectl command shows documentation for a resource's fields, e.g. <code>kubectl explain pod.spec.containers</code>?
-**Options:** A. kubectl describe<br>B. kubectl explain<br>C. kubectl doc<br>D. kubectl get -o yaml
-**Answer:** B (2) – kubectl explain
-**Explanation:** kubectl explain prints the schema/documentation for a resource's fields — e.g. kubectl explain deployment.spec.strategy describes every field, its type and meaning. It's the built-in way to answer 'what does this manifest field do' without leaving the terminal.
+**Options:** A. <code>kubectl describe</code><br>B. <code>kubectl explain</code><br>C. kubectl doc<br>D. <code>kubectl get -o yaml</code>
+**Answer:** B (2) – <code>kubectl explain</code>
+**Explanation:** <code>kubectl explain</code> prints the schema/documentation for a resource's fields — e.g. <code>kubectl explain deployment.spec.strategy</code> describes every field, its type and meaning. It's the built-in way to answer 'what does this manifest field do' without leaving the terminal.
 **Sources:** <a href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_explain/" target="_blank">Kubernetes Documentation - kubectl explain</a>
 **Tags:** k8s::kcna topic::kubectl topic::yaml src::session
 
@@ -23,9 +23,9 @@
 <!-- note:1793754672885 model:Many -->
 **Domain:** kubectl run
 **Question:** Which command creates a pod named 'nginx' running the nginx image?
-**Options:** A. kubectl create pod nginx<br>B. kubectl run nginx --image=nginx<br>C. kubectl deploy nginx --image=nginx<br>D. kubectl start nginx --image=nginx
-**Answer:** B (2) – kubectl run nginx --image=nginx
-**Explanation:** kubectl run creates a single pod; --image names the container image to pull (Docker Hub by default — use a full registry path for private repos). Note: kubectl create has NO pod subcommand (only deployment, service, job, etc.) — pods are created via kubectl run or a manifest with kubectl create/apply -f. deploy/start are not pod commands.
+**Options:** A. <code>kubectl create pod nginx</code><br>B. <code>kubectl run nginx --image=nginx</code><br>C. kubectl deploy nginx <code>--image=nginx</code><br>D. kubectl start nginx <code>--image=nginx</code>
+**Answer:** B (2) – <code>kubectl run nginx --image=nginx</code>
+**Explanation:** <code>kubectl run</code> creates a single pod; <code>--image</code> names the container image to pull (Docker Hub by default — use a full registry path for private repos). Note: <code>kubectl create</code> has NO pod subcommand (only deployment, service, job, etc.) — pods are created via kubectl run or a manifest with kubectl create/apply -f. deploy/start are not pod commands.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/pods/" target="_blank">Kubernetes Documentation - Pods</a>
 **Tags:** k8s::kcna topic::kubectl topic::pods src::session
 
@@ -48,8 +48,8 @@
 <!-- note:1793755549227 model:Many -->
 **Domain:** Imperative vs Declarative - apply
 **Question:** Which of these is the DECLARATIVE object-management approach in Kubernetes?
-**Options:** A. kubectl create deployment web --image=nginx<br>B. kubectl replace -f deployment.yaml<br>C. kubectl apply -f deployment.yaml<br>D. kubectl edit deployment web
-**Answer:** C (3) – kubectl apply -f deployment.yaml
+**Options:** A. <code>kubectl create deployment web --image=nginx</code><br>B. <code>kubectl replace -f deployment.yaml</code><br>C. <code>kubectl apply -f deployment.yaml</code><br>D. <code>kubectl edit deployment web</code>
+**Answer:** C (3) – <code>kubectl apply -f deployment.yaml</code>
 **Explanation:** apply -f is the DECLARATIVE path: it merges the file's desired state into the live object and records last-applied-configuration to compute future diffs. create/replace -f are the middle tier ('imperative object configuration' — file-driven but verb-led: create fails if it exists, replace swaps the whole object). create/edit/run/expose are pure imperative commands.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/object-management/" target="_blank">Kubernetes Documentation - Kubernetes Object Management</a>
 **Tags:** k8s::kcna topic::kubectl topic::yaml src::session
@@ -59,8 +59,8 @@
 <!-- note:1793755549228 model:Many -->
 **Domain:** Imperative vs Declarative - commands
 **Question:** Which group contains ONLY imperative commands (no manifest file involved)?
-**Options:** A. kubectl run, kubectl create deployment, kubectl expose<br>B. kubectl apply -f, kubectl diff<br>C. kubectl create -f, kubectl replace -f<br>D. kubectl get, kubectl describe
-**Answer:** A (1) – kubectl run, kubectl create deployment, kubectl expose
+**Options:** A. <code>kubectl run</code>, <code>kubectl create deployment</code>, <code>kubectl expose</code><br>B. <code>kubectl apply -f</code>, <code>kubectl diff</code><br>C. <code>kubectl create -f</code>, <code>kubectl replace -f</code><br>D. <code>kubectl get</code>, <code>kubectl describe</code>
+**Answer:** A (1) – <code>kubectl run</code>, <code>kubectl create deployment</code>, <code>kubectl expose</code>
 **Explanation:** Imperative commands tell the cluster WHAT to do right now: run, create deployment, expose, scale, delete — no file, no recorded desired state. The -f variants of create/replace are imperative object configuration (middle tier); apply -f is the declarative tier. get/describe are read-only, not management.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/object-management/" target="_blank">Kubernetes Documentation - Kubernetes Object Management</a>
 **Tags:** k8s::kcna topic::kubectl topic::yaml src::session
@@ -97,7 +97,7 @@
 **Question:** You write a Terraform config describing what infrastructure SHOULD exist, and Terraform works out the steps to reach it. Which approach is this?
 **Options:** A. Imperative<br>B. Declarative<br>C. Procedural<br>D. Manual
 **Answer:** B (2) – Declarative
-**Explanation:** Terraform is the classic declarative IaC tool: you write config describing the END state (which resources should exist), and Terraform's engine computes the plan — what to create/change/destroy to get there. Same model as kubectl apply. Imperative tools/scripts instead encode each step to execute.
+**Explanation:** Terraform is the classic declarative IaC tool: you write config describing the END state (which resources should exist), and Terraform's engine computes the plan — what to create/change/destroy to get there. Same model as <code>kubectl apply</code>. Imperative tools/scripts instead encode each step to execute.
 **Sources:** <a href="https://developer.hashicorp.com/terraform/intro" target="_blank">HashiCorp Documentation - What is Terraform</a>
 **Tags:** k8s::kcna topic::declarative topic::gitops src::session
 
@@ -108,7 +108,7 @@
 **Question:** <code>kubectl set image deployment/web nginx=nginx:2.0</code> — which management approach is this?
 **Options:** A. A declarative update<br>B. Imperative object configuration<br>C. An imperative command — it directly instructs the cluster to change the image NOW, with no declared desired state<br>D. A GitOps operation
 **Answer:** C (3) – An imperative command — it directly instructs the cluster to change the image NOW, with no declared desired state
-**Explanation:** set image, like run/create/expose/scale/edit/delete, is imperative: one-shot instruction, nothing recorded to converge against. The declarative equivalent is editing the image in the manifest and re-running kubectl apply -f.
+**Explanation:** set image, like run/create/expose/scale/edit/delete, is imperative: one-shot instruction, nothing recorded to converge against. The declarative equivalent is editing the image in the manifest and re-running <code>kubectl apply -f</code>
 **Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/object-management/" target="_blank">Kubernetes Documentation - Kubernetes Object Management</a>
 **Tags:** k8s::kcna topic::declarative topic::kubectl src::session
 
@@ -139,9 +139,9 @@
 <!-- note:1793756656941 model:Many -->
 **Domain:** kubectl apply - last-applied
 **Question:** What does the <code>kubectl.kubernetes.io/last-applied-configuration</code> annotation on an object store?
-**Options:** A. The object's current live spec<br>B. The JSON of the manifest most recently applied via kubectl apply<br>C. The default values the API server filled in<br>D. The object's original creation manifest from any tool
-**Answer:** B (2) – The JSON of the manifest most recently applied via kubectl apply
-**Explanation:** Each apply writes the applied manifest (as JSON) into the kubectl.kubernetes.io/last-applied-configuration annotation on the object. It's the third leg of apply's three-way merge — file vs live vs last-applied — letting kubectl compute diffs, detect drift, and delete fields removed from the file. kubectl get -o yaml shows LIVE state; this annotation remembers what YOU declared.
+**Options:** A. The object's current live spec<br>B. The JSON of the manifest most recently applied via <code>kubectl apply</code><br>C. The default values the API server filled in<br>D. The object's original creation manifest from any tool
+**Answer:** B (2) – The JSON of the manifest most recently applied via <code>kubectl apply</code>
+**Explanation:** Each apply writes the applied manifest (as JSON) into the kubectl.kubernetes.io/last-applied-configuration annotation on the object. It's the third leg of apply's three-way merge — file vs live vs last-applied — letting kubectl compute diffs, detect drift, and delete fields removed from the file. <code>kubectl get -o yaml</code> shows LIVE state; this annotation remembers what YOU declared.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/object-management/" target="_blank">Kubernetes Documentation - Kubernetes Object Management</a>
 **Tags:** k8s::kcna topic::declarative topic::kubectl topic::yaml src::session
 

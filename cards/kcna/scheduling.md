@@ -12,7 +12,7 @@
 <!-- note:1793807595537 model:Many -->
 **Domain:** Scheduling - nodeName immutability
 **Question:** Can you change spec.nodeName on an already-created pod to move it to another node?
-**Options:** A. Yes — kubectl patch pod --type merge works<br>B. Yes — kubectl edit pod and update the field<br>C. No — nodeName is immutable after creation; recreate the pod to move it<br>D. Only if the pod is restarted first
+**Options:** A. Yes — <code>kubectl patch pod --type merge</code> works<br>B. Yes — kubectl edit pod and update the field<br>C. No — nodeName is immutable after creation; recreate the pod to move it<br>D. Only if the pod is restarted first
 **Answer:** C (3) – no — nodeName is immutable after creation; recreate the pod to move it
 **Explanation:** spec.nodeName can only be written at two moments: by you at pod creation, or by the scheduler via a Binding while the pod is still unassigned. Once set it's read-only — kubectl patch/edit on it is rejected. To move a scheduled pod you must delete and recreate it (or let a Deployment do the rollout).
 **Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/kube-scheduler/" target="_blank">Kubernetes Documentation - kube-scheduler</a>
@@ -25,7 +25,7 @@
 **Question:** Without kube-scheduler, how do you assign an already-created pod that has no nodeName to a node?
 **Options:** A. kubectl annotate the pod with the target node<br>B. Create a Binding object (POST JSON to the pod's binding subresource naming the target node)<br>C. Patch spec.nodeName directly<br>D. Add the node's name to metadata.labels
 **Answer:** B (2) – create a Binding object (POST JSON to the pod's binding subresource naming the target node)
-**Explanation:** The Binding object is what the scheduler itself creates after picking a node. Doing it manually: POST to /api/v1/namespaces/<ns>/pods/<pod>/binding with a body like {"target": {"kind": "Node", "name": "node2"}} — the API server then writes nodeName and the kubelet takes over. It only works while nodeName is still empty.
+**Explanation:** The Binding object is what the scheduler itself creates after picking a node. Doing it manually: POST to /api/v1/namespaces/&lt;ns&gt;/pods/&lt;pod&gt;/binding with a body like {"target": {"kind": "Node", "name": "node2"}} — the API server then writes nodeName and the kubelet takes over. It only works while nodeName is still empty.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/kube-scheduler/" target="_blank">Kubernetes Documentation - kube-scheduler</a>
 **Tags:** k8s::kcna topic::api topic::scheduling src::session
 
@@ -72,7 +72,7 @@
 **Question:** Why don't regular workload pods land on the control-plane node by default?
 **Options:** A. Pods can't reach the control-plane network<br>B. kubelet refuses to run user pods on it<br>C. The control-plane node carries a default taint (node-role.kubernetes.io/control-plane:NoSchedule) that user pods don't tolerate<br>D. Control-plane nodes only accept static pods
 **Answer:** C (3) – the control-plane node carries a default taint (node-role.kubernetes.io/control-plane:NoSchedule) that user pods don't tolerate
-**Explanation:** kubeadm clusters taint control-plane nodes by default (node-role.kubernetes.io/control-plane:NoSchedule) so workloads stay off them — protection, not magic. DaemonSets and system pods carry matching tolerations. You CAN remove the taint (kubectl taint nodes <cp> node-role.kubernetes.io/control-plane:NoSchedule-) e.g. on single-node labs like minikube — it's just not done on real clusters.
+**Explanation:** kubeadm clusters taint control-plane nodes by default (node-role.kubernetes.io/control-plane:NoSchedule) so workloads stay off them — protection, not magic. DaemonSets and system pods carry matching tolerations. You CAN remove the taint (<code>kubectl taint nodes &lt;cp&gt; node-role.kubernetes.io/control-plane:NoSchedule-</code>) e.g. on single-node labs like minikube — it's just not done on real clusters.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/" target="_blank">Kubernetes Documentation - Taints and Tolerations</a>
 **Tags:** k8s::kcna topic::architecture topic::taints src::session
 
@@ -87,7 +87,7 @@
 
 <!-- note:1793809412490 model:Cloze -->
 **Text:** Taint node1 so only pods tolerating <code>dedicated=gpu</code> may schedule:<br><br><code>kubectl taint nodes node1 {{c1::dedicated=gpu}}:{{c2::NoSchedule}}</code>
-**Back Extra:** Format: kubectl taint nodes <node> <key>=<value>:<effect>. Remove a taint by appending a minus: kubectl taint nodes node1 dedicated=gpu:NoSchedule-. Effects: NoSchedule / PreferNoSchedule / NoExecute.
+**Back Extra:** Format: <code>kubectl taint nodes &lt;node&gt; &lt;key&gt;=&lt;value&gt;:&lt;effect&gt;</code>. Remove a taint by appending a minus: <code>kubectl taint nodes node1 dedicated=gpu:NoSchedule-</code>. Effects: NoSchedule / PreferNoSchedule / NoExecute.
 **Tags:** k8s::kcna topic::kubectl topic::taints src::session
 
 ---
@@ -188,7 +188,7 @@
 
 <!-- note:1793810943076 model:Cloze -->
 **Text:** Require the pod on large-or-medium nodes via affinity:<br><br><code>spec:<br>  affinity:<br>    {{c1::nodeAffinity}}:<br>      {{c2::requiredDuringSchedulingIgnoredDuringExecution}}:<br>        {{c3::nodeSelectorTerms}}:<br>        - {{c4::matchExpressions}}:<br>          - {key: size, operator: {{c5::In}}, values: [large, medium]}</code>
-**Back Extra:** Hierarchy: spec.affinity.nodeAffinity.<type>.nodeSelectorTerms[].matchExpressions[] — each expression is {key, operator, values[]}. values is a LIST (In = OR across values). Preferred type uses - weight: N / preference: matchExpressions instead of plain terms.
+**Back Extra:** Hierarchy: spec.affinity.nodeAffinity.&lt;type&gt;.nodeSelectorTerms[].matchExpressions[] — each expression is {key, operator, values[]}. values is a LIST (In = OR across values). Preferred type uses - weight: N / preference: matchExpressions instead of plain terms.
 **Tags:** k8s::kcna topic::affinity topic::yaml src::session
 
 ---
@@ -308,7 +308,7 @@
 <!-- note:1793835711169 model:Many -->
 **Domain:** Schedulers - profiles
 **Question:** How can one kube-scheduler process act as several different schedulers?
-**Options:** A. It can't — you must run separate binaries<br>B. --replicas flag on kube-scheduler<br>C. KubeSchedulerConfiguration profiles[] — one process, multiple profiles, each with its own schedulerName<br>D. Namespaces scope the schedulers
+**Options:** A. It can't — you must run separate binaries<br>B. <code>--replicas</code> flag on kube-scheduler<br>C. KubeSchedulerConfiguration profiles[] — one process, multiple profiles, each with its own schedulerName<br>D. Namespaces scope the schedulers
 **Answer:** C (3) – KubeSchedulerConfiguration profiles[] — one process, multiple profiles, each with its own schedulerName
 **Explanation:** Profiles let ONE kube-scheduler binary wear multiple hats: the config's profiles[] list gives each profile a distinct schedulerName + its own plugin config, and pods pick a profile via spec.schedulerName — but only a single scheduler process runs. Alternative: separate scheduler PROCESSES (e.g. a second kube-scheduler Deployment with its own config/name). Both patterns give 'multiple schedulers'.
 **Sources:** <a href="https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/" target="_blank">Kubernetes Documentation - Configure Multiple Schedulers</a>
@@ -401,7 +401,7 @@
 
 <!-- note:1793836413464 model:Cloze -->
 **Text:** Second profile with customized plugins:<br><br><code>apiVersion: {{c1::kubescheduler.config.k8s.io/v1}}<br>kind: {{c2::KubeSchedulerConfiguration}}<br>{{c3::profiles}}:<br>- {{c4::schedulerName}}: default-scheduler<br>- schedulerName: no-scoring<br>  {{c5::plugins}}:<br>    {{c6::score}}:<br>      {{c7::disabled}}: [{name: NodeResourcesFit}]<br>      {{c8::enabled}}: [{name: MyScorer}]</code>
-**Back Extra:** Each profile = its own schedulerName (pods select via spec.schedulerName) + plugin config. plugins.<extensionPoint>.disabled removes stock plugins (name: '*' disables all at that point); enabled adds custom ones (compiled into the scheduler). Extension points: queueSort, preFilter, filter, postFilter, preScore, score, reserve, permit, preBind, bind, postBind.
+**Back Extra:** Each profile = its own schedulerName (pods select via spec.schedulerName) + plugin config. plugins.&lt;extensionPoint&gt;.disabled removes stock plugins (name: '*' disables all at that point); enabled adds custom ones (compiled into the scheduler). Extension points: queueSort, preFilter, filter, postFilter, preScore, score, reserve, permit, preBind, bind, postBind.
 **Tags:** k8s::kcna topic::scheduling topic::yaml src::session
 
 ---
@@ -432,7 +432,7 @@
 **Question:** The correct nodeSelector format is:
 **Options:** A. <code>nodeSelector: { disk: ssd }</code><br>B. <code>nodeSelector: ["disk=ssd"]</code><br>C. <code>nodeSelector: (disk=ssd)</code><br>D. <code>nodeSelector: "disk=ssd"</code>
 **Answer:** A – nodeSelector: { disk: ssd }
-**Explanation:** nodeSelector is a key/value map, not a query string: under spec.nodeSelector you write YAML labels as key: value pairs — <code>nodeSelector: { disk: ssd }</code> (or block form with each pair on its own line) pins the pod to nodes carrying disk=ssd, with ALL pairs required (AND). The 'disk=ssd' expression style is kubectl's -l/--selector flag syntax (e.g. kubectl get pods -l disk=ssd), NOT pod-spec field syntax — a common mix-up. nodeSelector only does equality; for operators like In/NotIn use nodeAffinity matchExpressions.
+**Explanation:** nodeSelector is a key/value map, not a query string: under spec.nodeSelector you write YAML labels as key: value pairs — <code>nodeSelector: { disk: ssd }</code> (or block form with each pair on its own line) pins the pod to nodes carrying disk=ssd, with ALL pairs required (AND). The 'disk=ssd' expression style is kubectl's -l/<code>--selector</code> flag syntax (e.g. <code>kubectl get pods -l disk=ssd</code>), NOT pod-spec field syntax — a common mix-up. nodeSelector only does equality; for operators like In/NotIn use nodeAffinity matchExpressions.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/" target="_blank">Kubernetes Docs - Assign Pods to Nodes</a>
 **Tags:** k8s::kcna topic::scheduling topic::nodeselector topic::yaml src::session
 

@@ -22,7 +22,7 @@
 
 <!-- note:1793808323513 model:Cloze -->
 **Text:** List only pods labelled <code>app=web</code>:<br><br><code>kubectl get pods {{c1::-l}} {{c2::app=web}}</code><br><br>(<code>-l</code> is short for <code>{{c3::--selector}}</code>)
-**Back Extra:** The flag works on most list commands (get pods, get svc, get all, delete). Multiple requirements AND together: -l 'app=web,env=prod'. Set-based form: -l 'env in (prod,qa)'. Combine with --show-labels to see each object's full label set.
+**Back Extra:** The flag works on most list commands (get pods, get svc, get all, delete). Multiple requirements AND together: -l 'app=web,env=prod'. Set-based form: -l 'env in (prod,qa)'. Combine with <code>--show-labels</code> to see each object's full label set.
 **Tags:** k8s::kcna topic::kubectl topic::labels src::session
 
 ---
@@ -65,7 +65,7 @@
 
 <!-- note:1793808422523 model:Cloze -->
 **Text:** Record a build version on a pod imperatively:<br><br><code>kubectl {{c1::annotate}} pod web {{c2::build-version}}={{c3::v1.4.2}}</code>
-**Back Extra:** Same shape as kubectl label: <resource> <name> <key>=<value>. Re-running with an existing key fails unless you add --overwrite. Remove with a trailing minus: kubectl annotate pod web build-version-. In YAML the same data sits under metadata.annotations.
+**Back Extra:** Same shape as <code>kubectl label</code>: &lt;resource&gt; &lt;name&gt; &lt;key&gt;=&lt;value&gt;. Re-running with an existing key fails unless you add <code>--overwrite</code>. Remove with a trailing minus: <code>kubectl annotate pod web build-version-</code>. In YAML the same data sits under metadata.annotations.
 **Tags:** k8s::kcna topic::annotations topic::kubectl src::session
 
 ---

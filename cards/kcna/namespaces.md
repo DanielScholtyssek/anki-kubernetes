@@ -3,7 +3,7 @@
 **Question:** Which namespaces exist in a fresh Kubernetes cluster by default?
 **Options:** A. only 'default'<br>B. default, prod, staging<br>C. default, kube-system, kube-public, kube-node-lease<br>D. master, worker, default
 **Answer:** C (3) – default, kube-system, kube-public, kube-node-lease
-**Explanation:** Every cluster starts with four: 'default' (objects with no namespace set), 'kube-system' (the cluster's own infrastructure — CoreDNS, kube-proxy, control-plane pods in kubeadm clusters), 'kube-public' (publicly readable info, mostly unused), 'kube-node-lease' (node heartbeat Lease objects). Create your own for teams/apps via kubectl create ns.
+**Explanation:** Every cluster starts with four: 'default' (objects with no namespace set), 'kube-system' (the cluster's own infrastructure — CoreDNS, kube-proxy, control-plane pods in kubeadm clusters), 'kube-public' (publicly readable info, mostly unused), 'kube-node-lease' (node heartbeat Lease objects). Create your own for teams/apps via <code>kubectl create ns</code>
 **Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/" target="_blank">Kubernetes Documentation - Namespaces</a>
 **Tags:** k8s::kcna topic::architecture topic::namespaces src::session
 
@@ -12,9 +12,9 @@
 <!-- note:1793756864966 model:Many -->
 **Domain:** Namespaces - kubectl
 **Question:** Which kubectl command makes 'dev' your DEFAULT namespace for all subsequent commands?
-**Options:** A. kubectl use namespace dev<br>B. kubectl config set-context --current --namespace=dev<br>C. kubectl set namespace dev<br>D. kubectl switch-context dev
-**Answer:** B (2) – kubectl config set-context --current --namespace=dev
-**Explanation:** set-context --current --namespace=dev writes 'dev' into your kubeconfig's current context — every subsequent kubectl command defaults to it, no -n flag needed. The alternative is passing -n dev (or --namespace=dev) on each command. kubectl get ns lists namespaces; create ns makes one.
+**Options:** A. kubectl use namespace dev<br>B. <code>kubectl config set-context --current --namespace=dev</code><br>C. <code>kubectl set namespace dev</code><br>D. kubectl switch-context dev
+**Answer:** B (2) – <code>kubectl config set-context --current --namespace=dev</code>
+**Explanation:** set-context <code>--current</code> <code>--namespace=dev</code> writes 'dev' into your kubeconfig's current context — every subsequent kubectl command defaults to it, no -n flag needed. The alternative is passing -n dev (or <code>--namespace=dev</code>) on each command. <code>kubectl get ns</code> lists namespaces; create ns makes one.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/" target="_blank">Kubernetes Documentation - Namespaces</a>
 **Tags:** k8s::kcna topic::kubectl topic::namespaces src::session
 
@@ -25,7 +25,7 @@
 **Question:** Which of these resources is cluster-scoped — i.e. does NOT live inside a namespace?
 **Options:** A. Pod<br>B. Service<br>C. Deployment<br>D. Node
 **Answer:** D (4) – Node
-**Explanation:** Nodes, PersistentVolumes, ClusterRoles — and Namespaces themselves — are cluster-scoped: they live outside any namespace (metadata.namespace must be empty). Pods, Services, Deployments, Secrets, ConfigMaps are namespaced. Discover which is which with kubectl api-resources --namespaced=true/false.
+**Explanation:** Nodes, PersistentVolumes, ClusterRoles — and Namespaces themselves — are cluster-scoped: they live outside any namespace (metadata.namespace must be empty). Pods, Services, Deployments, Secrets, ConfigMaps are namespaced. Discover which is which with <code>kubectl api-resources --namespaced=true/false</code>
 **Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/" target="_blank">Kubernetes Documentation - Namespaces</a>
 **Tags:** k8s::kcna topic::api topic::namespaces src::session
 
@@ -47,7 +47,7 @@
 **Question:** A fresh cluster's DNS pods (CoreDNS) and kube-proxy land in which namespace — deliberately separated from user workloads so they can't be accidentally deleted?
 **Options:** A. default<br>B. kube-system<br>C. kube-public<br>D. kube-node-lease
 **Answer:** B (2) – kube-system
-**Explanation:** kube-system holds the cluster's own objects — CoreDNS, kube-proxy, and (in kubeadm clusters) the control-plane static pods. Putting them in their own namespace keeps them out of your 'kubectl get all' view and protects them from accidental deletion — you have to explicitly target -n kube-system. kube-public is for data readable by ALL users; kube-node-lease holds node heartbeats.
+**Explanation:** kube-system holds the cluster's own objects — CoreDNS, kube-proxy, and (in kubeadm clusters) the control-plane static pods. Putting them in their own namespace keeps them out of your '<code>kubectl get all</code>' view and protects them from accidental deletion — you have to explicitly target -n kube-system. kube-public is for data readable by ALL users; kube-node-lease holds node heartbeats.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/" target="_blank">Kubernetes Documentation - Namespaces</a>
 **Tags:** k8s::kcna topic::architecture topic::namespaces src::session
 
@@ -58,7 +58,7 @@
 **Question:** A pod in namespace 'dev' must reach the Service 'api' living in namespace 'prod'. Which DNS name works?
 **Options:** A. api<br>B. api.prod<br>C. api.prod.svc.cluster.local<br>D. api.dev.svc.cluster.local
 **Answer:** C (3) – api.prod.svc.cluster.local
-**Explanation:** Services are registered in CoreDNS as <service>.<namespace>.svc.cluster.local. The SHORT name (api) only resolves inside the caller's own namespace — a dev pod asking for 'api' gets dev's api (or NXDOMAIN). Cross-namespace calls need the namespace in the name: api.prod.svc.cluster.local.
+**Explanation:** Services are registered in CoreDNS as &lt;service&gt;.&lt;namespace&gt;.svc.cluster.local. The SHORT name (api) only resolves inside the caller's own namespace — a dev pod asking for 'api' gets dev's api (or NXDOMAIN). Cross-namespace calls need the namespace in the name: api.prod.svc.cluster.local.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/" target="_blank">Kubernetes Documentation - DNS for Services and Pods</a>
 **Tags:** k8s::kcna topic::dns topic::namespaces src::session
 

@@ -1458,3 +1458,64 @@ D. etcd
 **Tags:** k8s::kcna topic::affinity topic::scheduling src::session
 
 ---
+<!-- note:1793906734606 model:Many -->
+**Domain:** Security Primitives
+**Question:** In which order does the kube-apiserver process an incoming request?
+**Options:** A. TLS terminates, then Authentication, Authorization, Admission Control, persist to etcd<br>B. Authentication, Authorization, Admission Control, then TLS terminates<br>C. Authorization, Authentication, Admission Control, persist to etcd<br>D. Authentication, Admission Control, Authorization, persist to etcd
+**Answer:** A – TLS terminates first, then Authentication, Authorization, Admission Control, then the object persists to etcd
+**Explanation:** Every API request passes the same pipeline: transport security (TLS cert check) → Authentication (WHO are you — cert/token/service account) → Authorization (WHAT may you do — RBAC/ABAC/Node/Webhook) → Admission Control (mutate or reject writes, e.g. LimitRange injecting defaults, PSA). Note that admission only acts on create/update/delete/connect requests — pure reads skip it — and the object is only written to etcd after surviving all stages.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/security/controlling-access/" target="_blank">Kubernetes Docs - Controlling Access to the API</a>
+**Tags:** k8s::kcna topic::security topic::api src::session
+
+---
+
+<!-- note:1793906734607 model:Many -->
+**Domain:** Security Primitives
+**Question:** Which mechanisms can authenticate a caller to the kube-apiserver? (Select all that apply)
+**Options:** A. X.509 client certificates signed by the cluster CA<br>B. ServiceAccount tokens (JWTs)<br>C. Static token or password file<br>D. External identity providers (OIDC, webhook, LDAP)<br>E. SSH keys
+**Answer:** A, B, C, D – client certs, ServiceAccount tokens, static token/password file, and external providers (OIDC/webhook/LDAP)
+**Explanation:** Authentication answers WHO can access the cluster. The API server supports client certificates signed by the cluster CA, bearer tokens (static token file, bootstrap tokens, ServiceAccount JWTs), basic password auth via a static file, and external providers (OIDC, authentication webhook — which bridges LDAP/other IdPs). Multiple modules can be configured and are tried in sequence until one succeeds. SSH keys secure access to the HOSTS, not the Kubernetes API.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/security/controlling-access/" target="_blank">Kubernetes Docs - Controlling Access to the API</a>
+**Tags:** k8s::kcna topic::security topic::api src::session
+
+---
+
+<!-- note:1793906734608 model:Many -->
+**Domain:** Security Primitives
+**Question:** Which authorization modes can the kube-apiserver enforce? (Select all that apply)
+**Options:** A. RBAC — roles bound to users/groups/service accounts<br>B. ABAC — attribute-based access control policies<br>C. Node authorization — constrains kubelets to their own node's objects<br>D. Webhook — delegates the decision to an external service<br>E. OAuth — OAuth2 access tokens
+**Answer:** A, B, C, D – RBAC, ABAC, Node authorization, and Webhook mode
+**Explanation:** Authorization answers WHAT an authenticated caller may do. The API server can run multiple authorization modules: RBAC (role-based, the common one — Roles/ClusterRoles + bindings), ABAC (attribute-based policies on user/verb/resource), Node authorization (special mode that constrains what kubelets may read/write to the objects their node needs), and Webhook (delegates the decision to an external service). If several modules are configured, each is checked — the request proceeds if ANY module authorizes it.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/security/controlling-access/" target="_blank">Kubernetes Docs - Controlling Access to the API</a>
+**Tags:** k8s::kcna topic::security topic::rbac src::session
+
+---
+
+<!-- note:1793906734609 model:Many -->
+**Domain:** Security Primitives
+**Question:** Which statement about encryption between Kubernetes components is TRUE?
+**Options:** A. All control-plane traffic is TLS-encrypted: kubectl→apiserver, apiserver↔etcd, and apiserver to kubelets/other components<br>B. Only kubectl→apiserver is encrypted; inter-component traffic is plain HTTP<br>C. TLS is an optional add-on installed by the CNI plugin<br>D. Components authenticate each other with bearer tokens, so TLS is unnecessary
+**Answer:** A – all control-plane component traffic plus client traffic to the apiserver is TLS-encrypted
+**Explanation:** TLS secures the entire control plane: kubectl/clients to kube-apiserver, apiserver to etcd, and apiserver's calls to kubelets, kube-proxy and the other components are all encrypted in transit (with a cluster CA — typically etcd, /etc/kubernetes/pki, issued by kubeadm or your own PKI). Plaintext is not a supported posture for API traffic; the 'insecure port' was removed entirely in Kubernetes 1.20.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/security/controlling-access/" target="_blank">Kubernetes Docs - Controlling Access to the API</a>
+**Tags:** k8s::kcna topic::security topic::control-plane src::session
+
+---
+
+<!-- note:1793906734610 model:Many -->
+**Domain:** Security Primitives
+**Question:** Before applying Kubernetes-level security controls, what should be hardened first?
+**Options:** A. The underlying hosts — SSH key-only auth, no password logins, patched OS<br>B. The pod manifests — set a securityContext first<br>C. The CNI plugin — enable its security features first<br>D. The container registry — sign all images first
+**Answer:** A – harden the underlying hosts first: SSH key-only login, no password auth, patched OS
+**Explanation:** Defense starts below Kubernetes: the cluster lives on its nodes, and a rooted node means a rooted cluster. Baseline host hardening — SSH key-only access, password auth disabled, OS patched, no unneeded services/ports — comes before any Kubernetes-level control. Only after the hosts are secured does the k8s-specific layering matter: API access control, RBAC, NetworkPolicies, pod security.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/security/controlling-access/" target="_blank">Kubernetes Docs - Controlling Access to the API</a>
+**Tags:** k8s::kcna topic::security topic::architecture src::session
+
+---
+
+<!-- note:1793906741654 model:Basic (and reversed card) -->
+**Front:** By default, how much pod-to-pod traffic does Kubernetes allow, and what restricts it?
+**Back:** Open — the pod network is flat: every pod can reach every other pod and namespace by default (no built-in isolation). NetworkPolicy is the opt-in control: a policy selects pods (podSelector) and whitelists ingress/egress; once a pod is selected by any policy, only matching traffic is allowed. Policies are enforced by the CNI plugin — a CNI that doesn't support NetworkPolicies silently ignores them.
+**Tags:** k8s::kcna topic::security topic::networking src::session
+
+---

@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Kubernetes Fundamentals
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 166 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 167 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1755878800141 model:Basic++ -->
 **Front:** Which Kubernetes control plane component is responsible for
@@ -1445,5 +1445,16 @@ D. etcd
 **Explanation:** NoExecute is the aggressive effect: it evicts running pods that don't tolerate the taint AND blocks new ones. (Pods that DO tolerate without tolerationSeconds stay forever; with tolerationSeconds they survive only that long.) The course's other options map to the remaining effects: 'pods will not be scheduled' = NoSchedule; 'try to avoid, not guaranteed' = PreferNoSchedule.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/" target="_blank">Kubernetes Documentation - Taints and Tolerations</a>
 **Tags:** k8s::kcna topic::scheduling topic::taints src::session
+
+---
+
+<!-- note:1793837334262 model:Many -->
+**Domain:** NodeAffinity - type semantics
+**Question:** What does the TYPE of node affinity in Kubernetes define?
+**Options:** A. How many nodes can match the rule<br>B. The scheduler's behavior regarding the rule at scheduling time AND during the pod's execution<br>C. Which node labels exist in the cluster<br>D. The weight given to preferred rules
+**Answer:** B (2) – the scheduler's behavior regarding the rule at scheduling time AND during the pod's execution
+**Explanation:** The type name literally spells out behavior at two lifecycle stages: 'required/preferred' + 'DuringScheduling' = hard rule (pod won't place without a match) vs soft preference (schedules anyway); 'IgnoredDuringExecution' = after the pod runs, node-label changes are ignored — no eviction. The unimplemented 'requiredDuringExecution' would have evicted on label changes.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/" target="_blank">Kubernetes Documentation - Assign Pods to Nodes</a>
+**Tags:** k8s::kcna topic::affinity topic::scheduling src::session
 
 ---

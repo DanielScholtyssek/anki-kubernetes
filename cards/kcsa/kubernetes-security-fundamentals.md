@@ -84,9 +84,9 @@
 
 <!-- note:1772101854902 model:Many -->
 **Domain:** Kubernetes Security Fundamentals
-**Question:** Why might a pod retain privileged access even after applying the 'restricted' Pod Security Standard (PSS) or Pod Security Admission (PSA) policy to its namespace?
+**Question:** Why might a pod retain privileged access even after applying the 'restricted' Pod Security Standard (PSS) or Pod Security Admission (PSA) policy to its namespace? (Select all that apply)
 **Options:** A. The Pod Security Standard does not apply retroactively to existing pods<br>B. The namespace labels required for policy enforcement are misconfigured or missing<br>C. The Kubernetes API server does not support Pod Security Standards<br>D. The pod specification explicitly overrides the policy<br>E. Privileged access is always allowed regardless of policy
-**Answer:** A (1) – The Pod Security Standard does not apply retroactively to existing pods
+**Answer:** A, B – the policy doesn't apply retroactively; missing or misconfigured namespace labels disable enforcement
 **Explanation:** The 'restricted' Pod Security Standard or Pod Security Admission policy applies only to pods created or updated after the policy is enforced; existing pods are not automatically remediated. Enforcement also depends on correct namespace labeling (e.g., 'pod-security.kubernetes.io/enforce=restricted'). If these labels are missing or misconfigured, the policy will not be enforced on pods in that namespace.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/security/pod-security-admission/" target="_blank">Kubernetes Official Documentation - Pod Security Admission</a><br><a href="https://kubernetes.io/blog/2021/07/14/pod-security-standards-ga/" target="_blank">Kubernetes Blog - Pod Security Standards</a>
 
@@ -114,7 +114,7 @@
 
 <!-- note:1772101854917 model:Many -->
 **Domain:** Kubernetes Security Fundamentals
-**Question:** What is a common reason why a Kubernetes Network Policy might not be enforced as expected in a cluster?
+**Question:** What is the primary reason why a Kubernetes Network Policy might not be enforced as expected in a cluster?
 **Options:** A. Network Policies are enabled by default in all clusters<br>B. The installed CNI plugin does not support Network Policies<br>C. The Network Policy YAML contains syntax errors<br>D. The Kubernetes API server is unavailable<br>E. Network Policies only apply to traffic from outside the cluster
 **Answer:** B (2) – The installed CNI plugin does not support Network Policies
 **Explanation:** Network Policies in Kubernetes rely on the underlying Container Network Interface (CNI) plugin to enforce rules. If the CNI plugin does not support Network Policies, then the policies will not be enforced regardless of their correctness. While syntax errors in the YAML or API server issues can cause problems, the primary reason Network Policies might not work is lack of CNI support. Also, Network Policies affect pod-to-pod traffic within the cluster, not just external traffic.

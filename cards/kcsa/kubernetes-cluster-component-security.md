@@ -394,9 +394,9 @@
 
 <!-- note:1772101854975 model:Many -->
 **Domain:** Kubernetes Cluster Component Security
-**Question:** How can you prevent pods from being scheduled on a Kubernetes node?
+**Question:** How can you prevent pods from being scheduled on a Kubernetes node? (Select all that apply)
 **Options:** A. kubectl cordon <node-name><br>B. kubectl drain <node-name><br>C. kubectl taint nodes <node-name> key=value:NoSchedule<br>D. kubectl label nodes <node-name> unschedulable=true<br>E. kubectl delete node <node-name>
-**Answer:** A (1) – kubectl cordon <node-name>
+**Answer:** A, C – kubectl cordon; kubectl taint nodes <node> key=value:NoSchedule
 **Explanation:** Both cordoning and tainting a node with `kubectl taint nodes <node-name> key=value:NoSchedule` prevents pods without a matching toleration from being scheduled on it. This is a way to mark nodes as unsuitable for certain workloads without completely removing them from the cluster.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/" target="_blank">Kubernetes Taints and Tolerations</a><br><a href="https://kubernetes.io/docs/reference/generated/kubectl/commands/taint" target="_blank">Kubernetes CLI Reference</a>
 

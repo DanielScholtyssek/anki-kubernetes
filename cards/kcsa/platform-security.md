@@ -194,9 +194,9 @@
 
 <!-- note:1772101855079 model:Many -->
 **Domain:** Platform Security
-**Question:** Which commands can be used to list all loaded AppArmor profiles on a Linux node?
+**Question:** Which commands can be used to list all loaded AppArmor profiles on a Linux node? (Select all that apply)
 **Options:** A. sudo apparmor_status<br>B. sudo aa-enforce<br>C. sudo apparmor_parser -L<br>D. sudo aa-status<br>E. sudo systemctl status apparmor
-**Answer:** A (1) – sudo apparmor_status
+**Answer:** A, D – sudo apparmor_status; sudo aa-status
 **Explanation:** Both `sudo apparmor_status` and `sudo aa-status` can be used to list all loaded AppArmor profiles on a Linux node. These commands provide detailed information about AppArmor, including the number of loaded profiles, their modes (enforce or complain), and any unconfined processes.<br><br>Other options are incorrect for the following reasons:<br><br>1. `sudo aa-enforce`: This command is used to set an AppArmor profile to enforce mode, not to list profiles.<br>2. `sudo apparmor_parser -L`: This command is used for loading AppArmor profiles but does not list them.<br>3. `sudo systemctl status apparmor`: This command checks the status of the AppArmor service but does not provide a list of loaded profiles.<br><br>Using either `sudo apparmor_status` or `sudo aa-status` ensures you can monitor and manage AppArmor profiles effectively.
 **Sources:** <a href="https://ubuntu.com/server/docs/security-apparmor" target="_blank">AppArmor Documentation - Ubuntu</a><br><a href="https://manpages.ubuntu.com/manpages/bionic/man8/aa-status.8.html" target="_blank">Linux Manual Pages - aa-status</a>
 
@@ -204,9 +204,9 @@
 
 <!-- note:1772101855080 model:Many -->
 **Domain:** Platform Security
-**Question:** In Kubernetes, how can you apply an AppArmor profile to all containers within a Pod?
+**Question:** In Kubernetes, how can you apply an AppArmor profile to all containers within a Pod? (Select all that apply)
 **Options:** A. Set the profile in the Pod's securityContext<br>B. Annotate each container with the AppArmor profile<br>C. Use the 'appArmorProfile' field in the container spec<br>D. Specify the profile in the Deployment's metadata<br>E. Set the profile in the node's AppArmor configuration
-**Answer:** B (2) – Annotate each container with the AppArmor profile
+**Answer:** B, C – annotate each container with the profile; or use the appArmorProfile field in the container securityContext (v1.30+)
 **Explanation:** To apply an AppArmor profile to all containers in a Pod, you can use one of two methods:<br><br>1. **Annotations**: Use the annotation `container.apparmor.security.beta.kubernetes.io/<container_name>: <profile_ref>` for each container in the Pod. This method has been traditionally used and is backward-compatible.<br><br>2. **`appArmorProfile` field in `securityContext`**: Starting with Kubernetes v1.30, you can specify the AppArmor profile directly in the `securityContext` of a container using the `appArmorProfile` field. This method is more intuitive and avoids relying on annotations.<br><br>Other options, such as setting it in the Deployment metadata or node-level configuration, are not valid methods for applying AppArmor profiles to specific containers.
 **Sources:** <a href="https://kubernetes.io/docs/tutorials/clusters/apparmor/" target="_blank">Kubernetes Official Documentation - Security Contexts</a><br><a href="https://kubernetes.io/docs/setup/release/notes/#feature-apparmor-profile-in-securitycontext" target="_blank">Kubernetes v1.30 Release Notes</a>
 
@@ -234,9 +234,9 @@
 
 <!-- note:1772101855097 model:Many -->
 **Domain:** Platform Security
-**Question:** Which command lists all processes currently listening on TCP and UDP ports on a Linux system, including the associated process IDs?
+**Question:** Which commands list all processes currently listening on TCP and UDP ports on a Linux system, including the associated process IDs? (Select all that apply)
 **Options:** A. sudo netstat -tulpn<br>B. sudo lsof -i<br>C. sudo ss -tulw<br>D. sudo ps aux | grep LISTEN<br>E. sudo netstat -an
-**Answer:** A (1) – sudo netstat -tulpn
+**Answer:** A, B – sudo netstat -tulpn; sudo lsof -i
 **Explanation:** The command 'sudo netstat -tulpn' lists all listening TCP and UDP ports along with the process IDs and names that are using those ports. The flags mean: '-t' for TCP, '-u' for UDP, '-l' for listening sockets, '-p' to show process info, and '-n' to show numeric addresses. 'sudo lsof -i' also shows network connections but is less focused on listening ports specifically. 'sudo ss -tulw' shows listening sockets but may omit process names without additional flags. 'sudo ps aux | grep LISTEN' is incorrect because 'LISTEN' is not a process name but a socket state. 'sudo netstat -an' shows all connections but does not include process information.
 **Sources:** <a href="https://man7.org/linux/man-pages/man8/netstat.8.html" target="_blank">Linux man page - netstat</a><br><a href="https://man7.org/linux/man-pages/man8/ss.8.html" target="_blank">Linux man page - ss</a>
 

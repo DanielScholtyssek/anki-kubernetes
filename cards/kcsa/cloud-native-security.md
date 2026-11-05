@@ -114,7 +114,7 @@
 
 <!-- note:1772101854916 model:Many -->
 **Domain:** Cloud Native Security
-**Question:** What is a common cause for failing to pull the latest version of a container image from the 'k8s.gcr.io' registry?
+**Question:** What is the most common cause for failing to pull the latest version of a container image from the 'k8s.gcr.io' registry?
 **Options:** A. The image registry has been deprecated or is unavailable<br>B. Specifying an incorrect image name or tag in the pull command<br>C. Network policies blocking outbound traffic from the node<br>D. The Kubernetes node lacks sufficient CPU or memory resources<br>E. The kube-proxy component is not running on the node
 **Answer:** B (2) – Specifying an incorrect image name or tag in the pull command
 **Explanation:** A frequent reason for image pull failures is specifying an incorrect image name or tag, which leads to the registry not finding the requested image. While registry deprecation or network policies can also cause issues, the most common and easily overlooked cause is a typo or mismatch in the image reference. Insufficient node resources or kube-proxy issues typically do not directly cause image pull failures.

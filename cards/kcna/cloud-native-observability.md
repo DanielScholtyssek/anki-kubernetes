@@ -197,3 +197,13 @@ in a specific format that Prometheus can then periodically scrape.
 **Back:** <div>Correct Answer: <b>C</b></div><div><br></div> <div><b>Explanation</b>: Prometheus collects metrics and triggers alerts based on defined rules.</div>
 
 ---
+<!-- note:1793915843459 model:Many -->
+**Domain:** Prometheus - metric types
+**Question:** Which metric type can go up and down in Prometheus?
+**Options:** A. Gauge<br>B. Histogram<br>C. Counter<br>D. “Percentile”
+**Answer:** A – Gauge
+**Explanation:** Gauges represent values that can go up AND down — memory usage, queue depth, temperature, current connections. A Counter is monotonically increasing (requests_total, errors_total — only resets on process restart), so you query it with rate()/increase() rather than reading it directly. Histogram samples observations into configurable buckets for distribution/quantile math — it's not a scalar that 'goes up and down'. 'Percentile' isn't a metric type at all — it's a computed statistic (histogram_quantile() in PromQL). Fourth real type: Summary, client-side quantiles.
+**Sources:** <a href="https://prometheus.io/docs/concepts/metric_types/" target="_blank">Prometheus Docs - Metric types</a>
+**Tags:** k8s::kcna topic::observability topic::prometheus src::session
+
+---

@@ -207,3 +207,14 @@ in a specific format that Prometheus can then periodically scrape.
 **Tags:** k8s::kcna topic::observability topic::prometheus src::session
 
 ---
+
+<!-- note:1793920396321 model:Many -->
+**Domain:** PromQL - functions
+**Question:** In PromQL, which function is used to get the per-second rate of a counter?
+**Options:** A. rate()<br>B. count()<br>C. sum()<br>D. max_over_time()
+**Answer:** A (1) – rate()
+**Explanation:** rate() takes a RANGE vector — rate(http_requests_total[5m]) — and extrapolates the counter's increase to a per-second rate, correctly handling counter resets (a restart dropping the value to 0 doesn't skew the result). It's THE function for counters; increase() does the same over the window without dividing by time. The distractors: count() counts the number of elements in a vector, sum() aggregates values across series, and max_over_time() is a range function returning the maximum SAMPLE VALUE seen — none compute a rate.
+**Sources:** <a href="https://prometheus.io/docs/prometheus/latest/querying/functions/" target="_blank">Prometheus Docs - Query functions</a>
+**Tags:** k8s::kcna topic::promql topic::prometheus topic::observability src::session
+
+---

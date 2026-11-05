@@ -267,3 +267,14 @@
 **Tags:** k8s::kcna topic::serviceaccounts topic::security topic::pods src::session
 
 ---
+
+<!-- note:1793921727121 model:Many -->
+**Domain:** Pod Security Standards
+**Question:** Pod Security Standards levels, ordered least → most restrictive:
+**Options:** A. Restricted → Baseline → Privileged<br>B. Privileged → Baseline → Restricted<br>C. Baseline → Restricted → Privileged<br>D. Baseline → Privileged → Restricted
+**Answer:** B (2) – Privileged → Baseline → Restricted
+**Explanation:** Least → most restrictive: Privileged → Baseline → Restricted. The levels are cumulative — Restricted includes ALL Baseline rules plus hardened requirements (runAsNonRoot, drop ALL capabilities, seccomp profile, no privilege escalation). Privileged is unrestricted (the effective default for unlabeled namespaces). Baseline blocks only the obviously dangerous: privileged containers, host namespaces/PID/IPC, hostPath volumes, host ports, dangerous capabilities. Restricted enforces current pod-hardening best practices. Enforcement is via namespace labels like <code>pod-security.kubernetes.io/enforce=restricted</code>, with audit and warn modes for rollout — Pod Security Admission replaced the deprecated PodSecurityPolicy.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/security/pod-security-standards/" target="_blank">Kubernetes Docs - Pod Security Standards</a>
+**Tags:** k8s::kcna topic::security topic::podsecurity topic::pods src::session
+
+---

@@ -1684,3 +1684,13 @@ D. etcd
 **Tags:** k8s::kcna topic::security topic::rbac src::session
 
 ---
+<!-- note:1793914866144 model:Many -->
+**Domain:** Health Probes
+**Question:** The purpose of the Readiness probe is to:
+**Options:** A. Encrypt traffic<br>B. Decide if Pod receives Service traffic<br>C. Restart container<br>D. Reserve CPU
+**Answer:** B – decide if Pod receives Service traffic
+**Explanation:** Readiness gates traffic; liveness restarts. A failing readiness probe removes the Pod from Service endpoints so no traffic is routed to it — the container keeps running and is NOT restarted (that's the liveness probe's job). Encryption is TLS/mesh; CPU reservation is resource requests — neither involves probes.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/" target="_blank">Kubernetes Docs - Liveness, Readiness, and Startup Probes</a>
+**Tags:** k8s::kcna topic::probes topic::services src::session
+
+---

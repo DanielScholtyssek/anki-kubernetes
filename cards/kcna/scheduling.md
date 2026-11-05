@@ -427,3 +427,13 @@
 **Tags:** k8s::kcna topic::affinity topic::scheduling src::session
 
 ---
+<!-- note:1793915613867 model:Many -->
+**Domain:** Scheduling - nodeSelector syntax
+**Question:** The correct nodeSelector format is:
+**Options:** A. <code>nodeSelector: { disk: ssd }</code><br>B. <code>nodeSelector: ["disk=ssd"]</code><br>C. <code>nodeSelector: (disk=ssd)</code><br>D. <code>nodeSelector: "disk=ssd"</code>
+**Answer:** A – nodeSelector: { disk: ssd }
+**Explanation:** nodeSelector is a key/value map, not a query string: under spec.nodeSelector you write YAML labels as key: value pairs — <code>nodeSelector: { disk: ssd }</code> (or block form with each pair on its own line) pins the pod to nodes carrying disk=ssd, with ALL pairs required (AND). The 'disk=ssd' expression style is kubectl's -l/--selector flag syntax (e.g. kubectl get pods -l disk=ssd), NOT pod-spec field syntax — a common mix-up. nodeSelector only does equality; for operators like In/NotIn use nodeAffinity matchExpressions.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/" target="_blank">Kubernetes Docs - Assign Pods to Nodes</a>
+**Tags:** k8s::kcna topic::scheduling topic::nodeselector topic::yaml src::session
+
+---

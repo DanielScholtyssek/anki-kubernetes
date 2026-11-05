@@ -145,9 +145,9 @@
 <!-- note:1793913972242 model:Many -->
 **Domain:** TLS Certificates
 **Question:** Which identity mappings do Kubernetes component certificates require? (Select all that apply)
-**Options:** A. kube-proxy cert must carry CN=system:kube-proxy<br>B. Each kubelet cert must carry CN=system:node:<nodename> with O=system:nodes<br>C. Admin users need O=system:masters in their cert<br>D. Any CN works — RBAC ignores certificate subjects
-**Answer:** A, B, C – system:kube-proxy for kube-proxy, system:node:<nodename>+O=system:nodes for each kubelet, O=system:masters for admin users
-**Explanation:** Component identities are fixed names the control plane expects: kube-proxy authenticates as 'system:kube-proxy' (CN), each kubelet as 'system:node:<nodeName>' (CN) plus group 'system:nodes' (O) — Node authorizer relies on that mapping; an admin user is 'kube-admin' (or any CN) in group 'system:masters'. Certificates without the right CN/O authenticate as someone else entirely and get rejected by authorization.
+**Options:** A. kube-proxy cert must carry <code>CN=system:kube-proxy</code><br>B. Each kubelet cert must carry <code>CN=system:node:&lt;nodename&gt;</code> with <code>O=system:nodes</code><br>C. Admin users need <code>O=system:masters</code> in their cert<br>D. Any CN works — RBAC ignores certificate subjects
+**Answer:** A, B, C – <code>system:kube-proxy</code> for kube-proxy, <code>system:node:&lt;nodename&gt;</code>+<code>O=system:nodes</code> for each kubelet, <code>O=system:masters</code> for admin users
+**Explanation:** Component identities are fixed names the control plane expects: kube-proxy authenticates as <code>system:kube-proxy</code> (CN), each kubelet as <code>system:node:&lt;nodeName&gt;</code> (CN) plus group <code>system:nodes</code> (O) — Node authorizer relies on that mapping; an admin user is 'kube-admin' (or any CN) in group <code>system:masters</code>. Certificates without the right CN/O authenticate as someone else entirely and get rejected by authorization.
 **Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authentication/" target="_blank">Kubernetes Docs - Authentication</a>
 **Tags:** k8s::kcna topic::security topic::tls topic::certificates topic::control-plane src::session
 
@@ -206,9 +206,9 @@
 <!-- note:1793914089195 model:Many -->
 **Domain:** TLS Certificates - Kubelet
 **Question:** How does each kubelet authenticate to the kube-apiserver?
-**Options:** A. One shared cluster cert copied to every node<br>B. A per-node client cert: CN=system:node:<nodeName>, O=system:nodes<br>C. A ServiceAccount token mounted at /var/lib/kubelet<br>D. The node's SSH host key
-**Answer:** B – a per-node client cert with CN=system:node:<nodeName> and O=system:nodes, unique to that machine
-**Explanation:** Every kubelet talks to the apiserver as its OWN node identity: the client cert's CN must be 'system:node:<nodeName>' and O=system:nodes — one cert per node, minted with that node's name. kubeadm keeps it under /var/lib/kubelet/pki/ and references it in kubelet.conf; with TLS bootstrap the kubelet even requests the cert itself via the certificates.k8s.io CSR API using a bootstrap token.
+**Options:** A. One shared cluster cert copied to every node<br>B. A per-node client cert: <code>CN=system:node:&lt;nodeName&gt;</code>, <code>O=system:nodes</code><br>C. A ServiceAccount token mounted at /var/lib/kubelet<br>D. The node's SSH host key
+**Answer:** B – a per-node client cert with <code>CN=system:node:&lt;nodeName&gt;</code> and <code>O=system:nodes</code>, unique to that machine
+**Explanation:** Every kubelet talks to the apiserver as its OWN node identity: the client cert's CN must be <code>system:node:&lt;nodeName&gt;</code> and <code>O=system:nodes</code> — one cert per node, minted with that node's name. kubeadm keeps it under <code>/var/lib/kubelet/pki/</code> and references it in <code>kubelet.conf</code>; with TLS bootstrap the kubelet even requests the cert itself via the certificates.k8s.io CSR API using a bootstrap token.
 **Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authentication/" target="_blank">Kubernetes Docs - Authentication</a>
 **Tags:** k8s::kcna topic::security topic::tls topic::control-plane src::session
 
@@ -217,10 +217,20 @@
 <!-- note:1793914089196 model:Many -->
 **Domain:** Node Authorization
 **Question:** What ties a kubelet's access to only its own node's objects?
-**Options:** A. RBAC RoleBindings per node<br>B. The Node authorizer matches the cert's system:node:<name> to scope kubelet to its own node's objects<br>C. NetworkPolicy blocks cross-node API calls<br>D. kube-proxy filters kubelet traffic
-**Answer:** B – Node authorization uses the cert's system:node:<name> to restrict each kubelet to objects belonging to its own node
+**Options:** A. RBAC RoleBindings per node<br>B. The Node authorizer matches the cert's <code>system:node:&lt;name&gt;</code> to scope kubelet to its own node's objects<br>C. NetworkPolicy blocks cross-node API calls<br>D. kube-proxy filters kubelet traffic
+**Answer:** B – Node authorization uses the cert's <code>system:node:&lt;name&gt;</code> to restrict each kubelet to objects belonging to its own node
 **Explanation:** The Node authorizer + NodeRestriction admission gate kubelet requests against the node name baked into its cert: 'system:node:worker-2' may only read pods scheduled to worker-2 and update its own node/secrets — it cannot list other nodes' pods or secrets. The name match is why node certs are per-node: a stolen kubelet cert only grants that one node's reach.
 **Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/node/" target="_blank">Kubernetes Docs - Node Authorization</a>
 **Tags:** k8s::kcna topic::security topic::rbac src::session
+
+---
+<!-- note:1793915613866 model:Many -->
+**Domain:** NetworkPolicy - isolation
+**Question:** If a Pod is selected by at least one NetworkPolicy for ingress, what's the default behavior for ingress traffic?
+**Options:** A. Ignore all NetworkPolicies<br>B. Only allow NodePort<br>C. Allow all<br>D. Deny all ingress except what policies allow
+**Answer:** D – deny all ingress except what policies allow
+**Explanation:** Selection triggers default-deny for that direction, then allow rules apply. Pods selected by NO NetworkPolicy are fully open (allow-all); the moment ≥1 policy's podSelector matches, that direction flips to isolated and ONLY traffic matching the policy's ingress rules passes — everything else is dropped. Three nuances: isolation is per-direction (ingress selection leaves egress open unless a policy also lists egress); policies are additive — multiple selecting policies OR their rules together (union, not strictest-wins); and enforcement depends on the CNI plugin supporting NetworkPolicy — unsupported CNIs silently ignore policies, leaving the pod open.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/network-policies/" target="_blank">Kubernetes Docs - Network Policies</a>
+**Tags:** k8s::kcna topic::networkpolicy topic::security topic::networking src::session
 
 ---

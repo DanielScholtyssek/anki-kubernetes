@@ -99,7 +99,9 @@ a remembered list.
     multiple-choice cards with real distractors: "which of these…",
     "select all that apply", pick-the-right-command. Fields: `Domain`
     (exam domain/section), `Question`, `Options` (`A. …<br>B. …`),
-    `Answer` (`C (3) – text`), `Explanation`, `Sources`. Exception to the
+    `Answer` (`C (3) – text`; multi-select: `A, C – text` — the template
+    parses the leading letter run and requires the exact set),
+    `Explanation`, `Sources`. Exception to the
     stock-types-only rule — this model is sanctioned for MCQ content.
     Fallback if `Many` is unavailable: `Basic` with options in `Front`
     and the answer letter in `Back`.

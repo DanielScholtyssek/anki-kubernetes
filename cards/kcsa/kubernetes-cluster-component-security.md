@@ -46,7 +46,7 @@
 **Domain:** Kubernetes Cluster Component Security
 **Question:** Which of the following best practices are recommended to secure the Kubernetes scheduler (kube-scheduler)? (Select all that apply.)
 **Options:** A. Bind the scheduler to 0.0.0.0 to ensure it is accessible from all network interfaces<br>B. Use Role-Based Access Control (RBAC) to restrict access to the scheduler API<br>C. Run the scheduler as a non-root user to minimize privilege escalation risks<br>D. Enable anonymous authentication to simplify access for debugging purposes<br>E. Configure network policies to restrict network access to and from the scheduler
-**Answer:** B (2) – Use Role-Based Access Control (RBAC) to restrict access to the scheduler API
+**Answer:** B, C, E – RBAC to restrict scheduler API access; run as non-root; network policies to restrict traffic
 **Explanation:** The recommended security measures for securing the kube-scheduler include: using Role-Based Access Control (RBAC) to enforce least privilege, ensuring only authorized entities can interact with the scheduler's API; running the kube-scheduler as a non-root user to reduce potential risks of privilege escalation in case of a compromise; and configuring network policies to restrict unauthorized network access to or from the kube-scheduler, thereby enhancing its security. Binding the scheduler to 0.0.0.0 increases exposure and is not recommended. Similarly, enabling anonymous authentication weakens security by allowing unauthenticated access.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/security/overview/" target="_blank">Kubernetes Documentation - Security Overview</a><br><a href="https://www.redhat.com/en/blog/12-kubernetes-configuration-best-practices" target="_blank">Red Hat Blog - Kubernetes Configuration Best Practices</a><br><a href="https://www.getambassador.io/blog/kubernetes-rbac-role-based-access-control" target="_blank">Kubernetes RBAC Best Practices</a>
 
@@ -56,7 +56,7 @@
 **Domain:** Kubernetes Cluster Component Security
 **Question:** Which of the following controllers are included in the Kubernetes kube-controller-manager? (Select all that apply)
 **Options:** A. Node Controller<br>B. ReplicaSet Controller<br>C. Ingress Controller<br>D. Cloud Controller Manager<br>E. Service Account Controller
-**Answer:** A (1) – Node Controller
+**Answer:** A, B, E – Node, ReplicaSet, and ServiceAccount controllers (Ingress is an add-on; Cloud Controller Manager is separate)
 **Explanation:** The kube-controller-manager runs several core controllers including the Node Controller, which manages node status; the ReplicaSet Controller, which ensures the desired number of pod replicas; and the Service Account Controller, which manages service account tokens. The Ingress Controller is typically deployed separately as an add-on and is not part of the kube-controller-manager. The Cloud Controller Manager is a separate component responsible for cloud-specific control loops and is not included in the kube-controller-manager.
 **Sources:** <a href="https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/" target="_blank">Kubernetes Official Documentation - Controller Manager</a><br><a href="https://kubernetes.io/docs/concepts/architecture/controller/" target="_blank">Kubernetes Official Documentation - Controllers</a>
 
@@ -66,7 +66,7 @@
 **Domain:** Kubernetes Cluster Component Security
 **Question:** Which of the following actions can improve the security of the Kubernetes kubelet? (Select all that apply)
 **Options:** A. Enable authentication and authorization on the kubelet API<br>B. Disable anonymous access to the kubelet<br>C. Expose the kubelet read-only port to all network interfaces<br>D. Use TLS certificates for kubelet communication<br>E. Run the kubelet process in privileged mode
-**Answer:** A (1) – Enable authentication and authorization on the kubelet API
+**Answer:** A, B, D – kubelet API authn/authz, disable anonymous access, TLS for kubelet communication
 **Explanation:** Improving kubelet security involves enabling authentication and authorization to ensure only authorized users can access the API, disabling anonymous access to prevent unauthenticated requests, and using TLS certificates to encrypt communication between components. Exposing the read-only port publicly increases attack surface and is discouraged. Running kubelet in privileged mode is not a security best practice and can increase risk.
 **Sources:** <a href="https://kubernetes.io/docs/tasks/administer-cluster/kubelet-authentication-authorization/" target="_blank">Kubernetes Official Documentation - Securing the Kubelet</a><br><a href="https://github.com/cncf/sig-security/blob/main/security-best-practices/kubelet.md" target="_blank">CNCF Kubernetes Security Best Practices</a>
 
@@ -76,7 +76,7 @@
 **Domain:** Kubernetes Cluster Component Security
 **Question:** Which directories on a client machine contain sensitive information related to accessing Kubernetes clusters? (Select all that apply)
 **Options:** A. /var/log/<br>B. ~/.kube/config<br>C. /etc/hosts<br>D. ~/.ssh/<br>E. /tmp/
-**Answer:** B (2) – ~/.kube/config
+**Answer:** B, D – ~/.kube/config and ~/.ssh/
 **Explanation:** The ~/.kube/config file stores Kubernetes cluster access credentials and configuration, making it sensitive. The ~/.ssh/ directory contains SSH keys used for secure access to nodes or clusters. Other directories like /var/log/, /etc/hosts, and /tmp/ do not typically contain sensitive Kubernetes access information.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/" target="_blank">Kubernetes Official Documentation - Configure Access to Multiple Clusters</a><br><a href="https://www.redhat.com/sysadmin/kubernetes-security-best-practices" target="_blank">Kubernetes Security Best Practices - SSH Key Management</a>
 
@@ -96,7 +96,7 @@
 **Domain:** Kubernetes Cluster Component Security
 **Question:** What types of data are stored inside the etcd key-value store in a Kubernetes cluster? (Select all that apply)
 **Options:** A. Kubernetes cluster state<br>B. Persistent application data<br>C. Pod logs<br>D. Secrets and ConfigMaps<br>E. Container images
-**Answer:** A (1) – Kubernetes cluster state
+**Answer:** A, D – cluster state, including Secrets and ConfigMaps
 **Explanation:** etcd stores the entire Kubernetes cluster state, including resource objects such as Secrets and ConfigMaps. It does not store persistent application data (which is stored in volumes), pod logs (which are stored on nodes or centralized logging systems), or container images (stored in container registries).
 **Sources:** <a href="https://kubernetes.io/docs/concepts/overview/components/#etcd" target="_blank">Kubernetes Official Documentation - etcd</a><br><a href="https://etcd.io/docs/v3.5/what-is-etcd/" target="_blank">CoreOS etcd Documentation - What is etcd?</a>
 
@@ -106,7 +106,7 @@
 **Domain:** Kubernetes Cluster Component Security
 **Question:** Which of the following statements about static pods in Kubernetes are true? (Select all that apply)
 **Options:** A. They are managed directly by the kubelet on a node<br>B. They are defined in the API server and stored in etcd<br>C. They are useful for running critical system components<br>D. They are automatically rescheduled on other nodes if the node fails<br>E. They can be updated using kubectl commands
-**Answer:** A (1) – They are managed directly by the kubelet on a node
+**Answer:** A, C – managed by kubelet on the node; useful for critical system components
 **Explanation:** Static pods are defined by placing pod manifest files directly on a node’s filesystem and are managed by the kubelet on that node, not through the API server or etcd. They are useful for running critical system components that must run on a specific node. Static pods are not rescheduled automatically if the node fails, and they cannot be updated via kubectl since they are not managed through the Kubernetes API.
 **Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/" target="_blank">Kubernetes Official Documentation - Static Pods</a><br><a href="https://kubernetes.io/blog/2016/07/static-pods/" target="_blank">Kubernetes Blog - Understanding Static Pods</a>
 
@@ -166,7 +166,7 @@
 **Domain:** Kubernetes Cluster Component Security
 **Question:** Which of the following are best practices for securing etcd in a Kubernetes cluster? (Select all that apply)
 **Options:** A. Enable TLS encryption for all communication with etcd<br>B. Limit access to etcd endpoints to trusted networks only<br>C. Use authentication and authorization mechanisms for etcd access<br>D. Expose etcd endpoints publicly to facilitate monitoring<br>E. Store etcd backups in a secure and access-controlled location
-**Answer:** A (1) – Enable TLS encryption for all communication with etcd
+**Answer:** A, B, C, E – TLS, trusted-network restriction, authn/authz, and secure backups
 **Explanation:** Securing etcd is critical as it stores the cluster state and sensitive data. Best practices include enabling TLS encryption to protect data in transit, restricting access to trusted networks to prevent unauthorized access, implementing authentication and authorization to control who can access etcd, and securely storing backups to prevent data loss or compromise. Exposing etcd endpoints publicly is strongly discouraged as it poses a significant security risk.
 **Sources:** <a href="https://kubernetes.io/docs/tasks/administer-cluster/securing-a-cluster/#securing-etcd" target="_blank">Kubernetes Official Documentation - Securing etcd</a><br><a href="https://etcd.io/docs/v3.5/op-guide/security/" target="_blank">etcd Security Best Practices</a>
 
@@ -726,7 +726,7 @@
 **Domain:** Kubernetes Cluster Component Security
 **Question:** Which of the following are critical security hardening measures for the Kubernetes API server? (Select all that apply)
 **Options:** A. Disable anonymous authentication<br>B. Enable RBAC authorization<br>C. Allow all admission controllers<br>D. Enable etcd encryption for secrets<br>E. Use insecure port for API communication
-**Answer:** A (1) – Disable anonymous authentication
+**Answer:** A, B, D – disable anonymous auth, RBAC, and etcd encryption for secrets
 **Explanation:** Disabling anonymous authentication prevents unauthorized access, RBAC enables granular permissions, and etcd encryption protects sensitive data. Allowing all admission controllers (including deprecated ones) and using insecure ports would reduce security. The insecure port (--insecure-port) is deprecated and should be disabled.
 **Sources:** <a href="https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/" target="_blank">Kubernetes API Server Security</a><br><a href="https://www.cisecurity.org/benchmark/kubernetes/" target="_blank">CIS Kubernetes Benchmark</a>
 

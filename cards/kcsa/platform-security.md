@@ -326,7 +326,7 @@
 **Domain:** Platform Security
 **Question:** Which of the following are key advantages of implementing a Service Mesh in Kubernetes? (Select all that apply)
 **Options:** A. Built-in observability through metrics, logs, and traces<br>B. Simplifies application code by offloading cross-cutting concerns<br>C. Enhanced security through mutual TLS encryption<br>D. Adds significant latency to all communications<br>E. Requires minimal operational expertise to implement
-**Answer:** A (1) – Built-in observability through metrics, logs, and traces
+**Answer:** A, B, C – observability, offloaded cross-cutting concerns, and mutual TLS
 **Explanation:** Service Meshes provide three primary benefits: 1) Comprehensive observability through automatic collection of communication metrics and distributed tracing. 2) Offloading of cross-cutting concerns like retries, timeouts, and circuit breaking from application code. 3) Security enhancements through automatic mutual TLS and fine-grained access controls. While they add some overhead, modern implementations minimize latency impact through optimized data planes.
 **Sources:** <a href="https://www.cncf.io/blog/2020/10/06/service-mesh-a-cncf-white-paper/" target="_blank">CNCF Service Mesh White Paper</a><br><a href="https://linkerd.io/2.11/features/" target="_blank">Linkerd Documentation</a>
 

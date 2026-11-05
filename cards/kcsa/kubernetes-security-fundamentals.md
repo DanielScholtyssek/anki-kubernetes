@@ -36,7 +36,7 @@
 **Domain:** Kubernetes Security Fundamentals
 **Question:** Which of the following restrictions does the 'baseline' Pod Security Standard enforce? (Select all that apply)
 **Options:** A. Disallows privileged containers<br>B. Allows hostPath volumes<br>C. Blocks host networking and ports<br>D. Requires running as non-root<br>E. Allows all Linux capabilities
-**Answer:** A (1) – Disallows privileged containers
+**Answer:** A, C – Disallows privileged containers; blocks host networking and ports
 **Explanation:** The 'baseline' Pod Security Standard disallows privileged containers and blocks host networking and ports. This ensures that pods are less vulnerable to security risks by limiting their capabilities.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/security/pod-security-standards/" target="_blank">Pod Security Standards</a><br><a href="https://kubernetes.io/docs/concepts/security/security-best-practices/" target="_blank">Kubernetes Security Best Practices</a>
 
@@ -96,7 +96,7 @@
 **Domain:** Kubernetes Security Fundamentals
 **Question:** Which authentication mechanisms are commonly used by kubeadm during Kubernetes cluster bootstrapping? (Select all that apply)
 **Options:** A. TLS certificates<br>B. Token-based authentication<br>C. OAuth tokens<br>D. Static passwords<br>E. Biometric authentication
-**Answer:** A (1) – TLS certificates
+**Answer:** A, B – TLS certificates and bootstrap tokens
 **Explanation:** kubeadm primarily uses TLS certificates and token-based authentication mechanisms to secure communication and authenticate components during cluster bootstrapping. TLS certificates are used for API server and client authentication, while bootstrap tokens facilitate node joining.
 **Sources:** <a href="https://kubernetes.io/docs/reference/setup-tools/kubeadm/kubeadm-init/#tls-bootstrap" target="_blank">Kubernetes Official Documentation - kubeadm TLS Bootstrap</a><br><a href="https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/" target="_blank">Kubernetes Official Documentation - Bootstrap Tokens</a>
 
@@ -176,7 +176,7 @@
 **Domain:** Kubernetes Security Fundamentals
 **Question:** Which of the following are common CNI plugins that support Network Policies? (Select all that apply)
 **Options:** A. Flannel<br>B. Calico<br>C. Weave Net<br>D. AWS VPC CNI<br>E. Cilium
-**Answer:** B (2) – Calico
+**Answer:** B, C, D, E – Calico, Weave Net, AWS VPC CNI, and Cilium support NetworkPolicies (Flannel does not by default)
 **Explanation:** Calico, Weave Net, Cilium, and AWS VPC CNI are CNI plugins that support Network Policies. AWS VPC CNI supports network policies but requires them to be enabled and does not support them for Fargate or Windows containers. Flannel does not support Network Policies by default.
 **Sources:** <a href="https://aws.amazon.com/about-aws/whats-new/2023/08/amazon-vpc-cni-kubernetes-networkpolicy-enforcement/" target="_blank">AWS Announcement on VPC CNI Network Policy Support</a><br><a href="https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy-configure.html#enable-network-policy-parameter" target="_blank">AWS EKS Documentation on Network Policy Configuration</a><br><a href="https://kubernetes.io/docs/concepts/services-networking/network-policies/" target="_blank">Kubernetes Documentation on Network Policies</a>
 
@@ -476,7 +476,7 @@
 **Domain:** Kubernetes Security Fundamentals
 **Question:** Which Kubernetes resources, if compromised, could lead to significant security breaches and should be audited carefully? (Select all that apply)
 **Options:** A. Secrets<br>B. ConfigMaps<br>C. Pods<br>D. ServiceAccounts<br>E. PersistentVolumes
-**Answer:** A (1) – Secrets
+**Answer:** A, D – Secrets and ServiceAccounts
 **Explanation:** Secrets and ServiceAccounts are considered sensitive Kubernetes resources because they often contain confidential information such as credentials, API keys, and tokens. If compromised, these resources can lead to unauthorized access, privilege escalation, or data breaches. ConfigMaps generally contain non-sensitive configuration data and are less critical from a security perspective. While Pods and PersistentVolumes are important, they are not typically audited for sensitive information unless they handle sensitive data explicitly.
 **Sources:** <a href="https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/" target="_blank">Kubernetes Official Documentation - Auditing</a><br><a href="https://kubernetes.io/docs/concepts/configuration/secret/" target="_blank">Kubernetes Official Documentation - Secrets</a>
 
@@ -496,7 +496,7 @@
 **Domain:** Kubernetes Security Fundamentals
 **Question:** Select all that apply: Which Kubernetes object(s) allow you to define a set of rules for validating or mutating admission requests?
 **Options:** A. ValidatingWebhookConfiguration<br>B. MutatingWebhookConfiguration<br>C. AdmissionController<br>D. CustomResourceDefinition<br>E. WebhookPolicy
-**Answer:** A (1) – ValidatingWebhookConfiguration
+**Answer:** A, B – ValidatingWebhookConfiguration and MutatingWebhookConfiguration
 **Explanation:** `ValidatingWebhookConfiguration` and `MutatingWebhookConfiguration` are used to integrate admission webhooks that validate or mutate admission requests. Option 2 (`AdmissionController`) is a general term for the mechanism but not a specific Kubernetes object. Option 3 (`CustomResourceDefinition`) is used to define custom resources, and Option 4 (`WebhookPolicy`) is not a valid Kubernetes object.
 **Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/" target="_blank">Kubernetes Admission Webhooks Documentation</a><br><a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#validatingwebhookconfiguration-v1-admissionregistration-k8s-io" target="_blank">Kubernetes API Reference</a>
 
@@ -536,7 +536,7 @@
 **Domain:** Kubernetes Security Fundamentals
 **Question:** Which of the following are valid components of a Kubernetes audit policy? (Select all that apply)
 **Options:** A. Rules<br>B. Levels<br>C. Stages<br>D. Users<br>E. Verbs
-**Answer:** A (1) – Rules
+**Answer:** A, C, D, E – rules, stages, users, and verbs (levels is a field inside rules, not a component)
 **Explanation:** A Kubernetes audit policy is composed of 'Rules' that define what events to capture. Each rule can specify 'Stages' of the request lifecycle (such as RequestReceived, ResponseStarted). 'Users' can be specified to filter audit events by user identity. 'Verbs' define the types of API operations (e.g., get, create) to audit. 'Levels' is not a component of the policy structure but rather a field inside rules specifying the detail level of logging (e.g., None, Metadata).
 **Sources:** <a href="https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/" target="_blank">Kubernetes Official Documentation - Auditing</a><br><a href="https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#audit" target="_blank">Kubernetes Audit Policy Documentation</a>
 
@@ -566,7 +566,7 @@
 **Domain:** Kubernetes Security Fundamentals
 **Question:** Select all that apply: Which command(s) can be used to list all ServiceAccounts in the 'dev' namespace?
 **Options:** A. kubectl get sa -n dev<br>B. kubectl get serviceaccount -A<br>C. kubectl get serviceaccounts --namespace=dev<br>D. kubectl describe serviceaccounts -n dev<br>E. kubectl list sa dev
-**Answer:** A (1) – kubectl get sa -n dev
+**Answer:** A, C, D – kubectl get sa -n dev; kubectl get serviceaccounts --namespace=dev; kubectl describe serviceaccounts -n dev
 **Explanation:** The commands `kubectl get sa -n dev`, `kubectl get serviceaccounts --namespace=dev`, and `kubectl describe serviceaccounts -n dev` all list ServiceAccounts in the 'dev' namespace. The first two provide a summary list, while `kubectl describe` provides detailed information about each ServiceAccount. Option 1 (`kubectl get serviceaccount -A`) lists ServiceAccounts across all namespaces, and Option 4 (`kubectl list sa dev`) is not a valid `kubectl` command.
 **Sources:** <a href="https://kubernetes.io/docs/reference/kubectl/overview/" target="_blank">Kubernetes Official Documentation</a><br><a href="https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands/" target="_blank">Kubernetes kubectl Command Reference</a>
 
@@ -596,7 +596,7 @@
 **Domain:** Kubernetes Security Fundamentals
 **Question:** Which of the following securityContext fields are commonly applied at the Pod level in Kubernetes? (Select all that apply)
 **Options:** A. runAsUser<br>B. fsGroup<br>C. privileged<br>D. capabilities<br>E. seLinuxOptions
-**Answer:** A (1) – runAsUser
+**Answer:** A, B, E – runAsUser, fsGroup, and seLinuxOptions (privileged and capabilities are container-level)
 **Explanation:** At the Pod level, 'runAsUser' specifies the user ID for all containers in the Pod, 'fsGroup' sets the group ID for mounted volumes, and 'seLinuxOptions' configures SELinux labels for the Pod. 'privileged' and 'capabilities' are container-level settings and cannot be set at the Pod level. Therefore, only 'runAsUser', 'fsGroup', and 'seLinuxOptions' are valid Pod-level securityContext fields.
 **Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/" target="_blank">Kubernetes Official Documentation - Security Context</a><br><a href="https://www.redhat.com/sysadmin/kubernetes-security-contexts" target="_blank">Red Hat - Understanding Kubernetes Security Contexts</a>
 
@@ -626,7 +626,7 @@
 **Domain:** Kubernetes Security Fundamentals
 **Question:** Which of the following steps are necessary to enable audit logging in Kubernetes? (Select all that apply)
 **Options:** A. Create an audit policy file<br>B. Configure the kubelet with audit flags<br>C. Add '--audit-policy-file' flag to API server<br>D. Restart the kube-controller-manager<br>E. Specify '--audit-log-path' in the API server configuration
-**Answer:** A (1) – Create an audit policy file
+**Answer:** A, C, E – create audit policy file, --audit-policy-file, and --audit-log-path on the API server
 **Explanation:** To enable audit logging in Kubernetes, you must create an audit policy file, specify this file using the '--audit-policy-file' flag in the API server configuration, and define the log path using '--audit-log-path'. These steps ensure that audit logs are properly configured and stored.
 **Sources:** <a href="https://kubernetes.io/docs/tasks/debug-application-cluster/audit/#audit-policy" target="_blank">Kubernetes Audit Policy</a><br><a href="https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/" target="_blank">Kubernetes API Server Configuration</a>
 
@@ -956,7 +956,7 @@
 **Domain:** Kubernetes Security Fundamentals
 **Question:** Which of the following are the recognized Pod Security Standard levels in Kubernetes? (Select all that apply)
 **Options:** A. Privileged<br>B. Baseline<br>C. Restricted<br>D. Unrestricted<br>E. Default
-**Answer:** A (1) – Privileged
+**Answer:** A, B, C – Privileged, Baseline, and Restricted
 **Explanation:** The Pod Security Standards define three levels of security enforcement for pods: Privileged, Baseline, and Restricted. 'Privileged' allows the most permissions, 'Baseline' enforces a moderate security posture suitable for most applications, and 'Restricted' enforces the strictest security controls. 'Unrestricted' and 'Default' are not recognized Pod Security Standard levels.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/security/pod-security-standards/" target="_blank">Kubernetes Official Documentation - Pod Security Standards</a><br><a href="https://kubernetes.io/docs/concepts/security/overview/" target="_blank">Kubernetes Security Best Practices</a>
 

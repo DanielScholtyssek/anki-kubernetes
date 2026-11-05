@@ -36,7 +36,7 @@
 **Domain:** Cloud Native Security
 **Question:** What are the key characteristics of gVisor and Firecracker? (Select all that apply)
 **Options:** A. gVisor is a user-space kernel providing sandboxing<br>B. Firecracker uses lightweight microVMs with KVM<br>C. Both provide full hardware virtualization<br>D. Firecracker is a container runtime interface<br>E. gVisor offers better performance than traditional VMs
-**Answer:** A (1) – gVisor is a user-space kernel providing sandboxing
+**Answer:** A, B, E – gVisor is a user-space kernel sandbox; Firecracker uses KVM microVMs; gVisor can outperform traditional VMs
 **Explanation:** gVisor provides sandboxing by running in user space and intercepting system calls, which enhances security without the need for full hardware virtualization. Firecracker uses microVMs, leveraging KVM for efficient isolation. gVisor can offer better performance compared to traditional VMs due to its lightweight nature.
 **Sources:** <a href="https://gvisor.dev/docs/" target="_blank">gVisor Documentation</a><br><a href="https://firecracker-microvm.github.io/" target="_blank">Firecracker Documentation</a>
 
@@ -96,7 +96,7 @@
 **Domain:** Cloud Native Security
 **Question:** Which methods can be used to isolate resources effectively in a multi-tenant Kubernetes environment? (Select all that apply)
 **Options:** A. Deploying separate Kubernetes clusters for each tenant<br>B. Using Kubernetes namespaces combined with Role-Based Access Control (RBAC)<br>C. Applying Kubernetes Network Policies to restrict traffic<br>D. Sharing service accounts among tenants to simplify access<br>E. Disabling resource quotas to allow unlimited resource usage
-**Answer:** A (1) – Deploying separate Kubernetes clusters for each tenant
+**Answer:** A, B, C – separate clusters, namespaces+RBAC, and NetworkPolicies
 **Explanation:** Effective resource isolation in multi-tenant Kubernetes environments can be achieved by deploying separate clusters, using namespaces with RBAC to control access, and applying network policies to restrict communication. Sharing service accounts among tenants reduces isolation and is insecure. Disabling resource quotas removes limits on resource consumption, which can lead to resource contention and is not recommended.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/" target="_blank">Kubernetes Official Documentation - Namespaces</a><br><a href="https://kubernetes.io/docs/concepts/services-networking/network-policies/" target="_blank">Kubernetes Official Documentation - Network Policies</a>
 
@@ -346,7 +346,7 @@
 **Domain:** Cloud Native Security
 **Question:** Which of the following are Kubernetes security best practices to follow during the Deploy phase? (Select all that apply)
 **Options:** A. Implement network policies<br>B. Run containers as root<br>C. Use image tags like 'latest'<br>D. Use the ImagePolicyWebhook admission controller<br>E. Apply security contexts to pods and containers
-**Answer:** A (1) – Implement network policies
+**Answer:** A, D, E – network policies, ImagePolicyWebhook, and security contexts
 **Explanation:** During deployment, implementing network policies restricts pod communication to only necessary traffic, reducing attack surfaces. The ImagePolicyWebhook admission controller enforces image security policies to prevent untrusted images from running. Applying security contexts defines permissions and restrictions for pods and containers, enhancing security. Running containers as root and using mutable tags like 'latest' are discouraged as they increase security risks and reduce traceability.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/network-policies/" target="_blank">Kubernetes Documentation - Network Policies</a><br><a href="https://kubernetes.io/docs/concepts/security/pod-security-standards/" target="_blank">Kubernetes Documentation - Pod Security Standards</a>
 

@@ -26,7 +26,7 @@
 **Domain:** Kubernetes Threat Model
 **Question:** Which of the following actions in Kubernetes cross trust boundaries and potentially introduce security risks? (Select all that apply)
 **Options:** A. Accessing the Kubernetes API server<br>B. Communicating between pods within the same namespace<br>C. Mounting hostPath volumes into pods<br>D. Using service accounts across different namespaces<br>E. Pulling container images from public registries
-**Answer:** C (3) – Mounting hostPath volumes into pods
+**Answer:** C, D, E – hostPath mounts, cross-namespace service accounts, and public image registries cross trust boundaries
 **Explanation:** Mounting hostPath volumes allows pods to access the host filesystem, crossing the boundary between container and host, which poses significant security risks. Using service accounts across namespaces can bypass namespace isolation, potentially escalating privileges. Pulling images from public registries introduces risks from untrusted or malicious images. Accessing the Kubernetes API is a controlled and authenticated action, while pod-to-pod communication within the same namespace is generally within the same trust boundary and less risky.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/security/overview/" target="_blank">Kubernetes Official Documentation - Security Best Practices</a><br><a href="https://github.com/cncf/sig-security/blob/main/security-whitepaper/cloud_native_security_whitepaper.pdf" target="_blank">CNCF Cloud Native Security Whitepaper</a>
 
@@ -36,7 +36,7 @@
 **Domain:** Kubernetes Threat Model
 **Question:** Which combination of pod configurations can allow a compromised Kubernetes pod to access and potentially modify the host system? (Select all that apply)
 **Options:** A. Running the pod in privileged mode<br>B. Mounting the host filesystem into the pod<br>C. Using host networking in the pod<br>D. Dropping all Linux capabilities from the pod<br>E. Running the pod as a non-root user
-**Answer:** A (1) – Running the pod in privileged mode
+**Answer:** A, B, C – privileged mode, host filesystem mounts, host networking
 **Explanation:** Running a pod in privileged mode grants it broad permissions, including the ability to access host resources and perform actions that can compromise the host system. Mounting the host filesystem into the pod exposes sensitive files and allows the pod to read or modify host data, which is a significant security risk. Using host networking gives the pod direct access to the host's network stack, increasing the risk of network-based attacks or eavesdropping. In contrast, dropping all Linux capabilities and running as a non-root user are security best practices that reduce the attack surface and limit the pod's ability to affect the host, making these options incorrect.
 **Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/" target="_blank">Kubernetes Official Documentation - Security Context</a><br><a href="https://kubernetes.io/docs/concepts/security/pod-security-standards/#privileged" target="_blank">Kubernetes Official Documentation - Privileged Mode</a><br><a href="https://github.com/cncf/sig-security/blob/main/security-whitepaper/privilege_escalation.md" target="_blank">CNCF Security Whitepaper - Privilege Escalation</a>
 
@@ -56,7 +56,7 @@
 **Domain:** Kubernetes Threat Model
 **Question:** Which of the following practices help prevent container breakout vulnerabilities? (Select all that apply)
 **Options:** A. Running containers with root privileges<br>B. Using minimal base images to reduce attack surface<br>C. Applying the principle of least privilege to container permissions<br>D. Disabling security modules like SELinux or AppArmor<br>E. Regularly updating container runtimes and dependencies
-**Answer:** B (2) – Using minimal base images to reduce attack surface
+**Answer:** B, C, E – minimal base images, least privilege, and updating runtimes/dependencies
 **Explanation:** Preventing container breakouts involves minimizing the attack surface and restricting privileges. Using minimal base images reduces unnecessary software that could be exploited. Applying the principle of least privilege limits container capabilities to only what is necessary, reducing risk. Regularly updating container runtimes ensures known vulnerabilities are patched. Conversely, running containers as root increases risk, and disabling security modules like SELinux or AppArmor removes important security layers, increasing breakout potential.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/security/pod-security-standards/" target="_blank">Kubernetes Official Documentation - Security Best Practices</a><br><a href="https://docs.docker.com/develop/security/security/" target="_blank">Docker Security - Best Practices</a>
 

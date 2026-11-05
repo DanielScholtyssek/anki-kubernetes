@@ -1663,3 +1663,24 @@ D. etcd
 **Tags:** k8s::kcna topic::security topic::tls topic::certificates src::session
 
 ---
+<!-- note:1793914089195 model:Many -->
+**Domain:** TLS Certificates - Kubelet
+**Question:** How does each kubelet authenticate to the kube-apiserver?
+**Options:** A. One shared cluster cert copied to every node<br>B. A per-node client cert: CN=system:node:<nodeName>, O=system:nodes<br>C. A ServiceAccount token mounted at /var/lib/kubelet<br>D. The node's SSH host key
+**Answer:** B – a per-node client cert with CN=system:node:<nodeName> and O=system:nodes, unique to that machine
+**Explanation:** Every kubelet talks to the apiserver as its OWN node identity: the client cert's CN must be 'system:node:<nodeName>' and O=system:nodes — one cert per node, minted with that node's name. kubeadm keeps it under /var/lib/kubelet/pki/ and references it in kubelet.conf; with TLS bootstrap the kubelet even requests the cert itself via the certificates.k8s.io CSR API using a bootstrap token.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authentication/" target="_blank">Kubernetes Docs - Authentication</a>
+**Tags:** k8s::kcna topic::security topic::tls topic::control-plane src::session
+
+---
+
+<!-- note:1793914089196 model:Many -->
+**Domain:** Node Authorization
+**Question:** What ties a kubelet's access to only its own node's objects?
+**Options:** A. RBAC RoleBindings per node<br>B. The Node authorizer matches the cert's system:node:<name> to scope kubelet to its own node's objects<br>C. NetworkPolicy blocks cross-node API calls<br>D. kube-proxy filters kubelet traffic
+**Answer:** B – Node authorization uses the cert's system:node:<name> to restrict each kubelet to objects belonging to its own node
+**Explanation:** The Node authorizer + NodeRestriction admission gate kubelet requests against the node name baked into its cert: 'system:node:worker-2' may only read pods scheduled to worker-2 and update its own node/secrets — it cannot list other nodes' pods or secrets. The name match is why node certs are per-node: a stolen kubelet cert only grants that one node's reach.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/node/" target="_blank">Kubernetes Docs - Node Authorization</a>
+**Tags:** k8s::kcna topic::security topic::rbac src::session
+
+---

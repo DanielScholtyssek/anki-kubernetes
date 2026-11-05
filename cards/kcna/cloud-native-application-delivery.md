@@ -126,3 +126,13 @@ Deployment automates the release to production without manual intervention if al
 **Tags:** k8s::kcna topic::helm topic::packaging src::session
 
 ---
+<!-- note:1793919187035 model:Many -->
+**Domain:** Helm - install flags
+**Question:** What is the purpose of Helm's --atomic flag?
+**Options:** A. Dry-run only<br>B. Roll back automatically on failure<br>C. Create CRDs<br>D. Render templates only
+**Answer:** B (2) – roll back automatically on failure
+**Explanation:** --atomic makes helm install/upgrade all-or-nothing: if any resource fails to become ready, Helm rolls the release back to its previous revision instead of leaving a half-installed release behind. It builds on --wait (Helm waits for readiness) plus automatic rollback — without it a failed upgrade can strand the cluster in a mixed old/new state. The distractors describe other flags: --dry-run only renders templates client-side without touching the cluster, and CRDs come from the chart's crds/ directory (installed before templates, never templated).
+**Sources:** <a href="https://helm.sh/docs/intro/using_helm/" target="_blank">Helm Docs - Using Helm</a>
+**Tags:** k8s::kcna topic::helm topic::packaging src::session
+
+---

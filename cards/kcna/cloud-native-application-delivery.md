@@ -136,3 +136,14 @@ Deployment automates the release to production without manual intervention if al
 **Tags:** k8s::kcna topic::helm topic::packaging src::session
 
 ---
+
+<!-- note:1793921208832 model:Many -->
+**Domain:** Ingress - API versions
+**Question:** Which is a valid Ingress apiVersion/kind in modern Kubernetes?
+**Options:** A. extensions/v1beta1 / Ingress<br>B. v1 / Ingress<br>C. networking.k8s.io/v2 / Ingress<br>D. networking.k8s.io/v1 / Ingress
+**Answer:** D (4) – networking.k8s.io/v1 / Ingress
+**Explanation:** networking.k8s.io/v1 has been the stable Ingress API since Kubernetes 1.19 — extensions/v1beta1 and networking.k8s.io/v1beta1 were removed in 1.22. The v1beta1→v1 jump had real breaking changes: pathType became required on every path, backend.service.port.name was dropped (number only), and ingressClassName became a spec field. The 'something different' to know: the Ingress API is FROZEN — generally available but no longer developed, no new features. Kubernetes officially recommends the Gateway API (gateway.networking.k8s.io/v1, GA since Oct 2023, v1.4 Oct 2025) as its successor — same job (HTTP routing to Services), richer model: Gateway + GatewayClass + HTTPRoute objects instead of one Ingress.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/ingress/" target="_blank">Kubernetes Docs - Ingress</a><br><a href="https://gateway-api.sigs.k8s.io/guides/getting-started/migrating-from-ingress/" target="_blank">Gateway API - Migrating from Ingress</a>
+**Tags:** k8s::kcna topic::networking topic::ingress src::session
+
+---

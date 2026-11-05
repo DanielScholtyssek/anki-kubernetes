@@ -749,3 +749,14 @@ D. etcd
 **Tags:** k8s::kcna topic::probes topic::pods src::session
 
 ---
+
+<!-- note:1793920205003 model:Many -->
+**Domain:** CNCF Governance
+**Question:** What is the preferred decision-making style in CNCF governance groups?
+**Options:** A. CEO-only decisions<br>B. Consensus-seeking<br>C. Random selection<br>D. Majority vote always
+**Answer:** B (2) – consensus-seeking
+**Explanation:** Consensus-seeking means the group works toward a decision everyone can accept through open discussion (mailing lists, Slack, recorded meetings) rather than forcing a vote — proposals stay open for review and only move forward when there's no unresolved objection. It's a process goal, NOT strict unanimity: the TOC charter says decisions are 'driven by consensus', and only if consensus can't be reached does a binding vote get called as deadlock fallback. That's why 'majority vote always' is wrong — winner-take-all voting lets a bare majority override minority concerns and fractures communities; 'CEO-only' and 'random' aren't governance at all.
+**Sources:** <a href="https://github.com/cncf/foundation/blob/main/charter.md" target="_blank">CNCF Charter - TOC Mandate</a>
+**Tags:** k8s::kcna topic::governance topic::ecosystem src::session
+
+---

@@ -1,6 +1,6 @@
 # KCNA - Kubernetes and Cloud Native Associate — Kubernetes Fundamentals
 
-> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 165 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
+> Deck: `KCNA - Kubernetes and Cloud Native Associate` · Group: `Kubernetes Fundamentals` · Notes: 166 · Models: Basic++, Basic+++, Basic, Basic (and reversed card), Cloze, Many
 
 <!-- note:1755878800141 model:Basic++ -->
 **Front:** Which Kubernetes control plane component is responsible for
@@ -1434,5 +1434,16 @@ D. etcd
 **Text:** Second profile with customized plugins:<br><br><code>apiVersion: {{c1::kubescheduler.config.k8s.io/v1}}<br>kind: {{c2::KubeSchedulerConfiguration}}<br>{{c3::profiles}}:<br>- {{c4::schedulerName}}: default-scheduler<br>- schedulerName: no-scoring<br>  {{c5::plugins}}:<br>    {{c6::score}}:<br>      {{c7::disabled}}: [{name: NodeResourcesFit}]<br>      {{c8::enabled}}: [{name: MyScorer}]</code>
 **Back Extra:** Each profile = its own schedulerName (pods select via spec.schedulerName) + plugin config. plugins.<extensionPoint>.disabled removes stock plugins (name: '*' disables all at that point); enabled adds custom ones (compiled into the scheduler). Extension points: queueSort, preFilter, filter, postFilter, preScore, score, reserve, permit, preBind, bind, postBind.
 **Tags:** k8s::kcna topic::scheduling topic::yaml src::session
+
+---
+
+<!-- note:1793837227572 model:Many -->
+**Domain:** Taints - NoExecute meaning
+**Question:** What does the taint effect "NoExecute" indicate in Kubernetes?
+**Options:** A. Pods will be evicted immediately from the node, if they do not tolerate the taint<br>B. Pods will not be scheduled on the node.<br>C. Pods will be scheduled with a higher priority on the node.<br>D. System will try to avoid placing a pod on the node, but it is not guaranteed.
+**Answer:** A (1) – Pods will be evicted immediately from the node, if they do not tolerate the taint
+**Explanation:** NoExecute is the aggressive effect: it evicts running pods that don't tolerate the taint AND blocks new ones. (Pods that DO tolerate without tolerationSeconds stay forever; with tolerationSeconds they survive only that long.) The course's other options map to the remaining effects: 'pods will not be scheduled' = NoSchedule; 'try to avoid, not guaranteed' = PreferNoSchedule.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/" target="_blank">Kubernetes Documentation - Taints and Tolerations</a>
+**Tags:** k8s::kcna topic::scheduling topic::taints src::session
 
 ---

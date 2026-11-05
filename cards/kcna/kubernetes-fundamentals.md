@@ -738,3 +738,14 @@ D. etcd
 **Tags:** k8s::kcna topic::probes topic::services src::session
 
 ---
+
+<!-- note:1793920105315 model:Many -->
+**Domain:** Health Probes - ordering
+**Question:** Probe relationship: which starts first?
+**Options:** A. liveness always first<br>B. readiness always first<br>C. startup→readiness→liveness strict loop<br>D. startup first; while failing, readiness/liveness is suppressed; after success, readiness/liveness is independent
+**Answer:** D (4) – startup first; while failing, readiness/liveness is suppressed; after success, readiness/liveness is independent
+**Explanation:** The startup probe exists for slow-booting apps: while it keeps failing, BOTH liveness and readiness are disabled — so a container that takes 5 minutes to start isn't killed by liveness or kept out of rotation complaints. Once startup succeeds it never runs again, and liveness + readiness take over independently: readiness can fail (pull from Service endpoints) while liveness stays green, and vice versa. There's no strict startup→readiness→liveness pipeline — readiness and liveness are peers, not stages.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/" target="_blank">Kubernetes Docs - Liveness, Readiness, and Startup Probes</a>
+**Tags:** k8s::kcna topic::probes topic::pods src::session
+
+---

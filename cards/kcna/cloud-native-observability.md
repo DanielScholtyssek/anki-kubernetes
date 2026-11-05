@@ -218,3 +218,14 @@ in a specific format that Prometheus can then periodically scrape.
 **Tags:** k8s::kcna topic::promql topic::prometheus topic::observability src::session
 
 ---
+
+<!-- note:1793920618409 model:Many -->
+**Domain:** Prometheus - metric selection
+**Question:** Which Prometheus metric type is best for tracking request latency distributions?
+**Options:** A. Histogram<br>B. Counter<br>C. Summary<br>D. Gauge
+**Answer:** A (1) – Histogram
+**Explanation:** Histograms bucket each observation into configurable ranges (the le buckets), so request durations can be turned into real quantiles server-side: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m])). Summary is the sophisticated distractor — it also computes quantiles, but CLIENT-side at fixed φ values baked into the metric: you can't aggregate summaries across pods or pick a different quantile later. Counter only counts monotonically upward; Gauge is a single up/down scalar — neither describes a distribution.
+**Sources:** <a href="https://prometheus.io/docs/practices/histograms/" target="_blank">Prometheus Docs - Histograms and summaries</a>
+**Tags:** k8s::kcna topic::prometheus topic::observability src::session
+
+---

@@ -437,3 +437,14 @@
 **Tags:** k8s::kcna topic::scheduling topic::nodeselector topic::yaml src::session
 
 ---
+
+<!-- note:1793920790860 model:Many -->
+**Domain:** Storage - zone topology
+**Question:** Pod error "no available volume zone" likely means:
+**Options:** A. CoreDNS down<br>B. PV/PVC zone topology mismatch with available nodes<br>C. Service selector issue<br>D. ImagePullBackOff
+**Answer:** B (2) – PV/PVC zone topology mismatch with available nodes
+**Explanation:** Zonal volumes are block storage bound to ONE availability zone — an EBS/GCE-PD/Azure-Disk volume in us-east-1a physically cannot attach to a node in us-east-1b. Kubernetes encodes that constraint as nodeAffinity on the PV (<code>topology.kubernetes.io/zone=&lt;zone&gt;</code>), so the scheduler only places pods using that PVC on nodes in the volume's zone. The error means the volume's zone and the pod's schedulable nodes don't overlap: the PVC was bound in zone A (Immediate binding mode provisions at PVC creation, blind to where the pod will run) while the pod's nodeSelector/affinity/tolerations only allow zone B — or the zone-A nodes are cordoned, full, or gone. The fix direction: <code>volumeBindingMode: WaitForFirstConsumer</code> delays provisioning until pod scheduling so the volume is created in the pod's zone (<code>allowedTopologies</code> can further restrict zones), or relax the pod's node constraints. Distractors: CoreDNS is DNS only, a selector issue breaks Service endpoints not mounts, ImagePullBackOff is an image problem.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/storage-classes/#volume-binding-mode" target="_blank">Kubernetes Docs - Storage Classes: Volume binding mode</a>
+**Tags:** k8s::kcna topic::storage topic::scheduling topic::topology src::session
+
+---

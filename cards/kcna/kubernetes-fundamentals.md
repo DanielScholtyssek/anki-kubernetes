@@ -755,7 +755,7 @@ D. etcd
 **Question:** Which command creates a pod named 'nginx' running the nginx image?
 **Options:** A. kubectl create pod nginx<br>B. kubectl run nginx --image=nginx<br>C. kubectl deploy nginx --image=nginx<br>D. kubectl start nginx --image=nginx
 **Answer:** B (2) – kubectl run nginx --image=nginx
-**Explanation:** kubectl run creates a single pod; --image names the container image to pull (Docker Hub by default — use a full registry path for private repos). kubectl create pod is also valid; deploy/start are not pod commands. Deployments come from kubectl create deployment.
+**Explanation:** kubectl run creates a single pod; --image names the container image to pull (Docker Hub by default — use a full registry path for private repos). Note: kubectl create has NO pod subcommand (only deployment, service, job, etc.) — pods are created via kubectl run or a manifest with kubectl create/apply -f. deploy/start are not pod commands.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/pods/" target="_blank">Kubernetes Documentation - Pods</a>
 **Tags:** k8s::kcna topic::kubectl topic::pods src::session
 

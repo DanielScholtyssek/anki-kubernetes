@@ -347,10 +347,10 @@ essential for their function, reducing the potential impact of a compromise.
 
 <!-- note:1793753618569 model:Many -->
 **Domain:** Container Runtime - CRI benefit
-**Question:** What is the benefit of using container runtimes that support the CRI?
+**Question:** What are the benefits of using container runtimes that support the CRI? (Select all that apply)
 **Options:** A. It enables automatic scaling of container instances<br>B. It enables container runtimes to be developed independently of Kubernetes<br>C. It provides better compatibility and standardization across container runtimes<br>D. It allows for direct communication between containers
-**Answer:** C (3) – It provides better compatibility and standardization across container runtimes
-**Explanation:** CRI defines one standard interface between the kubelet and any container runtime — that's its core benefit: compliant runtimes (containerd, CRI-O, cri-dockerd) plug in interchangeably. Option B is a consequence of that standardization (runtimes evolve independently since they only need to satisfy the interface), but the course's intended answer is the standardization/compatibility itself. A and D are unrelated to CRI — scaling is an orchestrator's job and CNI, not CRI, handles connectivity.
+**Answer:** B, C – runtimes implement CRI independently of Kubernetes; the standard interface gives compatibility and standardization across runtimes
+**Explanation:** CRI defines one standard interface between the kubelet and any container runtime. That standardization is the core benefit: compliant runtimes (containerd, CRI-O, cri-dockerd) plug in interchangeably, giving better compatibility and standardization across runtimes (C); and runtime developers only need to satisfy the interface, so runtimes can be built and evolved independently of Kubernetes itself (B). A and D are unrelated to CRI — scaling is the orchestrator's job and CNI, not CRI, handles container networking.
 **Sources:** <a href="https://kubernetes.io/docs/concepts/architecture/cri/" target="_blank">Kubernetes Documentation - Container Runtime Interface (CRI)</a>
 **Tags:** k8s::kcna topic::container-orchestration topic::cri-oci src::session
 

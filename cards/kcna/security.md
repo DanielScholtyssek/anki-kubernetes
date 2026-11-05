@@ -234,3 +234,14 @@
 **Tags:** k8s::kcna topic::networkpolicy topic::security topic::networking src::session
 
 ---
+
+<!-- note:1793920650504 model:Many -->
+**Domain:** Service Communication
+**Question:** Why use certificates between services?
+**Options:** A. Encrypt + authenticate (TLS/mTLS)<br>B. Increase CPU<br>C. Replace DNS<br>D. Stop restarts
+**Answer:** A (1) – encrypt + authenticate (TLS/mTLS)
+**Explanation:** Certificates between services buy TWO things at once: encryption in transit (pod-to-pod traffic crosses node networks where cleartext HTTP would expose credentials and data) AND identity verification — with mTLS BOTH sides present certs, so each service proves who it is, not just that the channel is private. That's the security layer service meshes like Istio/Linkerd automate at scale. The distractors are nonsense or other systems' jobs: certificates don't speed anything up (mTLS costs CPU for handshake/crypto), DNS is CoreDNS, and restart behavior belongs to liveness probes and controllers.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/security/" target="_blank">Kubernetes Docs - Security</a>
+**Tags:** k8s::kcna topic::security topic::tls topic::mtls src::session
+
+---

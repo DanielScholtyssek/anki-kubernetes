@@ -229,3 +229,14 @@ in a specific format that Prometheus can then periodically scrape.
 **Tags:** k8s::kcna topic::prometheus topic::observability src::session
 
 ---
+
+<!-- note:1793920683153 model:Many -->
+**Domain:** PromQL - rate vs increase
+**Question:** In PromQL, which function computes the total increase of a counter over a window?
+**Options:** A. increase()<br>B. histogram_quantile()<br>C. avg()<br>D. irate()
+**Answer:** A (1) – increase()
+**Explanation:** increase(counter[1h]) returns the TOTAL rise of the counter across the window — extrapolated to cover the full range and corrected for counter resets. rate() is literally increase() divided by the window's seconds, giving per-second change. irate() is the instant-rate sibling: it uses only the last two samples, so it reacts fastest but is the noisiest — never use it for totals. histogram_quantile() computes quantiles from histogram buckets; avg() averages an instant vector's values.
+**Sources:** <a href="https://prometheus.io/docs/prometheus/latest/querying/functions/" target="_blank">Prometheus Docs - Query functions</a>
+**Tags:** k8s::kcna topic::promql topic::prometheus topic::observability src::session
+
+---

@@ -240,3 +240,14 @@ in a specific format that Prometheus can then periodically scrape.
 **Tags:** k8s::kcna topic::promql topic::prometheus topic::observability src::session
 
 ---
+
+<!-- note:1793921550156 model:Many -->
+**Domain:** PromQL - histogram_quantile
+**Question:** Which function is used to compute p95 from histogram buckets?
+**Options:** A. histogram_quantile()<br>B. bucket_rate()<br>C. percentile()<br>D. quantile()
+**Answer:** A (1) – histogram_quantile()
+**Explanation:** histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) estimates p95 by interpolating inside the histogram's le (less-than-or-equal) buckets — it needs the _bucket series, which is why it's wrapped around rate() for counters. It computes the quantile WITHIN one histogram's distribution. The distractors don't exist as bucket-quantile functions: bucket_rate() and percentile() aren't PromQL functions at all. Note the real quantile() aggregation operator DOES exist in PromQL — but it computes a quantile ACROSS multiple series' values (like avg/sum), it cannot derive p95 from histogram buckets.
+**Sources:** <a href="https://prometheus.io/docs/prometheus/latest/querying/functions/#histogram_quantile" target="_blank">Prometheus Docs - histogram_quantile</a>
+**Tags:** k8s::kcna topic::promql topic::prometheus src::session
+
+---

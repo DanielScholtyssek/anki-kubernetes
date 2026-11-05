@@ -245,3 +245,25 @@
 **Tags:** k8s::kcna topic::security topic::tls topic::mtls src::session
 
 ---
+
+<!-- note:1793921403923 model:Many -->
+**Domain:** RBAC - additive model
+**Question:** Kubernetes RBAC "deny" behavior:
+**Options:** A. ClusterRole overrides to remove<br>B. RBAC is additive; reduce by removing/changing bindings/roles<br>C. Roles can explicitly deny<br>D. Empty Role cancels other grants
+**Answer:** B (2) – RBAC is additive; reduce access by removing or narrowing bindings/roles
+**Explanation:** RBAC has NO deny mechanism: there is no 'deny' verb, a Role cannot express 'allow everything except X', and an empty Role grants nothing rather than cancelling other grants. Permissions only accumulate — effective access is the UNION of every Role/ClusterRole bound to you (and across authz modes, an allow from ANY enabled mode wins). Wildcards (*) in rules only expand grants, never subtract. The only ways to reduce someone's access are removing the RoleBinding/ClusterRoleBinding, or editing the Role's rules to narrow verbs/resources. This differs from firewalls/SELinux where explicit deny rules exist — RBAC can't do default-deny-with-exceptions.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/" target="_blank">Kubernetes Docs - Using RBAC Authorization</a>
+**Tags:** k8s::kcna topic::rbac topic::security src::session
+
+---
+
+<!-- note:1793921403924 model:Many -->
+**Domain:** ServiceAccounts - token mount
+**Question:** Which setting prevents a Pod from auto-mounting a ServiceAccount token?
+**Options:** A. runAsNonRoot: true<br>B. automountServiceAccountToken: false<br>C. readOnlyRootFilesystem: true<br>D. serviceAccountName: ""
+**Answer:** B (2) – automountServiceAccountToken: false
+**Explanation:** Every pod gets a ServiceAccount token auto-mounted at /var/run/secrets/kubernetes.io/serviceaccount/ — a projected volume holding the SA's JWT plus the cluster CA cert — because the default is automountServiceAccountToken: true. Setting it false (on the pod spec or on the ServiceAccount itself) skips the mount entirely. It exists for least privilege: any process in the pod can read that token and authenticate to the API server AS that ServiceAccount, so mounting it everywhere means every container carries a live credential it may never need — a stolen token = stolen API access. Pods that don't call the K8s API shouldn't get one; pair it with an RBAC-scoped SA so even mounted tokens can only do what's needed. Distractors: runAsNonRoot and readOnlyRootFilesystem are pod securityContext hardening (UID/filesystem), and serviceAccountName only selects WHICH account — an empty value still mounts the default SA's token.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/" target="_blank">Kubernetes Docs - Configure Service Accounts for Pods</a>
+**Tags:** k8s::kcna topic::serviceaccounts topic::security topic::pods src::session
+
+---

@@ -116,3 +116,13 @@ Deployment automates the release to production without manual intervention if al
 **Back:** <div>Correct Answer: <b>C</b></div><div><br></div><div><b>Explanation</b>: Application delivery focuses on the processes and tools used to get applications running reliably and efficiently in the environment.</div>
 
 ---
+<!-- note:1793915795947 model:Many -->
+**Domain:** Helm - values
+**Question:** Which Helm option overrides chart values from the command line?
+**Options:** A. --values<br>B. --namespace<br>C. --kubeconfig<br>D. --set
+**Answer:** D – --set key=value overrides Helm values inline
+**Explanation:** --set overrides individual chart values inline as key=value pairs — repeatable and comma-separable (helm install web ./chart --set image.tag=2.0 --set replicas=3). Precedence: --set beats -f/--values files, which beat the chart's values.yaml defaults. The distractors do unrelated things: --values/-f supplies a whole YAML file of overrides (not inline), --namespace picks the install namespace, --kubeconfig points at a cluster credentials file. For strings that look like numbers or file-sourced values there are --set-string and --set-file.
+**Sources:** <a href="https://helm.sh/docs/intro/using_helm/" target="_blank">Helm Docs - Using Helm</a>
+**Tags:** k8s::kcna topic::helm topic::packaging src::session
+
+---

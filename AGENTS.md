@@ -105,6 +105,11 @@ a remembered list.
     stock-types-only rule — this model is sanctioned for MCQ content.
     Fallback if `Many` is unavailable: `Basic` with options in `Front`
     and the answer letter in `Back`.
+    Gotcha: `Domain` is `Many`'s sort field, and `add_notes` dedups on it
+    — notes in a LATER batch with a Domain value that already exists in
+    the deck get skipped as "duplicate" even when the question is new.
+    Use a distinct Domain string per batch (e.g. `TLS Certificates -
+    Kubelet`) or a fresh wording rather than `allow_duplicate`.
 - **Match the card mix to the target deck's exam format** (formats are
   listed in `CERTS.md`, verified against official CNCF pages):
   - Pure-MCQ cert decks — KCNA, KCSA, PCA, CCA, CAPA, CGOA, CBA, OTCA,

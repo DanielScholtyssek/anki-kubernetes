@@ -399,3 +399,87 @@
 **Tags:** k8s::kcna topic::serviceaccounts topic::secrets topic::security src::session
 
 ---
+
+<!-- note:1793994897834 model:Many -->
+**Domain:** Authorization - concept
+**Question:** After a request is authenticated, what does Kubernetes authorization decide?
+**Options:** A. Whether the authenticated identity is allowed to perform the requested action on the requested resource<br>B. Who the caller is — their username and groups<br>C. Whether the connection to the API server is TLS-encrypted<br>D. Which node the pod should be scheduled onto
+**Answer:** A (1) – whether the authenticated identity is allowed to perform the requested action on the requested resource
+**Explanation:** Authorization answers WHAT an authenticated caller may do: for each API request it evaluates the caller's identity (user + groups) against the request's attributes — verb (get/list/create/update/delete…), resource type, namespace, API path — and returns allow, deny, or no-opinion. Deny-by-default: if NO authorizer approves the request it's rejected 403 Forbidden. Authentication already answered WHO upstream in the request pipeline; authorization is the permission gate before admission control and etcd.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authorization/" target="_blank">Kubernetes Docs - Authorization</a>
+**Tags:** k8s::kcna topic::security topic::rbac src::session
+
+---
+
+<!-- note:1793994897835 model:Many -->
+**Domain:** Authorization - vs authentication
+**Question:** Which statement correctly contrasts authentication and authorization in Kubernetes?
+**Options:** A. Authentication proves WHO the caller is; authorization decides WHAT that identity may do<br>B. Authentication decides permissions; authorization proves the caller's identity<br>C. They are the same pipeline stage with two names<br>D. Authorization only applies to pod-to-pod traffic, not API requests
+**Answer:** A (1) – authentication proves WHO the caller is; authorization decides WHAT that identity may do
+**Explanation:** Two separate pipeline stages with separate plugins. Authentication answers WHO: it turns a cert/token/password into an identity — username plus groups (cert CN→user, O→groups; SA→system:serviceaccount:<ns>:<name>). Authorization answers WHAT: given that identity + the request's verb/resource/namespace attributes, an authorizer (RBAC, Node, Webhook…) allows or denies. Key consequence: you can be fully authenticated and still completely denied — authenticated ≠ authorized. Common misconception: people treat them as one step; they're distinct stages, and RBAC bindings only matter AFTER authentication produces the identity they reference.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/security/controlling-access/" target="_blank">Kubernetes Docs - Controlling Access to the API</a>
+**Tags:** k8s::kcna topic::security topic::authentication src::session
+
+---
+
+<!-- note:1793994897836 model:Many -->
+**Domain:** Authorization - why
+**Question:** Why does Kubernetes need authorization as a separate layer from authentication?
+**Options:** A. Authenticated users need different permissions: admins get full access, developers get scoped-down rights, teams get namespace-limited access<br>B. Authentication is too slow, so authorization shortcuts it<br>C. Authorization is what encrypts Secrets at rest<br>D. The API server refuses to start without an authorization layer
+**Answer:** A (1) – authenticated users need different permissions: admins get full access, developers get scoped-down rights, teams get namespace-limited access
+**Explanation:** Authentication only answers 'are you who you claim' — without authorization, EVERY valid credential would have equal power over the cluster. Authorization implements least privilege: cluster admins need unrestricted access, developers need only their namespaces and workloads, CI bots need narrow verb sets. It's what lets one cluster safely serve many tenants/teams — the same API server, wildly different effective permissions per identity. Without it, a leaked developer kubeconfig = full cluster compromise.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/security/controlling-access/" target="_blank">Kubernetes Docs - Controlling Access to the API</a>
+**Tags:** k8s::kcna topic::security topic::rbac src::session
+
+---
+
+<!-- note:1793994897837 model:Many -->
+**Domain:** Authorization - Webhook
+**Question:** What does Webhook authorization mode do?
+**Options:** A. Makes a synchronous HTTP callout to an external service that returns the allow/deny verdict<br>B. Reads permission rules from a local JSON policy file on the API server<br>C. Checks the requesting kubelet's node client certificate<br>D. Evaluates Role and ClusterRole objects like RBAC does
+**Answer:** A (1) – makes a synchronous HTTP callout to an external service that returns the allow/deny verdict
+**Explanation:** Webhook mode delegates the authorization decision entirely: the API server sends a SubjectAccessReview (user, groups, verb, resource, namespace) to your external endpoint and BLOCKS until it responds with allowed/denied — you can run your own logic or use ecosystem solutions like Open Policy Agent. Current clusters can chain MULTIPLE webhooks with matchConditions and failurePolicy via the structured --authorization-config file (the modern replacement for scattered --authorization-webhook-* flags). The failurePolicy matters: if your webhook is down, the config decides whether requests fail open (NoOpinion → next authorizer) or closed (deny).
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authorization/" target="_blank">Kubernetes Docs - Authorization</a>
+**Tags:** k8s::kcna topic::security topic::rbac topic::webhook src::session
+
+---
+
+<!-- note:1793994897838 model:Many -->
+**Domain:** Authorization - AlwaysAllow
+**Question:** What does AlwaysAllow authorization mode do — and when is it the default?
+**Options:** A. Permits every request that passed authentication; it is the default when --authorization-mode is not set<br>B. Permits requests only from system:node identities<br>C. Denies every request except health checks<br>D. Delegates all decisions to an external webhook service
+**Answer:** A (1) – permits every request that passed authentication; it is the default when --authorization-mode is not set
+**Explanation:** AlwaysAllow is the 'no authorization' mode: any request that survived authentication is permitted — authentication becomes the only gate. It IS the default: if --authorization-mode isn't configured on the API server, AlwaysAllow applies (that's why fresh/kind/minikube clusters let your admin cert do anything). The docs warn explicitly: don't run it where the API server is reachable by clients you don't fully trust — every valid credential gets full power. It's for learning/testing clusters; real clusters set --authorization-mode=Node,RBAC (kubeadm default). Pairs with AlwaysDeny — together they bracket the authz spectrum.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authorization/" target="_blank">Kubernetes Docs - Authorization</a>
+**Tags:** k8s::kcna topic::security topic::rbac src::session
+
+---
+
+<!-- note:1793994897839 model:Many -->
+**Domain:** Authorization - mode ordering
+**Question:** With --authorization-mode=Node,RBAC, how are requests evaluated?
+**Options:** A. Evaluated in order; the first authorizer to return allow OR deny wins immediately; if ALL return no-opinion the request is denied<br>B. Every configured authorizer must approve the request<br>C. RBAC always gets the final say regardless of order<br>D. The order is randomized on each API server restart
+**Answer:** A (1) – evaluated in order; the first authorizer to return allow OR deny wins immediately; if ALL return no-opinion the request is denied
+**Explanation:** Each configured authorizer returns one of three verdicts: allow, deny, or no-opinion. The chain evaluates in --authorization-mode order and the FIRST definitive verdict (allow or deny) is returned immediately — later modes aren't consulted. If every mode abstains (no opinion), the request is DENIED with 403 — deny-by-default. The trap: AlwaysAllow/AlwaysDeny always have an opinion, so position is everything — --authorization-mode=AlwaysAllow,RBAC behaves identically to AlwaysAllow alone (RBAC never gets asked). That's why production uses Node,RBAC: kubelets get Node-authorized first, humans fall through to RBAC.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authorization/" target="_blank">Kubernetes Docs - Authorization</a>
+**Tags:** k8s::kcna topic::security topic::rbac src::session
+
+---
+
+<!-- note:1793994897840 model:Many -->
+**Domain:** Authorization - system:masters
+**Question:** What is special about the system:masters group?
+**Options:** A. A built-in group granting unrestricted API access that bypasses RBAC and Webhook authorization restrictions<br>B. A read-only group for monitoring tools<br>C. The group kubelets belong to for node authorization<br>D. A deprecated group kept only for backwards compatibility
+**Answer:** A (1) – a built-in group granting unrestricted API access that bypasses RBAC and Webhook authorization restrictions
+**Explanation:** system:masters is Kubernetes's break-glass group: any identity belonging to it gets full cluster-admin privileges regardless of what RBAC Roles/Bindings or webhooks say — authorization restrictions are bypassed entirely. That's why admin certs carry O=system:masters in their subject (the cert→group mapping you know) and why kubeadm's default admin kubeconfig works instantly. The docs warn against adding users to it: prefer a ClusterRoleBinding to the built-in cluster-admin ClusterRole instead — same power but visible/auditable in RBAC objects rather than a hidden group claim.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authorization/" target="_blank">Kubernetes Docs - Authorization</a>
+**Tags:** k8s::kcna topic::security topic::rbac topic::authentication src::session
+
+---
+
+<!-- note:1793994897843 model:Cloze -->
+**Text:** ABAC authorization: permission policies live in a {{c1::JSON policy file}} passed to the API server via {{c2::--authorization-policy-file}}; changing them requires {{c3::editing the file and restarting the API server}} — the operational pain that made {{c4::RBAC}} the standard instead.
+**Back Extra:** ABAC = Attribute-Based Access Control: policies combine user attributes + resource attributes + environment attributes into allow rules. It predates RBAC and lost because every policy change meant editing the file AND restarting the API server — no dynamic updates, no kubectl management. RBAC replaced it by making permissions Kubernetes API objects editable live. Avoid ABAC in new clusters.
+**Tags:** k8s::kcna topic::security topic::rbac topic::abac src::session
+
+---

@@ -147,3 +147,14 @@ Deployment automates the release to production without manual intervention if al
 **Tags:** k8s::kcna topic::networking topic::ingress src::session
 
 ---
+
+<!-- note:1794008796228 model:Many -->
+**Domain:** Services - pod access
+**Question:** How can a pod within a Kubernetes cluster reach a service?
+**Options:** A. By using the service's DNS record<br>B. By using the service name<br>C. By using the cluster's DNS server<br>D. By using the pod's IP address
+**Answer:** B (2) – By using the service name
+**Explanation:** A pod reaches a Service by connecting to its NAME (my-service or my-service.ns.svc.cluster.local) — the stable identifier you configure in the app. CoreDNS then resolves that name to the ClusterIP, and kube-proxy forwards ClusterIP traffic to a ready pod. Why not the others: the DNS record and DNS server are the RESOLUTION MECHANISM that makes the name work — they describe how the name is looked up, not what the pod connects to (and resolv.conf already points at CoreDNS automatically). Pod IP bypasses the Service completely — no ClusterIP, no load balancing, and pod IPs are ephemeral. Name vs IP is the real distinction: stable vs unstable.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/service/" target="_blank">Kubernetes Docs - Service</a><br><a href="https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/" target="_blank">Kubernetes Docs - DNS for Services and Pods</a>
+**Tags:** k8s::kcna topic::networking topic::services topic::dns src::session
+
+---

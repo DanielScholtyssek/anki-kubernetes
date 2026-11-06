@@ -388,3 +388,14 @@
 **Tags:** k8s::kcna topic::rbac topic::security src::session
 
 ---
+
+<!-- note:1793935100778 model:Many -->
+**Domain:** Secrets - SA token link
+**Question:** What is the relationship between the secret object and the service account in Kubernetes?
+**Options:** A. The service account is used to authenticate the secret object.<br>B. The secret object is linked to the service account and stores the service account token.<br>C. The service account is linked to the secret object and stores the API server endpoint.<br>D. The secret object is used to authenticate the service account.
+**Answer:** B (2) – the secret object is linked to the service account and stores the service account token
+**Explanation:** LEGACY model (pre-1.24, and still true for manually created token secrets): an SA's token lived in a Secret of type kubernetes.io/service-account-token — the Secret was linked to the SA (via annotation kubernetes.io/service-account.name) and stored its JWT, which pods mounted at /var/run/secrets/kubernetes.io/serviceaccount/. The Secret doesn't authenticate the SA — the SA IS the identity, the token just proves it; and the SA doesn't store the API endpoint (that's kubeconfig's job). MODERN model (1.24+): NO Secret is created — pods get short-lived audience/time/object-bound tokens via the TokenRequest API in a projected volume. That's why YOUR cluster lists SAs but no matching secrets: kubectl get secrets shows nothing of type service-account-token on a post-1.24 cluster.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/configuration/secret/" target="_blank">Kubernetes Docs - Secrets</a><br><a href="https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/" target="_blank">Kubernetes Docs - Managing Service Accounts</a>
+**Tags:** k8s::kcna topic::serviceaccounts topic::secrets topic::security src::session
+
+---

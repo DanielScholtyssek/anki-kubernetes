@@ -585,3 +585,105 @@
 **Tags:** k8s::kcna topic::rbac topic::yaml src::session
 
 ---
+
+<!-- note:1794001609836 model:Many -->
+**Domain:** ClusterRoles - cluster-scoped resources
+**Question:** A Role in namespace 'prod' grants get/list/watch on 'nodes'. Why doesn't it work?
+**Options:** A. Nodes are cluster-scoped — the rule must be in a ClusterRole bound by a ClusterRoleBinding<br>B. Nodes require resourceNames to be set<br>C. The apiGroup should be 'nodes' instead of ''<br>D. Roles cannot contain rules — only ClusterRoles can
+**Answer:** A (1) – Nodes are cluster-scoped — the rule must be in a ClusterRole bound by a ClusterRoleBinding
+**Explanation:** Cluster-scoped resources have no namespace, so namespaced RBAC can't reach them. kubectl api-resources --namespaced=false lists them: nodes, namespaces, persistentvolumes, clusterroles, storageclasses, CSRs and more. The doc is explicit: a nodes rule 'must be in a ClusterRole bound with a ClusterRoleBinding to be effective.' Role + RoleBinding only covers namespaced resources inside one namespace — for cluster-wide objects you need the Cluster* pair.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/" target="_blank">Kubernetes Docs - Using RBAC Authorization</a>
+**Tags:** k8s::kcna topic::rbac topic::security src::session
+
+---
+
+<!-- note:1794001609837 model:Many -->
+**Domain:** ClusterRoles - apiVersion
+**Question:** Which apiVersion/kind defines a cluster-wide RBAC role?
+**Options:** A. apiVersion: rbac.authorization.k8s.io/v1, kind: ClusterRole<br>B. apiVersion: v1, kind: ClusterRole<br>C. apiVersion: rbac.authorization.k8s.io/v1, kind: Role<br>D. apiVersion: rbac.authorization.k8s.io/v1, kind: ClusterRoleBinding
+**Answer:** A (1) – apiVersion: rbac.authorization.k8s.io/v1, kind: ClusterRole
+**Explanation:** ClusterRoles live in the same rbac.authorization.k8s.io/v1 API group as Role/RoleBinding/ClusterRoleBinding. kind: ClusterRole is cluster-scoped — metadata has NO namespace field (a Role requires one). A ClusterRole's rules can cover three things: cluster-scoped resources (nodes, namespaces, PVs), non-resource URLs (/healthz — via nonResourceURLs), and namespaced resources across ALL namespaces when bound cluster-wide. Note ClusterRoleBinding is the binding object — it links subjects to a role, it doesn't define permissions itself.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/" target="_blank">Kubernetes Docs - Using RBAC Authorization</a>
+**Tags:** k8s::kcna topic::rbac topic::security topic::yaml src::session
+
+---
+
+<!-- note:1794001609838 model:Many -->
+**Domain:** ClusterRoles - binding matrix
+**Question:** Which statement about what bindings can reference is correct?
+**Options:** A. A ClusterRoleBinding can only reference a ClusterRole; a RoleBinding can reference a Role or ClusterRole<br>B. A ClusterRoleBinding can reference Roles and ClusterRoles<br>C. A RoleBinding can only reference Roles<br>D. Bindings can reference any RBAC object
+**Answer:** A (1) – A ClusterRoleBinding can only reference a ClusterRole; a RoleBinding can reference a Role or ClusterRole
+**Explanation:** The scope matrix: RoleBinding→Role = permissions within the binding's namespace only. RoleBinding→ClusterRole = the ClusterRole's rules but ONLY inside that one namespace (the 'dave reads secrets in development' pattern — reuse one ClusterRole across namespaces). ClusterRoleBinding→ClusterRole = permissions across ALL namespaces plus cluster-scoped resources. ClusterRoleBinding→Role is invalid — a namespaced Role can't grant cluster-wide access. Memorize: binding type picks the SCOPE, roleRef.kind picks which role object.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/" target="_blank">Kubernetes Docs - Using RBAC Authorization</a>
+**Tags:** k8s::kcna topic::rbac topic::security src::session
+
+---
+
+<!-- note:1794001609839 model:Many -->
+**Domain:** ClusterRoles - default roles
+**Question:** Which built-in ClusterRole grants unrestricted super-user access and is bound to system:masters?
+**Options:** A. cluster-admin<br>B. admin<br>C. edit<br>D. view
+**Answer:** A (1) – cluster-admin
+**Explanation:** cluster-admin is the super-user ClusterRole — any action on any resource; bound to the system:masters group (the O= field in admin kubeconfigs). The other user-facing defaults are the namespace trio, intended for RoleBindings: admin = read/write most resources + manage roles/rolebindings in the namespace; edit = read/write most objects but no RBAC objects; view = read-only, no roles/rolebindings and NO Secrets. User-facing ClusterRoles support aggregation: label a ClusterRole rbac.authorization.k8s.io/aggregate-to-admin/edit/view to inject rules into the defaults.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/" target="_blank">Kubernetes Docs - Using RBAC Authorization</a>
+**Tags:** k8s::kcna topic::rbac topic::security src::session
+
+---
+
+<!-- note:1794001609840 model:Many -->
+**Domain:** ClusterRoles - admin edit view
+**Question:** What is true about the default 'edit' ClusterRole?
+**Options:** A. It allows reading Secrets and running Pods as any ServiceAccount in the namespace — a privilege-escalation path<br>B. It forbids access to Secrets entirely<br>C. It grants cluster-wide read/write access<br>D. It can modify RoleBindings
+**Answer:** A (1) – It allows reading Secrets and running Pods as any ServiceAccount in the namespace — a privilege-escalation path
+**Explanation:** Doc-verified distinctions: edit = read/write most objects in a namespace but NOT roles/rolebindings — yet it CAN access Secrets and run pods as any ServiceAccount, handing the user that SA's API access (escalation). view = read-only, and deliberately excludes Secrets because secret contents contain SA tokens → privesc. admin = edit + role/rolebinding management. None of the trio has a default binding — you create the RoleBinding yourself to grant them.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/" target="_blank">Kubernetes Docs - Using RBAC Authorization</a>
+**Tags:** k8s::kcna topic::rbac topic::security src::session
+
+---
+
+<!-- note:1794001609841 model:Many -->
+**Domain:** ClusterRoles - kubectl create
+**Question:** Which commands create a ClusterRole 'node-admin' and bind group 'ops' to it cluster-wide?
+**Options:** A. kubectl create clusterrole node-admin --verb=get,list,watch,create,update,patch,delete --resource=nodes ; kubectl create clusterrolebinding node-admin --clusterrole=node-admin --group=ops<br>B. kubectl create role node-admin --verb=get --resource=nodes ; kubectl create rolebinding node-admin --role=node-admin --group=ops<br>C. kubectl create clusterrolebinding node-admin --role=node-admin --group=ops<br>D. kubectl auth can-i create nodes --as ops
+**Answer:** A (1) – kubectl create clusterrole node-admin --verb=... --resource=nodes ; kubectl create clusterrolebinding node-admin --clusterrole=node-admin --group=ops
+**Explanation:** kubectl create clusterrole mirrors create role (--verb, --resource, --api-group — no namespace needed since it's cluster-scoped). kubectl create clusterrolebinding links subjects cluster-wide using --clusterrole= (NOT --role=) plus --user=, --group=, or --serviceaccount=ns:name subjects. Doc example: kubectl create clusterrolebinding root-cluster-admin-binding --clusterrole=cluster-admin --user=root. Inspect with kubectl get clusterrole,clusterrolebinding -o yaml.
+**Sources:** <a href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/" target="_blank">Kubernetes Docs - kubectl create clusterrole / clusterrolebinding</a>
+**Tags:** k8s::kcna topic::rbac topic::kubectl src::session
+
+---
+
+<!-- note:1794001609842 model:Many -->
+**Domain:** ClusterRoles - nonResourceURLs
+**Question:** How does a ClusterRole grant access to endpoints like /healthz or /metrics that aren't Kubernetes resources?
+**Options:** A. With the nonResourceURLs field — e.g. nonResourceURLs: ["/healthz", "/healthz/*"] with verbs<br>B. By listing them under resources as "healthz"<br>C. Via a special apiGroup called "nonresource"<br>D. It can't — only admission webhooks reach those endpoints
+**Answer:** A (1) – With the nonResourceURLs field — e.g. nonResourceURLs: ["/healthz", "/healthz/*"] with verbs
+**Explanation:** nonResourceURLs is a ClusterRole-only rules field for API endpoints that aren't Kubernetes resources: /healthz, /metrics, /version, /api, /apis. Format: nonResourceURLs: ["/healthz", "/healthz/*"] with verbs — '*' works as a suffix glob. These rules only take effect in a ClusterRole bound by a ClusterRoleBinding. Listing 'healthz' under resources won't work — it's not a resource type at all.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/" target="_blank">Kubernetes Docs - Using RBAC Authorization</a>
+**Tags:** k8s::kcna topic::rbac topic::security topic::api src::session
+
+---
+
+<!-- note:1794001609843 model:Many -->
+**Domain:** ClusterRoles - system roles
+**Question:** You manually edit the rules of the system:discovery ClusterRole. What happens?
+**Options:** A. The API server overwrites your changes at startup via auto-reconciliation<br>B. Nothing — manual edits to ClusterRoles are permanent<br>C. The cluster breaks immediately<br>D. Your changes merge permanently with the defaults
+**Answer:** A (1) – The API server overwrites your changes at startup via auto-reconciliation
+**Explanation:** system:-prefixed ClusterRoles and ClusterRoleBindings are control-plane managed (labeled kubernetes.io/bootstrapping=rbac-defaults). At EVERY apiserver start it re-adds missing permissions and subjects — auto-reconciliation repairs accidental edits and picks up new permissions each Kubernetes release. Opt out per-object with annotation rbac.authorization.kubernetes.io/autoupdate: "false", but missing defaults can leave the cluster non-functional. Never hand-edit system: roles — extend them instead via aggregate-to-* labels on your own ClusterRoles.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/" target="_blank">Kubernetes Docs - Using RBAC Authorization</a>
+**Tags:** k8s::kcna topic::rbac topic::security src::session
+
+---
+
+<!-- note:1794001609859 model:Cloze -->
+**Text:** ClusterRole manifest granting full node management cluster-wide:<br><br><code>apiVersion: {{c1::rbac.authorization.k8s.io/v1}}<br>kind: {{c2::ClusterRole}}<br>metadata:<br>  name: node-admin<br>rules:<br>- apiGroups: [{{c3::""}}]<br>  resources: [{{c4::nodes}}]<br>  verbs: [{{c5::get, list, watch, create, update, patch, delete}}]</code>
+**Back Extra:** No namespace field — ClusterRoles are cluster-scoped (Role requires metadata.namespace). nodes is a core-group resource so apiGroups: [""]. A ClusterRole alone grants nothing — it needs a ClusterRoleBinding to attach subjects. Same skeleton works for namespaces, persistentvolumes, clusterroles, storageclasses (all cluster-scoped).
+**Tags:** k8s::kcna topic::rbac topic::yaml src::session
+
+---
+
+<!-- note:1794001609860 model:Cloze -->
+**Text:** ClusterRoleBinding manifest granting group 'manager' secret read access in EVERY namespace:<br><br><code>apiVersion: {{c1::rbac.authorization.k8s.io/v1}}<br>kind: {{c2::ClusterRoleBinding}}<br>metadata:<br>  name: read-secrets-global<br>subjects:<br>- kind: {{c3::Group}}<br>  name: {{c4::manager}}<br>  apiGroup: rbac.authorization.k8s.io<br>roleRef:<br>  kind: {{c5::ClusterRole}}<br>  name: secret-reader<br>  apiGroup: rbac.authorization.k8s.io</code>
+**Back Extra:** No namespace — the binding grants across ALL namespaces cluster-wide. roleRef.kind must be ClusterRole (can't point at a namespaced Role). roleRef is immutable — delete/recreate to change. subjects support User/Group/ServiceAccount kinds, names case-sensitive. Imperative equivalent: kubectl create clusterrolebinding read-secrets-global --clusterrole=secret-reader --group=manager.
+**Tags:** k8s::kcna topic::rbac topic::yaml src::session
+
+---

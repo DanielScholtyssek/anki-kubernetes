@@ -322,3 +322,14 @@
 **Tags:** k8s::kcna topic::security topic::kubelet topic::rbac src::session
 
 ---
+
+<!-- note:1793932923824 model:Many -->
+**Domain:** NetworkPolicy - CNI support
+**Question:** Which of the following solutions support Kubernetes network policies?
+**Options:** A. Flannel, weave-net, and kube-proxy<br>B. Calico, weave-net, and flannel<br>C. Kube router, calico, and flannel<br>D. Kube router, calico, and weave-net
+**Answer:** D (4) – kube-router, calico, and weave-net
+**Explanation:** NetworkPolicy is just an API — the CNI plugin must actually ENFORCE it, so support is entirely CNI-dependent. Calico, weave-net and kube-router all ship NetworkPolicy controllers (kube-router even has an official Kubernetes docs page for it; Cilium and Antrea do too). Flannel is the classic 'no' — flanneld only does overlay networking/routing and is policy-unaware (newer flannel charts can bundle a separate policy controller, but that's an add-on, not flannel itself). kube-proxy isn't a CNI at all — it programs Service ClusterIP/NodePort rules on each node; it has nothing to do with pod ingress/egress policy.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/administer-cluster/network-policy-provider/kube-router-network-policy/" target="_blank">Kubernetes Docs - Use Kube-router for NetworkPolicy</a>
+**Tags:** k8s::kcna topic::networking topic::networkpolicy topic::cni src::session
+
+---

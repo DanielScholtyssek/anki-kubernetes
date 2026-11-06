@@ -851,3 +851,14 @@ D. etcd
 **Tags:** k8s::kcna topic::kubectl topic::api src::session
 
 ---
+
+<!-- note:1793932382562 model:Many -->
+**Domain:** kube-proxy - purpose
+**Question:** What is the purpose of Kube Proxy in a Kubernetes cluster?
+**Options:** A. It is used to monitor the health of the Kubernetes cluster.<br>B. It is used to create and manage Kubernetes objects like Pods and Services.<br>C. It is used to manage the storage resources in a Kubernetes cluster.<br>D. It is used to enable connectivity between pods and services across different nodes in the cluster.
+**Answer:** D (4) – enable connectivity between pods and services across different nodes in the cluster
+**Explanation:** kube-proxy runs on EVERY node (workers AND control plane — it's not a control-plane component) and implements Services at the node level: it watches Service and EndpointSlice objects through the API server and programs per-node packet rules — iptables, IPVS, nftables, or eBPF depending on proxy mode — that DNAT traffic destined for a ClusterIP to a ready pod IP, and that catch NodePort traffic arriving on the node. So 'pod → Service ClusterIP → some pod, possibly on another node' works transparently. It's not monitoring (that's kubelet probes/metrics-server), not object management (that's controllers), not storage. kube-proxy itself doesn't health-check pods — EndpointSlices only contain ready endpoints, maintained by the endpointslice mirroring controller.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/kube-proxy/" target="_blank">Kubernetes Docs - kube-proxy</a>
+**Tags:** k8s::kcna topic::networking topic::services src::session
+
+---

@@ -880,3 +880,83 @@
 **Tags:** k8s::kcna topic::authentication topic::kubectl src::session
 
 ---
+
+<!-- note:1794006612602 model:Many -->
+**Domain:** SecurityContext - concept
+**Question:** What is securityContext and why does it exist?
+**Options:** A. Privilege and access-control settings for a Pod or Container — UID/GID, capabilities, seccomp, AppArmor, SELinux, read-only rootfs<br>B. Network rules controlling which pods can talk to each other<br>C. Resource quotas limiting CPU and memory per pod<br>D. TLS certificates used to encrypt pod-to-pod traffic
+**Answer:** A (1) – Privilege and access-control settings for a Pod or Container — UID/GID, capabilities, seccomp, AppArmor, SELinux, read-only rootfs
+**Explanation:** securityContext defines privilege and access control for pods/containers: runAsUser/runAsGroup (UID/GID), capabilities (Linux privileges), privileged mode, allowPrivilegeEscalation (blocks setuid gains), readOnlyRootFilesystem, seccompProfile, appArmorProfile, seLinuxOptions. It exists because containers share the host kernel — isolation is weaker than a VM, so these settings are the per-workload hardening layer that Pod Security Standards then enforce cluster-wide.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/" target="_blank">Kubernetes Docs - Configure a Security Context for a Pod or Container</a>
+**Tags:** k8s::kcna topic::security topic::podsecurity topic::pods src::session
+
+---
+
+<!-- note:1794006612603 model:Many -->
+**Domain:** SecurityContext - pod vs container
+**Question:** Where do pod-level and container-level securityContext fields live in the spec?
+**Options:** A. spec.securityContext = PodSecurityContext for ALL containers (+ volumes); spec.containers[].securityContext = SecurityContext for ONE container<br>B. spec.securityContext is for containers, spec.podSecurityContext is for the pod<br>C. Both fields are identical — placement doesn't matter<br>D. spec.securityContext only works on Deployments, not bare Pods
+**Answer:** A (1) – spec.securityContext = PodSecurityContext for ALL containers (+ volumes); spec.containers[].securityContext = SecurityContext for ONE container
+**Explanation:** Two different objects at two levels: spec.securityContext is a PodSecurityContext applying to every container in the pod (and volumes — fsGroup controls volume ownership); spec.containers[].securityContext is a SecurityContext applying to just that one container. The Pod object is the broader default; the container object is the per-workload override.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/" target="_blank">Kubernetes Docs - Configure a Security Context for a Pod or Container</a>
+**Tags:** k8s::kcna topic::security topic::podsecurity topic::yaml src::session
+
+---
+
+<!-- note:1794006612604 model:Many -->
+**Domain:** SecurityContext - override
+**Question:** A Pod sets spec.securityContext.runAsUser: 1000 but its container sets securityContext.runAsUser: 2000. What UID does the process run as?
+**Options:** A. The container runs as UID 2000 — container-level securityContext overrides pod-level on overlap<br>B. The container runs as UID 1000 — pod-level always wins<br>C. Pod creation is rejected — conflicting UIDs<br>D. The container runs as root — container settings are ignored
+**Answer:** A (1) – The container runs as UID 2000 — container-level securityContext overrides pod-level on overlap
+**Explanation:** Doc example: pod sets securityContext.runAsUser: 1000 but the container sets securityContext.runAsUser: 2000 → the process runs as 2000. Container settings override pod settings wherever they overlap; pod settings are the defaults for everything not overridden. One asymmetry: container settings do NOT affect the pod's volumes — fsGroup and friends only exist at pod level.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/" target="_blank">Kubernetes Docs - Configure a Security Context for a Pod or Container</a>
+**Tags:** k8s::kcna topic::security topic::podsecurity src::session
+
+---
+
+<!-- note:1794006612605 model:Many -->
+**Domain:** SecurityContext - volumes/fsGroup
+**Question:** Which securityContext field controls group ownership of mounted volumes, and where must it be set?
+**Options:** A. fsGroup — it makes volume contents owned by that GID; it only exists at pod level because container settings don't touch volumes<br>B. runAsUser — it controls volume permissions per-container<br>C. privileged — it grants volume admin rights<br>D. readOnlyRootFilesystem — it protects volumes from writes
+**Answer:** A (1) – fsGroup — it makes volume contents owned by that GID; it only exists at pod level because container settings don't touch volumes
+**Explanation:** fsGroup is a PodSecurityContext-only field: it sets the group ownership of mounted volumes so containers can read/write shared data without running as root. Doc rule: 'Container settings do not affect the Pod's Volumes' — so fsGroup, supplementalGroups, fsGroupChangePolicy and supplementalGroupsPolicy exist ONLY under spec.securityContext. Companion fields: fsGroupChangePolicy (OnRootMismatch skips recursive chown for speed) and supplementalGroupsPolicy (Merge default vs Strict — controls whether the image's /etc/group memberships get merged in, a beta feature since v1.33).
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/" target="_blank">Kubernetes Docs - Configure a Security Context for a Pod or Container</a>
+**Tags:** k8s::kcna topic::security topic::podsecurity topic::storage src::session
+
+---
+
+<!-- note:1794006612606 model:Many -->
+**Domain:** SecurityContext - allowPrivilegeEscalation
+**Question:** What does allowPrivilegeEscalation: false do, and what is its default?
+**Options:** A. It defaults to true; setting false blocks setuid-based privilege gains and is incompatible with privileged:true or CAP_SYS_ADMIN<br>B. It defaults to false; set true to allow setuid binaries<br>C. It only applies at pod level, not container level<br>D. It controls whether the container can escalate to host root via nsenter
+**Answer:** A (1) – It defaults to true; setting false blocks setuid-based privilege gains and is incompatible with privileged:true or CAP_SYS_ADMIN
+**Explanation:** allowPrivilegeEscalation controls whether a process can gain MORE privileges than its parent — e.g. by executing a setuid binary. It maps to the kernel's no_new_privs flag (inverted: allowPrivilegeEscalation: false sets no_new_privs). If undefined it DEFAULTS TO TRUE — so you must opt out explicitly. It's inconsistent with privileged: true or CAP_SYS_ADMIN and can't be combined with them. This is the field Pod Security Standards 'restricted' requires.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/" target="_blank">Kubernetes Docs - Configure a Security Context for a Pod or Container</a>
+**Tags:** k8s::kcna topic::security topic::podsecurity topic::pods src::session
+
+---
+
+<!-- note:1794006612607 model:Many -->
+**Domain:** SecurityContext - capabilities
+**Question:** How do you apply least privilege with Linux capabilities in a container securityContext?
+**Options:** A. capabilities.drop: ["ALL"] then add back only what's needed — least privilege; privileged:true grants everything<br>B. Capabilities can only be added, never dropped<br>C. privileged:true is required for any container to function<br>D. capabilities are set at pod level only, never per-container
+**Answer:** A (1) – capabilities.drop: ["ALL"] then add back only what's needed — least privilege; privileged:true grants everything
+**Explanation:** Linux capabilities are the granular privileges root normally holds (NET_ADMIN, SYS_ADMIN, DAC_OVERRIDE…). Hardened containers drop ALL capabilities then add back only required ones: securityContext.capabilities.drop: ["ALL"], add: ["NET_BIND_SERVICE"]. privileged: true is the nuclear option — ALL capabilities plus host device access — required for things like CNI plugins but a massive risk in multi-tenant clusters; Pod Security Standards 'baseline' forbids it.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/" target="_blank">Kubernetes Docs - Configure a Security Context for a Pod or Container</a>
+**Tags:** k8s::kcna topic::security topic::podsecurity topic::pods src::session
+
+---
+
+<!-- note:1794006612610 model:Cloze -->
+**Text:** Pod-level securityContext manifest (from the docs):<br><br><code>apiVersion: v1<br>kind: Pod<br>metadata:<br>  name: security-context-demo<br>spec:<br>  securityContext:<br>    runAsUser: {{c1::1000}}<br>    runAsGroup: {{c2::3000}}<br>    fsGroup: {{c3::2000}}<br>    supplementalGroups: [{{c4::4000}}]<br>  containers:<br>  - name: sec-ctx-demo<br>    image: busybox<br>    securityContext:<br>      allowPrivilegeEscalation: {{c5::false}}</code>
+**Back Extra:** Pod-level fields seen here: runAsUser/runAsGroup (UID/GID for all containers), fsGroup (volume group ownership), supplementalGroups (extra groups). Container-level adds per-container overrides like allowPrivilegeEscalation: false and capabilities. The id output would be uid=1000 gid=3000 groups=2000,3000,4000 — pod settings apply to every container unless overridden.
+**Tags:** k8s::kcna topic::security topic::podsecurity topic::yaml src::session
+
+---
+
+<!-- note:1794006612611 model:Cloze -->
+**Text:** Container-level override example — pod says 1000, container says 2000:<br><br><code>spec:<br>  securityContext:<br>    runAsUser: {{c1::1000}}        # pod default for all containers<br>  containers:<br>  - name: sec-ctx-demo-2<br>    securityContext:<br>      runAsUser: {{c2::2000}}      # overrides pod → runs as 2000<br>      allowPrivilegeEscalation: {{c3::false}}</code>
+**Back Extra:** securityContext-2.yaml verbatim: pod-level runAsUser: 1000, container-level runAsUser: 2000 → process runs as 2000 (container wins on overlap). Container settings apply ONLY to that container and never affect pod volumes. kubectl exec -it <pod> -- id confirms the effective UID/GID/groups.
+**Tags:** k8s::kcna topic::security topic::podsecurity topic::yaml src::session
+
+---

@@ -300,3 +300,14 @@
 **Tags:** k8s::kcna topic::networking topic::networkpolicy topic::yaml src::session
 
 ---
+
+<!-- note:1793932581200 model:Many -->
+**Domain:** ServiceAccounts - immutability
+**Question:** What statement/s is/are true about the service account of an existing pod in Kubernetes?
+**Options:** A. You can change the service account by running kubectl edit pod and modifying the service account field.<br>B. The service account of a pod can be changed by directly modifying the service account field in the running pod using kubectl apply without modifying the pod definition file.<br>C. The service account is set when the pod is created and cannot be changed afterwards.<br>D. You can change the service account by modifying the pod definition file and updating the service account name field.
+**Answer:** C (3) – the service account is set when the pod is created and cannot be changed afterwards
+**Explanation:** spec.serviceAccountName is immutable after pod creation — same pattern as spec.nodeName: it's fixed at admission and the API server rejects kubectl edit/patch/apply attempts on a live pod (that's why A, B and D all fail — D would work for a NEW pod via the definition file, but applying it to an existing pod errors on the immutable field). To change a pod's SA you must delete and recreate it — for Deployments that's updating the pod template and letting the rollout create new pods. Note the distinction: you CAN change what an SA is allowed to do (edit its RBAC bindings) — that changes permissions of the identity, not which identity the pod uses. The mounted token is also projected at creation, so the pod's credential can't be swapped in place either.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/" target="_blank">Kubernetes Docs - Configure Service Accounts for Pods</a>
+**Tags:** k8s::kcna topic::serviceaccounts topic::pods topic::security src::session
+
+---

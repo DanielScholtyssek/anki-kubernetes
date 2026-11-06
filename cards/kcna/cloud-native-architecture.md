@@ -205,3 +205,98 @@ completely managed by the platform, allowing developers to focus on code.
 **Back:** <div>Correct Answer: <b>A</b></div><div><br></div> <div><b>Explanation</b>: FaaS allows execution of functions without managing servers.</div>
 
 ---
+
+<!-- note:1794007966270 model:Many -->
+**Domain:** Cluster Networking - apiserver port
+**Question:** Which port does the Kubernetes API server listen on by default?
+**Options:** A. TCP 6443<br>B. TCP 443<br>C. TCP 2379<br>D. TCP 10250
+**Answer:** A (1) – TCP 6443 — the Kubernetes API server, the port EVERY component talks through
+**Explanation:** kube-apiserver listens on TCP 6443 inbound by default — it's the single front door: kubelets, kube-proxy, controllers, scheduler, kubectl, and every Pod's ServiceAccount token all authenticate to it. In firewall-restricted environments (on-prem DCs, VPC security groups) 6443 is the one port that must be reachable by everything. It's a default, not a law — teams often put the API server behind a load balancer on 443 and route to 6443 internally.
+**Sources:** <a href="https://kubernetes.io/docs/reference/networking/ports-and-protocols/" target="_blank">Kubernetes Docs - Ports and Protocols</a>
+**Tags:** k8s::kcna topic::networking topic::control-plane src::session
+
+---
+
+<!-- note:1794007966271 model:Many -->
+**Domain:** Cluster Networking - control plane ports
+**Question:** Which ports must be open on control plane nodes? (Select all that apply)
+**Options:** A. 6443 — kube-apiserver<br>B. 2379-2380 — etcd client API<br>C. 10257 — kube-controller-manager<br>D. 10259 — kube-scheduler<br>E. 10255 — kubelet read-only API
+**Answer:** A, B, C, D – 6443 apiserver, 2379-2380 etcd, 10257 controller-manager, 10259 scheduler
+**Explanation:** (Select all that apply) Control plane inbound TCP ports: 6443 kube-apiserver (all components), 2379-2380 etcd client API (apiserver↔etcd), 10257 kube-controller-manager (self only — its secure endpoint), 10259 kube-scheduler (self only). NOT on the list: 10255 is the long-deprecated kubelet read-only port, 10256 is kube-proxy (worker-side health endpoint), and 443 is only there if you override the API server port.
+**Sources:** <a href="https://kubernetes.io/docs/reference/networking/ports-and-protocols/" target="_blank">Kubernetes Docs - Ports and Protocols</a>
+**Tags:** k8s::kcna topic::networking topic::control-plane src::session
+
+---
+
+<!-- note:1794007966272 model:Many -->
+**Domain:** Cluster Networking - etcd ports
+**Question:** Which ports does etcd need open, and who talks to it?
+**Options:** A. TCP 2379-2380 — etcd's client API range; 2379 for client traffic, 2380 for peer replication<br>B. TCP 6443-6444 — etcd mirrors the API server ports<br>C. TCP 10250 — etcd shares the kubelet port<br>D. UDP 2379 — etcd uses UDP for replication
+**Answer:** A (1) – TCP 2379-2380 — etcd's client API range; 2379 for client traffic, 2380 for peer replication
+**Explanation:** etcd listens on TCP 2379-2380 inbound: 2379 serves the client API (kube-apiserver is the client — it's the only regular consumer), 2380 handles peer-to-peer replication between etcd members. etcd stores ALL cluster state so these ports matter for quorum. The doc notes etcd can also run EXTERNAL to the control plane or on custom ports — then only the apiserver↔etcd path needs opening, not the whole range everywhere.
+**Sources:** <a href="https://kubernetes.io/docs/reference/networking/ports-and-protocols/" target="_blank">Kubernetes Docs - Ports and Protocols</a>
+**Tags:** k8s::kcna topic::networking topic::etcd topic::control-plane src::session
+
+---
+
+<!-- note:1794007966273 model:Many -->
+**Domain:** Cluster Networking - kubelet port
+**Question:** Which port does the kubelet serve its API on?
+**Options:** A. TCP 10250 — the kubelet API: self plus the control plane (logs, exec, metrics, probes)<br>B. TCP 10257 — kubelets share the controller-manager port<br>C. TCP 4194 — the kubelet's flannel VXLAN port<br>D. TCP 6782-6784 — kubelet metrics ports
+**Answer:** A (1) – TCP 10250 — the kubelet API: self plus the control plane (logs, exec, metrics, probes)
+**Explanation:** kubelet serves its API on TCP 10250 inbound — used by the kubelet itself AND the control plane, which reaches in for kubectl logs/exec, metrics scraping, and probe results. On worker nodes this is THE port that must be open to the control plane subnet. (Historical note: 10255 was the old read-only kubelet port — deprecated and gone from the docs because it leaked pod specs without auth.)
+**Sources:** <a href="https://kubernetes.io/docs/reference/networking/ports-and-protocols/" target="_blank">Kubernetes Docs - Ports and Protocols</a>
+**Tags:** k8s::kcna topic::networking topic::kubelet src::session
+
+---
+
+<!-- note:1794007966274 model:Many -->
+**Domain:** Cluster Networking - kube-proxy port
+**Question:** What is TCP 10256 for?
+**Options:** A. TCP 10256 — kube-proxy's healthz/metrics endpoint, used by itself and load balancers<br>B. TCP 10250 — kube-proxy shares the kubelet port<br>C. TCP 30000-32767 — kube-proxy's own management range<br>D. UDP 10256 — kube-proxy uses UDP for service traffic
+**Answer:** A (1) – TCP 10256 — kube-proxy's healthz/metrics endpoint, used by itself and load balancers
+**Explanation:** kube-proxy opens TCP 10256 inbound — it's NOT the port that carries Service traffic (that's whatever NodePort/hostPort the Service uses); 10256 is kube-proxy's own health/metrics endpoint so load balancers and monitoring can check whether the proxy is alive on each node. If you health-check kube-proxy through an LB or scrape its metrics, this is the port to allow.
+**Sources:** <a href="https://kubernetes.io/docs/reference/networking/ports-and-protocols/" target="_blank">Kubernetes Docs - Ports and Protocols</a>
+**Tags:** k8s::kcna topic::networking topic::services src::session
+
+---
+
+<!-- note:1794007966275 model:Many -->
+**Domain:** Cluster Networking - NodePort range
+**Question:** Which port range must be open on worker nodes for NodePort Services?
+**Options:** A. TCP and UDP 30000-32767 — the default NodePort range, open on every worker node<br>B. TCP 3000-3010 — the default HTTP service range<br>C. TCP 8080-8090 — the kube-proxy forwarding range<br>D. UDP 53 only — NodePort uses DNS ports
+**Answer:** A (1) – TCP and UDP 30000-32767 — the default NodePort range, open on every worker node
+**Explanation:** NodePort Services get a port in the default range 30000-32767 on EVERY node — both TCP and UDP are listed because the Service protocol decides which. kube-proxy on each node catches traffic arriving at nodeIP:nodePort and forwards it to a ready pod. The range is customizable (--service-node-port-range on the API server) — if you change it, open the NEW range instead. This is why NodePort is 'expose on all nodes': any node's IP works as an entry point.
+**Sources:** <a href="https://kubernetes.io/docs/reference/networking/ports-and-protocols/" target="_blank">Kubernetes Docs - Ports and Protocols</a>
+**Tags:** k8s::kcna topic::networking topic::services src::session
+
+---
+
+<!-- note:1794007966276 model:Many -->
+**Domain:** Cluster Networking - port overrides
+**Question:** Can the default component ports be changed?
+**Options:** A. All of them are defaults — e.g. API server is often moved behind a 443 load balancer<br>B. Only the API server port can be changed<br>C. Ports are compiled into the kubelet binary<br>D. Changing ports requires recompiling Kubernetes
+**Answer:** A (1) – All of them are defaults — e.g. API server is often moved behind a 443 load balancer
+**Explanation:** Every port in the table is a default, not fixed: --secure-port on kube-apiserver, --etcd-servers for etcd placement, kubelet's --port, kube-proxy's --healthz-port/metrics-port, and --service-node-port-range for NodePort. The classic pattern: keep the API server on 6443 internally but front it with a load balancer listening on 443 that routes to it — external clients hit 443, internal traffic stays on 6443.
+**Sources:** <a href="https://kubernetes.io/docs/reference/networking/ports-and-protocols/" target="_blank">Kubernetes Docs - Ports and Protocols</a>
+**Tags:** k8s::kcna topic::networking topic::control-plane src::session
+
+---
+
+<!-- note:1794007966277 model:Many -->
+**Domain:** Cluster Networking - node prereqs
+**Question:** What network prerequisites must every node in a Kubernetes cluster satisfy?
+**Options:** A. Each node needs ≥1 networked interface with an IP, a unique hostname, a unique MAC, and the documented ports open<br>B. All nodes must share one flat L2 broadcast domain<br>C. Each node needs a public IP address<br>D. Hostnames must match pod names exactly
+**Answer:** A (1) – Each node needs ≥1 networked interface with an IP, a unique hostname, a unique MAC, and the documented ports open
+**Explanation:** Cluster networking prerequisites per node: at least one interface connected to a network, each interface has an IP address, and the host has a unique hostname and unique MAC address — pod networking overlays (VXLAN etc.) and kubelet identity assume no two nodes look alike at L2. On top of that, the firewall must allow the documented component ports (6443, 2379-2380, 10250, 10256, 10257, 10259, NodePort range). Break any of these and you get subtle failures: duplicate hostnames confuse node identity, missing ports show up as probe/metrics timeouts.
+**Sources:** <a href="https://kubernetes.io/docs/reference/networking/ports-and-protocols/" target="_blank">Kubernetes Docs - Ports and Protocols</a>
+**Tags:** k8s::kcna topic::networking topic::cluster-setup src::session
+
+---
+
+<!-- note:1794007966278 model:Cloze -->
+**Text:** Default Kubernetes ports — control plane then workers:<br><br>Control plane (all TCP inbound):<br>{{c1::kube-apiserver}} → {{c2::6443}} (all components)<br>{{c3::etcd}} → {{c4::2379-2380}} (client API)<br>{{c5::kube-controller-manager}} → {{c6::10257}} (self)<br>{{c7::kube-scheduler}} → {{c8::10259}} (self)<br><br>Worker nodes:<br>{{c9::kubelet}} → {{c10::10250}}<br>kube-proxy → {{c11::10256}} (healthz)<br>NodePort Services → {{c12::30000-32767}} TCP+UDP
+**Back Extra:** Direction is always INBOUND to the listed component. kubelet 10250 appears on BOTH control plane and workers (control plane reaches in for logs/exec/metrics). etcd can live externally or on custom ports. NodePort range is a default — change it and open the new range instead. kube-proxy 10256 is health/metrics only, NOT service traffic.
+**Tags:** k8s::kcna topic::networking topic::control-plane src::session
+
+---

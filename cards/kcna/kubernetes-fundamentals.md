@@ -760,3 +760,83 @@ D. etcd
 **Tags:** k8s::kcna topic::governance topic::ecosystem src::session
 
 ---
+
+<!-- note:1793931644489 model:Many -->
+**Domain:** API Groups - core vs named
+**Question:** How do the core API group and named API groups differ?
+**Options:** A. Core serves at REST path /api/v1 with apiVersion: v1; named groups at /apis/$GROUP/$VERSION with apiVersion: $GROUP/$VERSION<br>B. The core group is deprecated — all resources moved to named groups<br>C. Named groups use /api/v1 too but with kind prefixes<br>D. The core group has no REST path — it exists only at compile time
+**Answer:** A – core serves at /api/v1 with apiVersion: v1; named groups at /apis/$GROUP/$VERSION with apiVersion: $GROUP/$VERSION
+**Explanation:** Every object declares group+version in its apiVersion field, which mirrors the REST path. The core (legacy) group is /api/v1 and is written as just apiVersion: v1 — no group name, because it's the original unnamed group holding pods, services, namespaces, nodes, secrets… Named groups live at /apis/<group>/<version> and write apiVersion: <group>/<version> — apps/v1 → /apis/apps/v1, networking.k8s.io/v1 → /apis/networking.k8s.io/v1, batch/v1 → /apis/batch/v1. Named groups exist so the API can grow: new features land in named groups without destabilizing the stable core API.
+**Sources:** <a href="https://kubernetes.io/docs/reference/using-api/" target="_blank">Kubernetes Docs - API Overview</a>
+**Tags:** k8s::kcna topic::api topic::yaml src::session
+
+---
+
+<!-- note:1793931644490 model:Many -->
+**Domain:** API Groups - core resources
+**Question:** Which resources are served by the core v1 API group? (Select all that apply)
+**Options:** A. Pods<br>B. Namespaces<br>C. Nodes<br>D. Events<br>E. Endpoints<br>F. Secrets<br>G. Deployments<br>H. NetworkPolicies<br>I. CronJobs<br>J. ClusterRoles
+**Answer:** A, B, C, D, E, F – Pods, Namespaces, Nodes, Events, Endpoints, Secrets
+**Explanation:** The core v1 group holds the ORIGINAL API: pods, services, namespaces, nodes, configmaps, secrets, serviceaccounts, endpoints, events, persistentvolumes/claims, resourcequotas, limitranges, replicationcontrollers, podtemplates. Everything newer lives in named groups — Deployments/StatefulSets/DaemonSets/ReplicaSets → apps/v1; Jobs/CronJobs → batch/v1; Ingresses/NetworkPolicies → networking.k8s.io/v1; Roles/ClusterRoles → rbac.authorization.k8s.io/v1; StorageClasses → storage.k8s.io/v1; CRDs → apiextensions.k8s.io/v1. Rule of thumb: apiVersion: v1 (bare) = core group.
+**Sources:** <a href="https://kubernetes.io/docs/reference/using-api/" target="_blank">Kubernetes Docs - API Overview</a>
+**Tags:** k8s::kcna topic::api topic::resources src::session
+
+---
+
+<!-- note:1793931644491 model:Many -->
+**Domain:** API Groups - named groups
+**Question:** Which apiVersion serves Deployment objects in modern Kubernetes?
+**Options:** A. v1<br>B. extensions/v1beta1<br>C. apps/v1<br>D. batch/v1
+**Answer:** C (3) – apps/v1
+**Explanation:** apps/v1 serves Deployments, ReplicaSets, DaemonSets, StatefulSets and ControllerRevisions. extensions/v1beta1 was their ORIGINAL home but was emptied and removed — Ingresses moved to networking.k8s.io/v1, workloads to apps/v1. batch/v1 = Jobs + CronJobs. This is exactly why named groups exist: related resources version and evolve together, and new features land in named groups instead of churning the stable core API.
+**Sources:** <a href="https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/deployment-v1/" target="_blank">Kubernetes API Reference - Deployment v1</a>
+**Tags:** k8s::kcna topic::api topic::workloads src::session
+
+---
+
+<!-- note:1793931644492 model:Many -->
+**Domain:** API Groups - verbs
+**Question:** Which of these are valid Kubernetes API verbs? (Select all that apply)
+**Options:** A. get<br>B. list<br>C. watch<br>D. create<br>E. update<br>F. patch<br>G. delete<br>H. deletecollection<br>I. read<br>J. write<br>K. query<br>L. fetch
+**Answer:** A, B, C, D, E, F, G, H – get, list, watch, create, update, patch, delete, deletecollection
+**Explanation:** Verbs are the actions the API server exposes on resources: get, list, watch (reads) and create, update, patch, delete, deletecollection (writes) — these are exactly what RBAC rules grant per resource. They map to HTTP methods: GET → get/list/watch, POST → create, PUT → update, PATCH → patch, DELETE → delete. Extra RBAC verbs exist for special cases: proxy, impersonate, bind, escalate. 'read', 'write', 'query', 'fetch' are NOT API verbs — generic programming words, not part of the API surface.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/" target="_blank">Kubernetes Docs - Using RBAC Authorization</a>
+**Tags:** k8s::kcna topic::api topic::rbac src::session
+
+---
+
+<!-- note:1793931644493 model:Many -->
+**Domain:** API Groups - kubectl proxy
+**Question:** What does kubectl proxy do?
+**Options:** A. Forwards a local port into a pod (like port-forward)<br>B. Starts a localhost proxy to the API server using your kubeconfig credentials, so you can hit the REST API directly<br>C. Proxies traffic between cluster Services<br>D. Opens an encrypted tunnel to etcd
+**Answer:** B – starts a localhost proxy to the API server using your kubeconfig credentials so you can hit the REST API directly
+**Explanation:** kubectl proxy runs a local proxy (default 127.0.0.1:8001; change with --port, --address, --accept-hosts) that forwards to the API server with your kubeconfig's TLS + auth already handled — so curl http://localhost:8001/api/v1/namespaces or /apis/apps/v1/deployments.default works with zero cert juggling. It's a debugging/exploration tool for the raw REST API. It is NOT pod port-forwarding (kubectl port-forward), NOT service-to-service traffic, and NOT etcd access.
+**Sources:** <a href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_proxy/" target="_blank">Kubernetes Docs - kubectl proxy</a>
+**Tags:** k8s::kcna topic::kubectl topic::api src::session
+
+---
+
+<!-- note:1793931644494 model:Many -->
+**Domain:** API Groups - discovery
+**Question:** Which kubectl command lists the API resources available on the cluster together with their API groups?
+**Options:** A. kubectl api-versions<br>B. kubectl api-resources<br>C. kubectl get --raw /version<br>D. kubectl config view
+**Answer:** B (2) – kubectl api-resources
+**Explanation:** kubectl api-resources lists every resource on the cluster (deployments, pods, networkpolicies…) together with its API group/version, kind, and short names. kubectl api-versions lists only the group/version strings. For raw discovery endpoints, kubectl get --raw /apis or /api/v1 queries the same discovery API the server exposes. kubectl config view shows your kubeconfig — unrelated to cluster API discovery.
+**Sources:** <a href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_api-resources/" target="_blank">Kubernetes Docs - kubectl api-resources</a>
+**Tags:** k8s::kcna topic::kubectl topic::api src::session
+
+---
+
+<!-- note:1793931644496 model:Cloze -->
+**Text:** REST paths — core group: {{c1::/api/v1}} (apiVersion: {{c2::v1}}, no group name); named groups: {{c3::/apis/$GROUP_NAME/$VERSION}} (e.g. apiVersion: {{c4::apps/v1}} → /apis/apps/v1).
+**Back Extra:** The apiVersion field mirrors the REST path: bare 'v1' = core group; 'group/version' = named group. So apiVersion: apps/v1 means REST path /apis/apps/v1. kubectl api-resources prints this mapping for every resource your cluster serves.
+**Tags:** k8s::kcna topic::api topic::yaml src::session
+
+---
+
+<!-- note:1793931644545 model:Basic (and reversed card) -->
+**Front:** What is a Kubernetes API group?
+**Back:** A logical grouping of related API resources served together at a REST path. The core (legacy) group lives at /api/v1 and holds the original resources (pods, services, namespaces, nodes, secrets…); named groups live at /apis/<group>/<version> (apps, batch, networking.k8s.io, rbac.authorization.k8s.io, storage.k8s.io, apiextensions.k8s.io…) and host newer features. The group is declared in each object's apiVersion field, and groups make the API extensible — new resource families arrive as new groups without changing core.
+**Tags:** k8s::kcna topic::api topic::architecture src::session
+
+---

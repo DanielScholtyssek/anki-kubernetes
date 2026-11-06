@@ -377,3 +377,14 @@
 **Tags:** k8s::kcna topic::serviceaccounts topic::secrets topic::security src::session
 
 ---
+
+<!-- note:1793934915989 model:Many -->
+**Domain:** Authorization - AlwaysDeny
+**Question:** What is the behavior of the AlwaysDeny authorisation mode in Kubernetes?
+**Options:** A. Allows all requests without performing any authorisation checks<br>B. Allows requests based on a policy file with a set of policies defined in a JSON format<br>C. Denies all requests<br>D. Authorises requests coming from a user with the name system node and part of the system nodes group
+**Answer:** C (3) – denies all requests
+**Explanation:** AlwaysDeny is an --authorization-mode that rejects EVERY API request with 403 Forbidden — yes, literally nothing works while it's the only/first effective mode: no reads, no writes, kubectl dead. It's not for production; it's a deliberate kill-switch and testing tool: emergency lockdown of a compromised or misbehaving cluster, negative testing (prove your RBAC actually blocks things — if requests still succeed under AlwaysDeny, something upstream is wrong), and mode-ordering experiments. Its opposite pole is AlwaysAllow (permits everything after authentication — useful in dev/training clusters). Modes in --authorization-mode are evaluated in order and the first ALLOW wins — AlwaysDeny exists precisely so you can append it as a final 'deny everything else' backstop after real modes like Node,RBAC.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authorization/" target="_blank">Kubernetes Docs - Authorization</a>
+**Tags:** k8s::kcna topic::rbac topic::security src::session
+
+---

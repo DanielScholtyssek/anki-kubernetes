@@ -493,3 +493,14 @@ essential for their function, reducing the potential impact of a compromise.
 **Tags:** k8s::kcna topic::kubelet topic::staticpods src::session
 
 ---
+
+<!-- note:1793933689164 model:Many -->
+**Domain:** Pods - imagePullSecrets
+**Question:** How can we specify the secret to our private registry inside our pod definition file?
+**Options:** A. By setting the environment variable in the container definition<br>B. By using the annotations in the pod definition file<br>C. By specifying the secret under the imagePullSecrets section in the pod definition file<br>D. By using the command line and specifying the secret name and registry URL
+**Answer:** C (3) – specifying the secret under the imagePullSecrets section in the pod definition file
+**Explanation:** spec.imagePullSecrets is the pod-spec field that tells the kubelet which Secret to use when pulling images from a private registry: spec.imagePullSecrets: [{name: regcred}] where regcred is a Secret of type kubernetes.io/dockerconfigjson holding .dockerconfigjson auth (created via kubectl create secret docker-registry). It works at PULL time — before the container starts — so env vars (runtime only) and annotations (metadata, not pull logic) can't do it, and there's no kubectl flag that attaches pull secrets to a pod. You can also set imagePullSecrets on a ServiceAccount so every pod using that SA inherits them. Older kubernetes.io/dockercfg secrets work too.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/" target="_blank">Kubernetes Docs - Pull an Image from a Private Registry</a>
+**Tags:** k8s::kcna topic::pods topic::secrets src::session
+
+---

@@ -840,3 +840,14 @@ D. etcd
 **Tags:** k8s::kcna topic::api topic::architecture src::session
 
 ---
+
+<!-- note:1793932055033 model:Many -->
+**Domain:** kubectl - api-resources flags
+**Question:** Which command would you use to see a full list of non-namespaced resources in Kubernetes?
+**Options:** A. kubectl api-resources --namespaced=false<br>B. kubectl api-resources --all<br>C. kubectl api-resources<br>D. kubectl api-resources --namespaced=true
+**Answer:** A (1) – kubectl api-resources --namespaced=false
+**Explanation:** api-resources --namespaced=false filters the output to CLUSTER-scoped resources only — nodes, namespaces, persistentvolumes, clusterroles, storageclasses, priorityclasses… (things not bound to a namespace). --namespaced=true does the opposite (namespaced only). With no flag, api-resources shows everything and a NAMESPACED column tells you which is which. There is no --all flag on api-resources — that's kubectl get territory (-A/--all-namespaces). Other useful filters: --api-group=&lt;group&gt; and --verbs=&lt;verb&gt;.
+**Sources:** <a href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_api-resources/" target="_blank">Kubernetes Docs - kubectl api-resources</a>
+**Tags:** k8s::kcna topic::kubectl topic::api src::session
+
+---

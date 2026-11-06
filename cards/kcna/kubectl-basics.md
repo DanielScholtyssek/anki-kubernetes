@@ -147,3 +147,61 @@
 
 ---
 
+
+<!-- note:1793931248497 model:Many -->
+**Domain:** Kubeconfig - purpose
+**Question:** Why use a kubeconfig file instead of passing --server, --client-key, --client-certificate, --certificate-authority to every kubectl command?
+**Options:** A. kubectl can't accept those flags at all<br>B. the kubeconfig stores cluster address + auth material once; kubectl reads it automatically<br>C. the kubeconfig encrypts credentials better than flags<br>D. those flags only work with kubectl exec
+**Answer:** B – the kubeconfig stores cluster address + auth material once; kubectl reads it automatically
+**Explanation:** The flags DO exist and work per-command — kubectl accepts --server, --client-key, --client-certificate, --certificate-authority, --token etc. on every invocation — but repeating the server URL and credential paths on every call is impractical. The kubeconfig file (default ~/.kube/config) stores named clusters, users, and contexts once, and kubectl loads it automatically. When both are present, command-line flags still win over file values (flag > kubeconfig precedence). The KUBECONFIG env var points kubectl at a different file or a list of files to merge.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/" target="_blank">Kubernetes Docs - Organizing Cluster Access Using kubeconfig Files</a>
+**Tags:** k8s::kcna topic::kubectl topic::kubeconfig src::session
+
+---
+
+<!-- note:1793931248498 model:Many -->
+**Domain:** Kubeconfig - context
+**Question:** In a kubeconfig file, which element groups a cluster, user, and namespace under one switchable name?
+**Options:** A. cluster<br>B. user<br>C. context<br>D. preferences
+**Answer:** C – context
+**Explanation:** A context is the convenience binding: it groups three parameters under one switchable name — cluster (WHERE: server URL + CA trust material like certificate-authority or certificate-authority-data, or insecure-skip-tls-verify), user (WHO: client-certificate+client-key, token, username/password, or exec credential plugins), and namespace (default namespace for that pairing). The current-context field selects which context kubectl uses; kubectl config use-context switches it. This is why one kubeconfig can hold many clusters/users — you switch contexts instead of editing flags.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/" target="_blank">Kubernetes Docs - Organizing Cluster Access Using kubeconfig Files</a>
+**Tags:** k8s::kcna topic::kubectl topic::kubeconfig src::session
+
+---
+
+<!-- note:1793931248499 model:Many -->
+**Domain:** Kubeconfig - kubectl config commands
+**Question:** Which command switches kubectl to a different context?
+**Options:** A. kubectl config get-contexts<br>B. kubectl config use-context &lt;name&gt;<br>C. kubectl config current-context<br>D. kubectl config set-context &lt;name&gt;
+**Answer:** B – kubectl config use-context &lt;name&gt;
+**Explanation:** kubectl config use-context &lt;name&gt; sets current-context — the * in get-contexts output moves to that context. The family: get-contexts lists all contexts (* = current), current-context prints just the active name, set-context creates or edits a context's cluster/user/namespace fields, and kubectl config unset contexts.&lt;name&gt; deletes one. To change only the namespace of the current context: kubectl config set-context --current --namespace=&lt;ns&gt;. View the whole merged file with kubectl config view.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/" target="_blank">Kubernetes Docs - Configure Access to Multiple Clusters</a>
+**Tags:** k8s::kcna topic::kubectl topic::kubeconfig src::session
+
+---
+
+<!-- note:1793931248500 model:Many -->
+**Domain:** Kubeconfig - defaults
+**Question:** Where does kubectl get the default namespace for namespaced resources?
+**Options:** A. always "default" — hardcoded<br>B. the namespace field of the current context (falls back to "default" if unset)<br>C. the cluster's namespace setting<br>D. the KUBECONFIG environment variable
+**Answer:** B – the namespace field of the current context (falls back to "default" if unset)
+**Explanation:** Namespace is a property of the CONTEXT, not the cluster or the user — each context can pin a different namespace, so switching contexts can silently change your default namespace. If the context has no namespace field, kubectl uses "default". A per-command --namespace flag always overrides the context's value for that invocation. The same pattern applies to identity: the user kubectl authenticates as comes from the context's user field unless --user is passed.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/" target="_blank">Kubernetes Docs - Organizing Cluster Access Using kubeconfig Files</a>
+**Tags:** k8s::kcna topic::kubectl topic::kubeconfig topic::namespaces src::session
+
+---
+
+<!-- note:1793931248507 model:Cloze -->
+**Text:** By default kubectl reads its kubeconfig from {{c1::$HOME/.kube/config}}. The {{c2::KUBECONFIG}} environment variable holds a {{c3::list}} of files that kubectl {{c4::merges}} (first file to set a value wins per key), while the {{c5::--kubeconfig}} flag points at exactly {{c6::one}} file with {{c7::no}} merging.
+**Back Extra:** Precedence: --kubeconfig flag > KUBECONFIG env var > default file. When KUBECONFIG lists multiple files, kubectl merges them — the first file to set a value or map key wins and later duplicates are discarded. Relative file paths inside a kubeconfig resolve relative to that kubeconfig's location.
+**Tags:** k8s::kcna topic::kubectl topic::kubeconfig src::session
+
+---
+
+<!-- note:1793931250748 model:Basic -->
+**Front:** What are the top-level sections of a kubeconfig file (kind: Config)?
+**Back:** apiVersion: v1 / kind: Config, then three named lists plus current-context. clusters: WHERE — each has name + server URL + trust material (certificate-authority file, certificate-authority-data base64, or insecure-skip-tls-verify: true, optional proxy-url). users: WHO — name + auth material (client-certificate + client-key, token, username + password, auth-provider, or exec credential plugins). contexts: the binding — name + cluster + user + optional namespace. current-context: which context kubectl uses by default. preferences: {} is normally empty. kubectl config view prints the effective (possibly merged) file.
+**Tags:** k8s::kcna topic::kubectl topic::kubeconfig topic::yaml src::session
+
+---

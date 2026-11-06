@@ -355,3 +355,14 @@
 **Tags:** k8s::kcna topic::serviceaccounts topic::security topic::authentication src::session
 
 ---
+
+<!-- note:1793933768337 model:Many -->
+**Domain:** RBAC - RoleBinding structure
+**Question:** What are the two sections of the RoleBinding object?
+**Options:** A. Subjects and RoleRef<br>B. Users and Permissions<br>C. Role and User<br>D. APIGroups and Resources
+**Answer:** A (1) – Subjects and RoleRef
+**Explanation:** A RoleBinding has two functional sections: subjects — WHO gets the permissions (a list of kind: User/Group/ServiceAccount entries with name and namespace) — and roleRef — WHAT they get (a pointer with apiGroup, kind, and name referencing either a Role or a ClusterRole). roleRef is IMMUTABLE: you can't repoint an existing binding to a different role — delete and recreate it instead. A namespaced RoleBinding may reference a ClusterRole, but the granted permissions then apply only within the binding's namespace; ClusterRoleBinding is the cluster-wide variant with the same two fields.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/" target="_blank">Kubernetes Docs - Using RBAC Authorization</a>
+**Tags:** k8s::kcna topic::rbac topic::security topic::yaml src::session
+
+---

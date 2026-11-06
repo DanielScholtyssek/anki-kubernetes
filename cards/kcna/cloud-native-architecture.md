@@ -300,3 +300,14 @@ completely managed by the platform, allowing developers to focus on code.
 **Tags:** k8s::kcna topic::networking topic::control-plane src::session
 
 ---
+
+<!-- note:1794009250197 model:Many -->
+**Domain:** CNI - ipMasquerade
+**Question:** What does the "ipMasquerade" field in a Container Network Interface (CNI) plugin configuration file determine?
+**Options:** A. Whether the plugin configuration file is valid<br>B. Whether the bridge network should have an assigned IP address<br>C. Whether a NAT rule should be added for IP masquerading<br>D. Whether the plugin supports IP masquerading
+**Answer:** C (3) – Whether a NAT rule should be added for IP masquerading
+**Explanation:** ipMasquerade (written ipMasq in the bridge plugin) is the on/off switch telling the CNI plugin to program iptables NAT MASQUERADE rules: pod traffic leaving the node gets its source IP rewritten to the node's IP — SNAT, same trick as a home router. It's needed because pod CIDR addresses (10.x) aren't routable outside the cluster — without masquerade, pod→internet egress has no return path. The field CONFIGURES masquerading; it doesn't validate the config file (schema does that), assign the bridge IP (that's ipam/isGateway), or declare plugin capability (capability is fixed — this is the per-config toggle).
+**Sources:** <a href="https://kubernetes.io/docs/concepts/cluster-administration/networking/" target="_blank">Kubernetes Docs - Cluster Networking</a>
+**Tags:** k8s::kcna topic::networking topic::cni src::session
+
+---

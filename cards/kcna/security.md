@@ -311,3 +311,14 @@
 **Tags:** k8s::kcna topic::serviceaccounts topic::pods topic::security src::session
 
 ---
+
+<!-- note:1793932659732 model:Many -->
+**Domain:** Node Authorization - role
+**Question:** What is the role of the node authoriser in Kubernetes cluster?
+**Options:** A. Handles requests from the kubelets on nodes to the kube-apiserver<br>B. Handles requests from human users to the kube-apiserver<br>C. Deploys and manages nodes within the Kubernetes cluster<br>D. Manages access control policies for the Kubernetes cluster
+**Answer:** A (1) – handles requests from the kubelets on nodes to the kube-apiserver
+**Explanation:** The Node authorizer is a specialized authorization module that handles ONLY kubelet→apiserver requests: it verifies the caller is authenticated as system:node:&lt;nodeName&gt; in group system:nodes, then decides what that kubelet may read/write for its own node — pods bound to it, node objects/status, mirrored EndpointSlices, leases, and certificate-signing requests for its serving certs (tightened by NodeRestriction). Human users never pass through it — they go through RBAC/Webhook/etc. It doesn't deploy or manage nodes (that's the kubelet executing instructions, and cluster autoscaler/node lifecycle controllers), and it doesn't manage access policies generally — that's RBAC's job; Node,RBAC run side by side in --authorization-mode.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/node/" target="_blank">Kubernetes Docs - Node authorizer</a>
+**Tags:** k8s::kcna topic::security topic::kubelet topic::rbac src::session
+
+---

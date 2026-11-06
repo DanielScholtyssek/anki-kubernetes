@@ -960,3 +960,76 @@
 **Tags:** k8s::kcna topic::security topic::podsecurity topic::yaml src::session
 
 ---
+
+<!-- note:1794006990743 model:Many -->
+**Domain:** Networking - ingress egress
+**Question:** What do ingress and egress mean for a Pod's network traffic?
+**Options:** A. Ingress = traffic INTO the pod; egress = traffic OUT of the pod — each direction is isolated independently<br>B. Ingress = pod-to-pod traffic; egress = pod-to-internet traffic<br>C. Ingress is enforced by kube-proxy; egress by the CNI<br>D. Ingress applies to Services; egress applies to Pods
+**Answer:** A (1) – Ingress = traffic INTO the pod; egress = traffic OUT of the pod — each direction is isolated independently
+**Explanation:** Ingress is inbound traffic to a pod (who may connect to it); egress is outbound traffic from a pod (where it may connect to). Isolation is declared per-direction and independently: a pod can be isolated for ingress while fully open for egress, or vice versa. 'Isolated' doesn't mean blocked — it means only explicitly allowed connections pass; 'non-isolated' means no restrictions. By default pods are non-isolated BOTH ways — the flat pod network lets any pod reach any pod or namespace.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/network-policies/" target="_blank">Kubernetes Docs - Network Policies</a>
+**Tags:** k8s::kcna topic::networking topic::networkpolicy src::session
+
+---
+
+<!-- note:1794006990744 model:Many -->
+**Domain:** NetworkPolicy - apiVersion
+**Question:** Which apiVersion/kind defines a Kubernetes NetworkPolicy?
+**Options:** A. apiVersion: networking.k8s.io/v1, kind: NetworkPolicy<br>B. apiVersion: v1, kind: NetworkPolicy<br>C. apiVersion: networking.k8s.io/v1, kind: NetworkPolicyList<br>D. apiVersion: policy/v1, kind: NetworkPolicy
+**Answer:** A (1) – apiVersion: networking.k8s.io/v1, kind: NetworkPolicy
+**Explanation:** NetworkPolicy lives in the networking.k8s.io API group at v1: apiVersion: networking.k8s.io/v1, kind: NetworkPolicy — namespaced, so metadata.namespace matters (a policy only selects pods in its own namespace). Mandatory fields beyond the usual apiVersion/kind/metadata: spec.podSelector (which pods it applies to — empty {} selects ALL pods in the namespace), spec.policyTypes (Ingress/Egress/both), and spec.ingress/spec.egress rule lists. Without a CNI that enforces NetworkPolicy, the object is accepted but does NOTHING.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/network-policies/" target="_blank">Kubernetes Docs - Network Policies</a>
+**Tags:** k8s::kcna topic::networking topic::networkpolicy topic::yaml src::session
+
+---
+
+<!-- note:1794006990745 model:Many -->
+**Domain:** Networking - both sides
+**Question:** For a connection from pod A to pod B to be allowed by NetworkPolicies, what must be true?
+**Options:** A. BOTH — the source pod's egress policy AND the destination pod's ingress policy must allow it<br>B. Only the destination's ingress policy matters<br>C. Only the source's egress policy matters<br>D. Whichever policy was created first
+**Answer:** A (1) – BOTH — the source pod's egress policy AND the destination pod's ingress policy must allow it
+**Explanation:** A NetworkPolicy connection requires consent from BOTH ends: the source pod's egress rules must allow the destination, AND the destination pod's ingress rules must allow the source. If either side doesn't permit it, the connection never happens — you can't open egress on the client and expect it to reach an isolated server. This is why 'default deny ingress' on a backend forces you to also think about what clients are allowed to initiate.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/network-policies/" target="_blank">Kubernetes Docs - Network Policies</a>
+**Tags:** k8s::kcna topic::networking topic::networkpolicy src::session
+
+---
+
+<!-- note:1794006990746 model:Many -->
+**Domain:** Networking - selectors
+**Question:** What are the selector types you can use in a NetworkPolicy's ingress.from / egress.to?
+**Options:** A. podSelector (pods in same namespace), namespaceSelector (whole namespaces), ipBlock (external CIDR ranges)<br>B. podSelector, serviceSelector, and nodeSelector<br>C. matchLabels, matchExpressions, and fieldSelector<br>D. ingressSelector, egressSelector, and cidrSelector
+**Answer:** A (1) – podSelector (pods in same namespace), namespaceSelector (whole namespaces), ipBlock (external CIDR ranges)
+**Explanation:** from/to entries accept three selector types: podSelector picks pods in the policy's OWN namespace by labels; namespaceSelector picks entire namespaces by labels (all their pods); ipBlock picks cluster-external CIDR ranges — pod IPs are ephemeral so ipBlock is for outside-the-cluster sources like load balancers. A single entry can combine namespaceSelector + podSelector to mean 'these labeled pods within these labeled namespaces'. kubectl describe shows how the CNI actually interpreted the policy.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/network-policies/" target="_blank">Kubernetes Docs - Network Policies</a>
+**Tags:** k8s::kcna topic::networking topic::networkpolicy topic::labels src::session
+
+---
+
+<!-- note:1794006990747 model:Many -->
+**Domain:** Networking - selector AND OR
+**Question:** namespaceSelector + podSelector in ONE map vs as separate list items — what's the difference?
+**Options:** A. One map with both selectors = AND (labeled pods inside labeled namespaces); two separate list items = OR<br>B. They always AND together regardless of YAML structure<br>C. They always OR together regardless of YAML structure<br>D. podSelector can't be combined with namespaceSelector at all
+**Answer:** A (1) – One map with both selectors = AND (labeled pods inside labeled namespaces); two separate list items = OR
+**Explanation:** The classic YAML gotcha: namespaceSelector and podSelector in the SAME map element are ANDed — 'pods labeled role=client in namespaces labeled user=alice'. As SEPARATE elements of the from/to list they're ORed — 'pods labeled role=client in ANY namespace, OR any pod in namespaces labeled user=alice'. Same labels, wildly different policy. When in doubt: kubectl describe networkpolicy shows the CNI's interpretation.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/network-policies/" target="_blank">Kubernetes Docs - Network Policies</a>
+**Tags:** k8s::kcna topic::networking topic::networkpolicy topic::yaml src::session
+
+---
+
+<!-- note:1794006990748 model:Many -->
+**Domain:** Networking - additive
+**Question:** Which statements about Kubernetes NetworkPolicy behavior are true? (Select all that apply)
+**Options:** A. When multiple policies select the same pod, their allowed rules combine additively<br>B. Both the source's egress and the destination's ingress must allow a connection<br>C. Reply traffic for allowed connections is implicitly permitted<br>D. Policies are evaluated in creation order — first match wins<br>E. Traffic between a pod and its own node is always allowed
+**Answer:** A, B, C, E – policies union additively; both ends must allow; reply traffic is implicit; node traffic always allowed
+**Explanation:** (Select all that apply) NetworkPolicies never conflict — when several select the same pod+direction, the allowed connections are the UNION of all their rules; evaluation order is irrelevant. Both ends of a connection must permit it (source egress + dest ingress). Reply traffic for allowed connections is implicitly permitted — you don't write return-path rules. Edge cases: a pod can't block traffic to itself, and traffic to/from the pod's own node is always allowed regardless of policy.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/network-policies/" target="_blank">Kubernetes Docs - Network Policies</a>
+**Tags:** k8s::kcna topic::networking topic::networkpolicy src::session
+
+---
+
+<!-- note:1794006990752 model:Cloze -->
+**Text:** NetworkPolicy manifest — isolate role=db pods, allow redis traffic:<br><br><code>apiVersion: {{c1::networking.k8s.io/v1}}<br>kind: {{c2::NetworkPolicy}}<br>metadata:<br>  name: test-network-policy<br>  namespace: default<br>spec:<br>  podSelector:<br>    matchLabels:<br>      role: {{c3::db}}<br>  policyTypes: [{{c4::Ingress, Egress}}]<br>  ingress:<br>  - from:<br>    - podSelector:<br>        matchLabels:<br>          role: frontend<br>    ports:<br>    - port: {{c5::6379}}<br>  egress:<br>  - to:<br>    - ipBlock:<br>        cidr: 10.0.0.0/24</code>
+**Back Extra:** The doc's example isolates role=db pods for BOTH directions: ingress allows TCP 6379 from role=frontend pods (same ns), any pod in project=myproject namespaces, and 172.17.0.0/16 minus 172.17.1.0/24; egress allows TCP 5978 to 10.0.0.0/24. Apply with kubectl apply -f — but only works if your CNI enforces NetworkPolicy.
+**Tags:** k8s::kcna topic::networking topic::networkpolicy topic::yaml src::session
+
+---

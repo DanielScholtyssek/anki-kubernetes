@@ -289,3 +289,14 @@
 **Tags:** k8s::kcna topic::security topic::kubelet topic::rbac src::session
 
 ---
+
+<!-- note:1793932282196 model:Many -->
+**Domain:** NetworkPolicy - pod selection
+**Question:** Where do we specify the pod labels in a Kubernetes network policy definition file?
+**Options:** A. spec.podSelector<br>B. spec.egress<br>C. spec.ingress<br>D. spec.matchLabels
+**Answer:** A (1) – spec.podSelector
+**Explanation:** spec.podSelector selects WHICH pods the policy applies to — the labels themselves go under spec.podSelector.matchLabels (or matchExpressions for operators). An empty podSelector: {} selects ALL pods in the policy's namespace. spec.ingress and spec.egress are the traffic RULE lists (from/to peers + ports), not selectors — spec.matchLabels isn't a NetworkPolicy field at all (that's the style used inside podSelector and in workload selectors like a Deployment's spec.selector.matchLabels).
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/network-policies/" target="_blank">Kubernetes Docs - Network Policies</a>
+**Tags:** k8s::kcna topic::networking topic::networkpolicy topic::yaml src::session
+
+---

@@ -483,3 +483,105 @@
 **Tags:** k8s::kcna topic::security topic::rbac topic::abac src::session
 
 ---
+
+<!-- note:1793995451562 model:Many -->
+**Domain:** RBAC - Role apiVersion
+**Question:** Which apiVersion/kind defines a namespaced RBAC Role?
+**Options:** A. apiVersion: rbac.authorization.k8s.io/v1, kind: Role<br>B. apiVersion: v1, kind: Role<br>C. apiVersion: rbac.authorization.k8s.io/v1, kind: ClusterRole<br>D. apiVersion: apps/v1, kind: Role
+**Answer:** A (1) – apiVersion: rbac.authorization.k8s.io/v1, kind: Role
+**Explanation:** RBAC objects live in the rbac.authorization.k8s.io API group at v1: apiVersion: rbac.authorization.k8s.io/v1, kind: Role for namespaced roles (metadata.namespace required) or kind: ClusterRole for cluster-scoped ones (no namespace field — ClusterRoles can grant cluster-scoped resources like nodes, non-resource URLs like /healthz, and namespaced resources across ALL namespaces). Inside rules, apiGroups refers to the RESOURCE's API group — apiGroups: [""] means the core/v1 group (pods, secrets, configmaps…).
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/" target="_blank">Kubernetes Docs - Using RBAC Authorization</a>
+**Tags:** k8s::kcna topic::rbac topic::security topic::yaml src::session
+
+---
+
+<!-- note:1793995451563 model:Many -->
+**Domain:** RBAC - rules structure
+**Question:** What three fields define what a Role rule permits?
+**Options:** A. apiGroups, resources, and verbs<br>B. subjects, roleRef, and namespace<br>C. name, labels, and annotations<br>D. apiVersion, kind, and metadata
+**Answer:** A (1) – apiGroups, resources, and verbs
+**Explanation:** Each entry in spec.rules is one permission set with three required dimensions — apiGroups (which API group the resources belong to; [""] = core), resources (plural resource names like pods, secrets, or subresources like pods/log, pods/exec), and verbs (get, list, watch, create, update, patch, delete, deletecollection — plus special verbs impersonate, bind, escalate). A request must match ALL dimensions of a rule to be allowed; multiple rules union together (additive — consistent with RBAC having no deny). Optional fields: resourceNames (restrict to named instances) and nonResourceURLs (for /healthz-style endpoints, ClusterRole only).
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/" target="_blank">Kubernetes Docs - Using RBAC Authorization</a>
+**Tags:** k8s::kcna topic::rbac topic::security topic::yaml src::session
+
+---
+
+<!-- note:1793995451564 model:Many -->
+**Domain:** RBAC - linking
+**Question:** What object links a user, group, or ServiceAccount to a Role's permissions?
+**Options:** A. A RoleBinding (its subjects say WHO, its roleRef says WHAT)<br>B. A ClusterRole with a users field<br>C. An annotation on the user's kubeconfig<br>D. A LabelSelector on the Role object
+**Answer:** A (1) – a RoleBinding (its subjects say WHO, its roleRef says WHAT)
+**Explanation:** The RoleBinding is the link object: subjects[] lists WHO gets access (kind: User, Group, or ServiceAccount + name — names are case-sensitive) and roleRef points to WHAT they get (kind: Role or ClusterRole + name + apiGroup: rbac.authorization.k8s.io). A RoleBinding lives in a namespace and grants the role's permissions within THAT namespace only — even when roleRef points to a ClusterRole. ClusterRoleBinding is the cluster-wide variant. And remember roleRef is immutable — to change what a binding grants you delete and recreate it.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/" target="_blank">Kubernetes Docs - Using RBAC Authorization</a>
+**Tags:** k8s::kcna topic::rbac topic::security topic::yaml src::session
+
+---
+
+<!-- note:1793995451565 model:Many -->
+**Domain:** RBAC - namespace scope
+**Question:** A RoleBinding in namespace 'dev' references a ClusterRole. Where do the permissions apply?
+**Options:** A. Only within the 'dev' namespace — the RoleBinding's own namespace sets the scope<br>B. Cluster-wide, because ClusterRoles are cluster-scoped<br>C. Only to user 'jane', cluster-wide<br>D. Nowhere — ClusterRoles can't be bound by RoleBindings
+**Answer:** A (1) – only within the 'dev' namespace — the RoleBinding's own namespace sets the scope
+**Explanation:** The RoleBinding's metadata.namespace decides WHERE permissions apply — NOT the roleRef's scope. A RoleBinding in namespace 'dev' referencing a ClusterRole grants those ClusterRole permissions ONLY inside 'dev'. This is the doc's own pattern: define ClusterRoles once (secret-reader) and reuse them across namespaces by creating a RoleBinding per namespace — 'dave' bound in 'development' reads secrets only there, not cluster-wide. To grant across ALL namespaces you need a ClusterRoleBinding instead. Role (namespaced) + RoleBinding (same ns) is the tightest scope.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/" target="_blank">Kubernetes Docs - Using RBAC Authorization</a>
+**Tags:** k8s::kcna topic::rbac topic::security topic::namespaces src::session
+
+---
+
+<!-- note:1793995451566 model:Many -->
+**Domain:** RBAC - kubectl create
+**Question:** Which kubectl command creates a Role granting get/list/watch on pods in namespace 'default'?
+**Options:** A. kubectl create role pod-reader --verb=get,list,watch --resource=pods --namespace=default<br>B. kubectl create clusterrole pod-reader --verb=get --resource=pods<br>C. kubectl create rolebinding pod-reader --role=pod-reader --user=jane<br>D. kubectl auth can-i get pods --as jane
+**Answer:** A (1) – kubectl create role pod-reader --verb=get,list,watch --resource=pods --namespace=default
+**Explanation:** kubectl create role builds a Role imperatively: --verb (repeatable or comma-separated), --resource (plural names), --api-group, and --namespace. Its sibling kubectl create rolebinding links subjects to it: kubectl create rolebinding read-pods --role=pod-reader --user=jane -n default (also --group= and --serviceaccount=ns:name subjects). Equivalent declarative path: kubectl apply -f role.yaml. Verify the result with kubectl auth can-i or kubectl get role,rolebinding -n default.
+**Sources:** <a href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_role/" target="_blank">Kubernetes Docs - kubectl create role</a>
+**Tags:** k8s::kcna topic::rbac topic::kubectl src::session
+
+---
+
+<!-- note:1793995451567 model:Many -->
+**Domain:** RBAC - auth can-i
+**Question:** Which command checks whether user 'jane' can get pods in namespace 'default'?
+**Options:** A. kubectl auth can-i get pods --as jane -n default<br>B. kubectl get rolebindings -n default<br>C. kubectl describe clusterrole pod-reader<br>D. kubectl auth reconcile jane
+**Answer:** A (1) – kubectl auth can-i get pods --as jane -n default
+**Explanation:** kubectl auth can-i performs a live SubjectAccessReview against the cluster's actual authorization chain — it answers 'could this identity do this?' without changing anything. Flags: --as=<user> simulates an identity, --as-group=<group> adds groups, -n/--namespace scopes it, and --list shows EVERYTHING the (simulated) identity can do. It's the debugging tool for 'why can't X do Y' — check the effective answer instead of reading bindings by hand. auth can-i also verifies your own permissions: kubectl auth can-i create deployments.
+**Sources:** <a href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_auth/kubectl_auth_can-i/" target="_blank">Kubernetes Docs - kubectl auth can-i</a>
+**Tags:** k8s::kcna topic::rbac topic::kubectl src::session
+
+---
+
+<!-- note:1793995451568 model:Many -->
+**Domain:** RBAC - impersonation
+**Question:** How do you act as another user or group with kubectl?
+**Options:** A. kubectl --as=alice --as-group=devs get pods<br>B. kubectl sudo get pods<br>C. kubectl config set-credentials alice --token=x<br>D. kubectl exec -it alice -- whoami
+**Answer:** A (1) – kubectl --as=alice --as-group=devs get pods
+**Explanation:** kubectl's --as and --as-group flags make the API server treat the request as a different identity — kubectl --as=alice --as-group=devs get pods acts AS alice in group devs. It only works if YOUR identity has the impersonate verb (RBAC grants it on users/groups/serviceaccounts resources — e.g. system:masters or an impersonator ClusterRole). This is how you test 'what would X see/do' safely. Combine with kubectl auth can-i --as for pure checks without executing the action. Related flags: --as-uid for service-account UIDs.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/user-impersonation/" target="_blank">Kubernetes Docs - User Impersonation</a>
+**Tags:** k8s::kcna topic::rbac topic::kubectl src::session
+
+---
+
+<!-- note:1793995451569 model:Many -->
+**Domain:** RBAC - resourceNames
+**Question:** What does resourceNames do in a Role rule?
+**Options:** A. It restricts the rule to specific named resource instances<br>B. It encrypts the named resources at rest<br>C. It assigns resource quotas to the role<br>D. It namespaces the rule to a single namespace
+**Answer:** A (1) – it restricts the rule to specific named resource instances
+**Explanation:** resourceNames narrows a rule from 'all pods' to named instances: resources: [configmaps], resourceNames: [my-configmap], verbs: [get, update] lets the subject touch ONLY that one ConfigMap. Hard limits (doc-verified): you CANNOT restrict top-level create (the name doesn't exist at authz time) or deletecollection by resourceName; list/watch restricted by resourceName require the client to send a matching field-selector (kubectl get configmaps --field-selector=metadata.name=my-configmap); it DOES work on subresources like pods/exec. An empty resourceNames list means everything is allowed.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/rbac/" target="_blank">Kubernetes Docs - Using RBAC Authorization</a>
+**Tags:** k8s::kcna topic::rbac topic::security topic::yaml src::session
+
+---
+
+<!-- note:1793995451571 model:Cloze -->
+**Text:** Minimal Role manifest (pod-reader in 'default'):<br><br><code>apiVersion: {{c1::rbac.authorization.k8s.io/v1}}<br>kind: {{c2::Role}}<br>metadata:<br>  namespace: {{c3::default}}<br>  name: pod-reader<br>rules:<br>- apiGroups: [{{c4::""}}]  # "" = core API group<br>  resources: [{{c5::pods}}]<br>  verbs: [{{c6::get, watch, list}}]</code>
+**Back Extra:** rules is a LIST — each entry is one permission set where apiGroups + resources + verbs must all match a request. apiGroups: [""] = core/v1 resources. Multiple rules union (RBAC is additive — no deny). Verbs come from the API verb set; special verbs impersonate/bind/escalate gate RBAC-escalation itself. Same skeleton with kind: ClusterRole + no namespace grants cluster-wide.
+**Tags:** k8s::kcna topic::rbac topic::yaml src::session
+
+---
+
+<!-- note:1793995451572 model:Cloze -->
+**Text:** RoleBinding manifest linking user 'jane' to Role 'pod-reader':<br><br><code>apiVersion: {{c1::rbac.authorization.k8s.io/v1}}<br>kind: {{c2::RoleBinding}}<br>metadata:<br>  name: read-pods<br>  namespace: {{c3::default}}<br>subjects:<br>- kind: {{c4::User}}<br>  name: {{c5::jane}}<br>  apiGroup: rbac.authorization.k8s.io<br>roleRef:<br>  kind: {{c6::Role}}<br>  name: pod-reader<br>  apiGroup: rbac.authorization.k8s.io</code>
+**Back Extra:** subjects = WHO gets it (kind User/Group/ServiceAccount + case-sensitive name + apiGroup); roleRef = WHAT (kind Role|ClusterRole + name + apiGroup — immutable, recreate to change). The binding's namespace sets scope: RoleBinding in 'dev' + ClusterRole ref = perms only in 'dev'. ClusterRoleBinding = cluster-wide. Create imperatively: kubectl create rolebinding read-pods --role=pod-reader --user=jane -n default.
+**Tags:** k8s::kcna topic::rbac topic::yaml src::session
+
+---

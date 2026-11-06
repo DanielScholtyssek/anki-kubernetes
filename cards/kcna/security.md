@@ -789,3 +789,94 @@
 **Tags:** k8s::kcna topic::rbac topic::yaml topic::secrets src::session
 
 ---
+
+<!-- note:1794004823829 model:Many -->
+**Domain:** User Access - CSR API
+**Question:** How do you get the cluster to sign a client certificate for a new user?
+**Options:** A. Create a CertificateSigningRequest, get it approved, then read the signed cert from .status.certificate<br>B. Run kubeadm certs sign on the control-plane node<br>C. Ask the kubelet to sign it via TLS bootstrap<br>D. kubectl create secret tls automatically issues client certs
+**Answer:** A (1) – Create a CertificateSigningRequest, get it approved, then read the signed cert from .status.certificate
+**Explanation:** The cluster-native signing path: kubectl apply a certificates.k8s.io/v1 CertificateSigningRequest (signerName: kubernetes.io/kube-apiserver-client, usages: [client auth]) → an admin runs kubectl certificate approve <name> → the signed cert appears in the CSR's .status.certificate (base64 — decode it). The control plane's csrsigning controller stamps it with the cluster CA. Requires RBAC rights on certificatesigningrequests — typically only admins can request/approve.
+**Sources:** <a href="https://kubernetes.io/docs/setup/best-practices/certificates/" target="_blank">Kubernetes Docs - PKI certificates and requirements</a>
+**Tags:** k8s::kcna topic::authentication topic::certificates topic::tls src::session
+
+---
+
+<!-- note:1794004823830 model:Many -->
+**Domain:** User Access - CA signing
+**Question:** Where do you get the CA cert and key needed to manually sign a user's client certificate?
+**Options:** A. On a control-plane node under /etc/kubernetes/pki/ — ca.crt + ca.key on kubeadm clusters<br>B. Inside the etcd database under the /registry/certs key<br>C. In the user's kubeconfig under certificate-authority-data<br>D. Distributed to every node via the kubelet's serving cert
+**Answer:** A (1) – On a control-plane node under /etc/kubernetes/pki/ — ca.crt + ca.key on kubeadm clusters
+**Explanation:** To sign a user CSR yourself you need the cluster CA's private key. On kubeadm clusters it lives on control-plane nodes: /etc/kubernetes/pki/ca.crt (public, distributed everywhere) and /etc/kubernetes/pki/ca.key (the crown jewels — whoever holds it can mint any identity). Then: openssl x509 -req -in user.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out user.crt -days 365. The CSR API path avoids touching ca.key directly.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/" target="_blank">Kubernetes Docs - kubeadm certificate management</a>
+**Tags:** k8s::kcna topic::authentication topic::certificates topic::tls src::session
+
+---
+
+<!-- note:1794004823831 model:Many -->
+**Domain:** User Access - kubeconfig build
+**Question:** Which commands assemble a kubeconfig file for a new user?
+**Options:** A. kubectl config set-cluster + set-credentials + set-context + use-context, with --embed-certs=true<br>B. kubectl create kubeconfig --user=dev1 --sign<br>C. kubectl get --raw /api/v1/namespaces/default/serviceaccount/default/token<br>D. Copy /var/lib/kubelet/pki/kubelet.conf to the user
+**Answer:** A (1) – kubectl config set-cluster + set-credentials + set-context + use-context, with --embed-certs=true
+**Explanation:** Assemble the file with kubectl config subcommands: set-cluster <name> --server=https://... --certificate-authority=ca.crt --embed-certs=true (inlines the CA cert so the file is portable); set-credentials <user> --client-certificate=user.crt --client-key=user.key --embed-certs=true (inlines cert+key); set-context <ctx> --cluster=<name> --user=<user>; use-context <ctx> to activate. Send the resulting ~/.kube/config — it contains everything needed, no external file refs.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/" target="_blank">Kubernetes Docs - Organize Cluster Access Using Kubeconfig Files</a>
+**Tags:** k8s::kcna topic::authentication topic::kubectl topic::certificates src::session
+
+---
+
+<!-- note:1794004823832 model:Many -->
+**Domain:** User Access - admin.conf
+**Question:** What is the fastest way to give someone full admin access to a kubeadm cluster?
+**Options:** A. Copy /etc/kubernetes/admin.conf from a control-plane node — it already embeds client certs, server, and context<br>B. Run kubectl create serviceaccount admin -n kube-system<br>C. Export the KUBECONFIG env var on the user's laptop<br>D. kubectl cp the kubelet.conf from any worker node
+**Answer:** A (1) – Copy /etc/kubernetes/admin.conf from a control-plane node — it already embeds client certs, server, and context
+**Explanation:** admin.conf is a ready-made kubeconfig kubeadm generates on control-plane nodes: server URL + cluster CA + an admin client cert/key (CN=kubernetes-admin, O=system:masters) all embedded. Copy it to the person's ~/.kube/config and they have full cluster-admin immediately — no CSR, no RBAC binding needed since system:masters bypasses authorization. It's the fast path for a second cluster admin; wrong choice for developers (way over-privileged).
+**Sources:** <a href="https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-certs/" target="_blank">Kubernetes Docs - kubeadm certificate management</a>
+**Tags:** k8s::kcna topic::authentication topic::certificates topic::rbac src::session
+
+---
+
+<!-- note:1794004823833 model:Many -->
+**Domain:** User Access - RBAC gate
+**Question:** You hand someone a valid client-cert kubeconfig but they get 403 on everything. Why?
+**Options:** A. Authentication succeeded (cert is valid) but no RBAC binding grants their identity permissions — cert proves WHO, RBAC decides WHAT<br>B. The certificate lacks a SAN entry for the API server<br>C. kubectl requires the --insecure-skip-tls-verify flag<br>D. The user's kubeconfig context points at the wrong cluster
+**Answer:** A (1) – Authentication succeeded (cert is valid) but no RBAC binding grants their identity permissions — cert proves WHO, RBAC decides WHAT
+**Explanation:** A valid client cert only gets you authenticated — the API server then runs authorization and with no Role/ClusterRoleBinding matching their CN or O group, every request returns 403. The workflow is always two steps: (1) issue identity (cert/token/OIDC), (2) bind permissions (kubectl create rolebinding dev1-edit --role=edit --user=dev1 -n dev). Test with kubectl auth can-i --as=dev1 to verify what their identity can actually do.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authentication/" target="_blank">Kubernetes Docs - Authentication</a>
+**Tags:** k8s::kcna topic::authentication topic::rbac topic::certificates src::session
+
+---
+
+<!-- note:1794004823834 model:Many -->
+**Domain:** User Access - OIDC
+**Question:** How do organizations provide cluster access without distributing certificates?
+**Options:** A. An OIDC issuer + exec credential plugin (e.g. kubelogin) in the kubeconfig — groups come from IdP claims<br>B. A shared admin.conf copied to every developer<br>C. Long-lived SA token Secrets distributed via email<br>D. Client certs signed by a public certificate authority
+**Answer:** A (1) – An OIDC issuer + exec credential plugin (e.g. kubelogin) in the kubeconfig — groups come from IdP claims
+**Explanation:** Production clusters skip cert distribution: the API server is configured with an OIDC issuer, and users' kubeconfigs use an exec credential plugin (kubelogin for Azure AD, kubectl-oidc-login, etc.) that fetches a fresh token from the IdP on each call. Identity + group claims come from the IdP → RBAC binds those groups. Revoking access = disable the IdP account — nothing long-lived sits on the user's machine to leak.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authentication/" target="_blank">Kubernetes Docs - Authentication</a>
+**Tags:** k8s::kcna topic::authentication topic::rbac src::session
+
+---
+
+<!-- note:1794004823835 model:Many -->
+**Domain:** User Access - revocation
+**Question:** How do you cut off a user's cluster access after you've issued them a client certificate?
+**Options:** A. Delete their RBAC bindings — access ends immediately even though the cert remains cryptographically valid<br>B. Revoke the cert through the cluster CA's CRL<br>C. kubectl delete secret containing the client cert<br>D. Restart the kube-apiserver to flush the auth cache
+**Answer:** A (1) – Delete their RBAC bindings — access ends immediately even though the cert remains cryptographically valid
+**Explanation:** Two layers, two revocation speeds: RBAC bindings take effect instantly — delete the RoleBinding/ClusterRoleBinding and the identity can do nothing (cert still valid but authorized for zero actions). Certificate revocation is the slow path: there's no CRL/OCSP in K8s client auth, so you wait for cert expiry or rotate the CA. Practical rule: grant access via GROUPS bound in RBAC — removing someone from the IdP group or deleting bindings cuts access without touching their cert.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/authentication/" target="_blank">Kubernetes Docs - Authentication</a>
+**Tags:** k8s::kcna topic::authentication topic::rbac src::session
+
+---
+
+<!-- note:1794004823845 model:Cloze -->
+**Text:** CertificateSigningRequest manifest for user 'dev1':<br><br><code>apiVersion: {{c1::certificates.k8s.io/v1}}<br>kind: {{c2::CertificateSigningRequest}}<br>metadata:<br>  name: dev1<br>spec:<br>  request: &lt;base64 CSR&gt;<br>  signerName: {{c3::kubernetes.io/kube-apiserver-client}}<br>  usages: [{{c4::"client auth"}}]</code>
+**Back Extra:** spec.request holds the base64-encoded CSR (openssl req -new -key user.key -out user.csr, then base64 -w0). After kubectl certificate approve dev1, the signed cert lands in .status.certificate — decode with base64 -d. Requires RBAC rights to create+approve CSRs. usages must include 'client auth' for kubeconfig use.
+**Tags:** k8s::kcna topic::authentication topic::certificates topic::yaml src::session
+
+---
+
+<!-- note:1794004823846 model:Cloze -->
+**Text:** Assemble a kubeconfig for user 'dev1' — the four kubectl config commands:<br><br>{{c1::<code>kubectl config set-cluster prod --server=https://API:6443 --certificate-authority=ca.crt --embed-certs=true</code>}}<br>{{c2::<code>kubectl config set-credentials dev1 --client-certificate=dev1.crt --client-key=dev1.key --embed-certs=true</code>}}<br>{{c3::<code>kubectl config set-context dev1@prod --cluster=prod --user=dev1</code>}}<br>{{c4::<code>kubectl config use-context dev1@prod</code>}}
+**Back Extra:** --embed-certs=true base64-inlines the CA into certificate-authority-data and cert+key into the user stanza — the file becomes fully self-contained/portable (that's what you email someone). Without it, kubectl looks for the referenced files on disk. Order: set-cluster → set-credentials → set-context → use-context. current-context in the file decides what plain 'kubectl get pods' uses.
+**Tags:** k8s::kcna topic::authentication topic::kubectl src::session
+
+---

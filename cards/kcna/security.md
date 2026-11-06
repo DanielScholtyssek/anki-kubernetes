@@ -278,3 +278,14 @@
 **Tags:** k8s::kcna topic::security topic::podsecurity topic::pods src::session
 
 ---
+
+<!-- note:1793932206940 model:Many -->
+**Domain:** Node Authorization - permitted identities
+**Question:** Who is authorized by the node authorizers to make requests to kube-apiserver?
+**Options:** A. Only the kubelet running on the master node<br>B. Any user with system administrator privileges<br>C. Any user that is part of the Kubernetes cluster<br>D. Any request from a user named system:node:&lt;name&gt; in the system:nodes group
+**Answer:** D (4) – requests from a user named system:node:&lt;name&gt; in the system:nodes group
+**Explanation:** The Node authorizer is a special mode built for kubelets: it only authorizes requests authenticated as system:node:&lt;nodeName&gt; belonging to group system:nodes — the identity kubelets get from their client certs (CN=system:node:&lt;name&gt;, O=system:nodes). It then scopes WHAT they may touch: pods bound to their node, node objects/status, mirrored EndpointSlices, leases, and CSRs for their node's certs — tightened further by NodeRestriction. It's identity-based, not role-based: cluster membership or OS admin rights mean nothing here; regular users are denied even though they're 'part of the cluster'. Runs alongside RBAC (--authorization-mode=Node,RBAC) — Node handles kubelet traffic, RBAC handles everything else.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/node/" target="_blank">Kubernetes Docs - Node authorizer</a>
+**Tags:** k8s::kcna topic::security topic::kubelet topic::rbac src::session
+
+---

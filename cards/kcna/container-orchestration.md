@@ -504,3 +504,87 @@ essential for their function, reducing the potential impact of a compromise.
 **Tags:** k8s::kcna topic::pods topic::secrets src::session
 
 ---
+
+<!-- note:1794006447940 model:Many -->
+**Domain:** Images - name expansion
+**Question:** In a Pod spec, image: nginx is shorthand for what fully-qualified image?
+**Options:** A. docker.io/library/nginx:latest<br>B. nginx.docker.io/library/latest<br>C. docker.io/nginx:library<br>D. index.docker.io/nginx:stable
+**Answer:** A (1) – docker.io/library/nginx:latest — registry docker.io, namespace library (official images), tag latest
+**Explanation:** An image name is REGISTRY/REPOSITORY:TAG with three independent defaults: no registry → docker.io (Docker Hub); official-library images live under the library/ namespace (docker.io/library/nginx); no tag → latest. So image: nginx is shorthand for docker.io/library/nginx:latest. Your own Docker Hub images resolve to docker.io/<your-username>/<image> — the middle path segment is the namespace/account, not part of the registry.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/containers/images/" target="_blank">Kubernetes Docs - Container Images</a>
+**Tags:** k8s::kcna topic::images topic::containers src::session
+
+---
+
+<!-- note:1794006447941 model:Many -->
+**Domain:** Images - name parts
+**Question:** For image: quay.io/myorg/api:v2, which part is the registry?
+**Options:** A. quay.io — the registry is the first path segment when it contains a dot or port<br>B. myorg — the first path segment is always the registry<br>C. api — the last segment is the registry<br>D. quay.io/myorg — registry and namespace are one field
+**Answer:** A (1) – quay.io — the registry is the first path segment when it contains a dot or port
+**Explanation:** Image name anatomy: [registry/][namespace/]repository[:tag]. The registry is identified by a '.' or ':' in the first path segment (quay.io, gcr.io, localhost:5000) or the literal 'localhost' — docker.io is assumed when absent. Everything between registry and repo is the namespace/account (yourorg, library). With your own Docker Hub account 'acme', image: acme/api expands to docker.io/acme/api:latest — registry docker.io, namespace acme, repo api.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/containers/images/" target="_blank">Kubernetes Docs - Container Images</a>
+**Tags:** k8s::kcna topic::images topic::containers src::session
+
+---
+
+<!-- note:1794006447942 model:Many -->
+**Domain:** Registry Auth - secret type
+**Question:** What Secret type stores container-registry credentials for image pulls?
+**Options:** A. kubernetes.io/dockerconfigjson — a Secret holding a .dockerconfigjson key with the registry auths<br>B. kubernetes.io/tls — a TLS cert/key pair for the registry<br>C. Opaque — any Secret type works for registry auth<br>D. kubernetes.io/service-account-token
+**Answer:** A (1) – kubernetes.io/dockerconfigjson — a Secret holding a .dockerconfigjson key with the registry auths
+**Explanation:** Registry credentials live in a Secret of type kubernetes.io/dockerconfigjson. Its data key .dockerconfigjson holds a base64'd docker config.json: {"auths":{"registry.example.com":{"username":..,"password":..,"auth":"base64(user:pass)"}}}. The legacy type kubernetes.io/dockercfg used the older ~/.dockercfg format — prefer dockerconfigjson. The kubelet reads this Secret at image-pull time and authenticates to the matching registry.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/" target="_blank">Kubernetes Docs - Pull an Image from a Private Registry</a>
+**Tags:** k8s::kcna topic::images topic::secrets topic::security src::session
+
+---
+
+<!-- note:1794006447943 model:Many -->
+**Domain:** Registry Auth - create command
+**Question:** Which command creates a Secret with Docker registry credentials?
+**Options:** A. kubectl create secret docker-registry regcred --docker-server=... --docker-username=... --docker-password=... --docker-email=...<br>B. kubectl create secret tls regcred --cert=... --key=...<br>C. kubectl create configmap regcred --from-literal=auth=...<br>D. kubectl create secret generic regcred --type=kubernetes.io/registry
+**Answer:** A (1) – kubectl create secret docker-registry regcred --docker-server=... --docker-username=... --docker-password=... --docker-email=...
+**Explanation:** kubectl create secret docker-registry builds the Secret imperatively: --docker-server is the registry FQDN (use https://index.docker.io/v1/ for Docker Hub, or your private registry's address), plus --docker-username/--docker-password/--docker-email. kubectl creates it as type kubernetes.io/dockerconfigjson in your current namespace. Doc warning: passing --docker-password on the CLI can leak it into shell history — prefer the --from-file=.dockerconfigjson variant when you already ran docker login.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/" target="_blank">Kubernetes Docs - Pull an Image from a Private Registry</a>
+**Tags:** k8s::kcna topic::images topic::secrets topic::kubectl src::session
+
+---
+
+<!-- note:1794006447944 model:Many -->
+**Domain:** Registry Auth - pull flow
+**Question:** How does a Pod authenticate to a private image registry?
+**Options:** A. Create the dockerconfigjson Secret in the pod's namespace, then reference it in spec.imagePullSecrets — the kubelet uses it at pull time<br>B. Add registry credentials to the pod's env vars<br>C. kubectl login inside the pod before the image pulls<br>D. Annotate the pod with the registry password
+**Answer:** A (1) – Create the dockerconfigjson Secret in the pod's namespace, then reference it in spec.imagePullSecrets — the kubelet uses it at pull time
+**Explanation:** End-to-end: (1) kubectl create secret docker-registry regcred ... in the SAME namespace as the pod — namespace mismatch is the #1 failure; (2) pod spec gets imagePullSecrets: [{name: regcred}]; (3) kubelet pulls the image using those creds before the container starts. If the Secret is missing the pod sits in ImagePullBackOff and kubectl describe pod shows FailedToRetrieveImagePullSecret. The Secret can also live on a ServiceAccount so all its pods inherit it.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/" target="_blank">Kubernetes Docs - Pull an Image from a Private Registry</a>
+**Tags:** k8s::kcna topic::images topic::secrets topic::pods src::session
+
+---
+
+<!-- note:1794006447945 model:Many -->
+**Domain:** Registry Auth - from dockerconfigjson
+**Question:** You already ran docker login — how do you turn that credential into a cluster Secret?
+**Options:** A. kubectl create secret generic regcred --from-file=.dockerconfigjson=~/.docker/config.json --type=kubernetes.io/dockerconfigjson<br>B. kubectl create secret docker-registry regcred --from-file=config.json<br>C. Copy ~/.docker/config.json into the pod as a mounted volume<br>D. kubectl create secret generic regcred --from-literal=.dockerconfigjson=$(cat config.json)
+**Answer:** A (1) – kubectl create secret generic regcred --from-file=.dockerconfigjson=~/.docker/config.json --type=kubernetes.io/dockerconfigjson
+**Explanation:** If you already ran docker login locally, reuse ~/.docker/config.json directly: kubectl create secret generic regcred --from-file=.dockerconfigjson=<path> --type=kubernetes.io/dockerconfigjson. The critical detail: the data key MUST be named .dockerconfigjson (that's what the kubelet looks for) and type must be kubernetes.io/dockerconfigjson. The file's auths entries carry base64 username:password per registry — same format docker uses.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/" target="_blank">Kubernetes Docs - Pull an Image from a Private Registry</a>
+**Tags:** k8s::kcna topic::images topic::secrets topic::kubectl src::session
+
+---
+
+<!-- note:1794006447946 model:Many -->
+**Domain:** Registry Auth - multiple registries
+**Question:** A Pod has containers from quay.io AND a private ECR registry — how do you supply credentials for both?
+**Options:** A. Multiple imagePullSecrets per pod, each holding credentials for multiple registries — the kubelet tries the credential matching the image's registry<br>B. Only one imagePullSecret is allowed per pod<br>C. The registry must be listed in the pod's image field<br>D. A single Secret can only hold one registry's credentials
+**Answer:** A (1) – Multiple imagePullSecrets per pod, each holding credentials for multiple registries — the kubelet tries the credential matching the image's registry
+**Explanation:** A pod with containers from different registries can list several imagePullSecrets, and each Secret's .dockerconfigjson can hold auths for multiple registries. At pull time the kubelet selects the credential matching that image's registry; if none matches it attempts the pull unauthenticated (or via runtime-specific config). imagePullSecrets is a pod-level list — order doesn't matter, matching is by registry hostname.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/" target="_blank">Kubernetes Docs - Pull an Image from a Private Registry</a>
+**Tags:** k8s::kcna topic::images topic::secrets topic::pods src::session
+
+---
+
+<!-- note:1794006447949 model:Cloze -->
+**Text:** Pod manifest pulling from a private registry via Secret 'regcred':<br><br><code>apiVersion: v1<br>kind: Pod<br>metadata:<br>  name: private-reg<br>spec:<br>  containers:<br>  - name: app<br>    image: your.private.registry.example.com/janedoe/app:v1<br>  {{c1::imagePullSecrets}}:<br>  - name: {{c2::regcred}}</code>
+**Back Extra:** imagePullSecrets is a LIST under spec — each entry references a Secret of type kubernetes.io/dockerconfigjson that must exist in the pod's namespace. The kubelet uses these credentials when pulling <private.registry>/app before the container starts. Same field exists on a ServiceAccount to cover all its pods.
+**Tags:** k8s::kcna topic::images topic::yaml topic::secrets src::session
+
+---

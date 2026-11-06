@@ -205,3 +205,14 @@
 **Tags:** k8s::kcna topic::kubectl topic::kubeconfig topic::yaml src::session
 
 ---
+
+<!-- note:1793934323616 model:Many -->
+**Domain:** Kubeconfig - alternate file
+**Question:** How do you make kubectl use a kubeconfig file other than the default ~/.kube/config?
+**Options:** A. kubectl config use-context my-config<br>B. kubectl --kubeconfig=my-config &lt;command&gt; (global flag) or KUBECONFIG=my-config env var<br>C. kubectl config switch my-config<br>D. kubectl config edit my-config
+**Answer:** B (2) – the --kubeconfig global flag on any kubectl command, or the KUBECONFIG environment variable
+**Explanation:** --kubeconfig is a GLOBAL kubectl flag — it goes before the subcommand: kubectl --kubeconfig=my-config get pods — and points kubectl at exactly one file (no merging). KUBECONFIG=my-config does the same via env var, and accepts a LIST of files that get merged (first-set wins per key). Precedence: --kubeconfig flag > KUBECONFIG env > default ~/.kube/config. The distractors fail because: 'use-context'/'config use' switch contexts WITHIN a file, not files; 'config view --kubeconfig=' and 'config edit --kubeconfig=' only display/edit that file — they don't make kubectl use it for commands; 'config switch' isn't a real subcommand.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/" target="_blank">Kubernetes Docs - Organizing Cluster Access Using kubeconfig Files</a>
+**Tags:** k8s::kcna topic::kubectl topic::kubeconfig src::session
+
+---

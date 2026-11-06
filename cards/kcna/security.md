@@ -687,3 +687,105 @@
 **Tags:** k8s::kcna topic::rbac topic::yaml src::session
 
 ---
+
+<!-- note:1794003812816 model:Many -->
+**Domain:** ServiceAccounts - purpose
+**Question:** What is the purpose of a ServiceAccount?
+**Options:** A. It provides an identity for processes running in Pods to authenticate to the API server<br>B. It stores sensitive credentials for applications<br>C. It defines network access policies for pods<br>D. It groups human users for permission assignment
+**Answer:** A (1) – It provides an identity for processes running in Pods to authenticate to the API server
+**Explanation:** A ServiceAccount gives in-cluster workloads (pods) an identity — requests authenticate as system:serviceaccount:<namespace>:<name>, then RBAC decides what that identity may do. Kubernetes deliberately has NO User API object: SAs are the only first-class identity Kubernetes manages itself. Human access is a separate path entirely (client certs, tokens, OIDC).
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/" target="_blank">Kubernetes Docs - Configure Service Accounts for Pods</a>
+**Tags:** k8s::kcna topic::rbac topic::security src::session
+
+---
+
+<!-- note:1794003812817 model:Many -->
+**Domain:** ServiceAccounts - users vs SAs
+**Question:** How do human users get access to a Kubernetes cluster? (ServiceAccounts are NOT the mechanism)
+**Options:** A. Client certificates, bearer tokens, or OIDC — they authenticate as User identities<br>B. By creating a ServiceAccount for each person<br>C. Via the serviceAccountName field in their kubeconfig<br>D. Through the default ServiceAccount in each namespace
+**Answer:** A (1) – Client certificates, bearer tokens, or OIDC — they authenticate as User identities
+**Explanation:** ServiceAccounts are for pod workloads, NOT people. Humans get cluster access by authenticating with client certificates (admin.conf kubeconfig), bearer tokens, or OIDC — becoming User identities with groups (e.g. system:masters) that RBAC then authorizes. SA identities look like system:serviceaccount:<ns>:<name> and belong to groups system:serviceaccounts and system:serviceaccounts:<ns>. If you need per-person access, issue certs/tokens — don't mint SAs.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/" target="_blank">Kubernetes Docs - Configure Service Accounts for Pods</a>
+**Tags:** k8s::kcna topic::rbac topic::authentication src::session
+
+---
+
+<!-- note:1794003812818 model:Many -->
+**Domain:** ServiceAccounts - kubectl create
+**Question:** Which command creates a ServiceAccount named build-robot?
+**Options:** A. kubectl create serviceaccount build-robot<br>B. kubectl create role build-robot<br>C. kubectl create secret build-robot<br>D. kubectl create token build-robot
+**Answer:** A (1) – kubectl create serviceaccount build-robot
+**Explanation:** kubectl create serviceaccount NAME makes one imperatively (equivalent: kubectl apply -f sa.yaml with apiVersion: v1, kind: ServiceAccount). The name must be a valid DNS subdomain. Related commands: kubectl get serviceaccounts lists them (NAME/SECRETS/AGE — the SECRETS column is a legacy artifact, mostly 0 since 1.24), kubectl describe serviceaccount <name>, kubectl delete serviceaccount <name>. A ServiceAccount alone grants nothing — pair it with RBAC RoleBindings to give it API permissions.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/" target="_blank">Kubernetes Docs - Configure Service Accounts for Pods</a>
+**Tags:** k8s::kcna topic::rbac topic::kubectl src::session
+
+---
+
+<!-- note:1794003812819 model:Many -->
+**Domain:** ServiceAccounts - default
+**Question:** What happens when you create a Pod without spec.serviceAccountName?
+**Options:** A. It is automatically assigned the 'default' ServiceAccount of its namespace<br>B. It gets no API credentials mounted at all<br>C. It uses a cluster-wide admin ServiceAccount<br>D. Pod creation fails validation without the field
+**Answer:** A (1) – It is automatically assigned the 'default' ServiceAccount of its namespace
+**Explanation:** Every namespace contains at least one SA — 'default'. If spec.serviceAccountName is unset, the API server assigns it at admission (visible in kubectl get pod <name> -o yaml). The default SA still gets its token mounted, so pods that never call the API should set automountServiceAccountToken: false. Best practice: create a dedicated SA per workload and bind only the RBAC it needs — never build apps on 'default'.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/" target="_blank">Kubernetes Docs - Configure Service Accounts for Pods</a>
+**Tags:** k8s::kcna topic::rbac topic::security src::session
+
+---
+
+<!-- note:1794003812820 model:Many -->
+**Domain:** ServiceAccounts - automount precedence
+**Question:** Where can automountServiceAccountToken: false be set, and which wins if both are set?
+**Options:** A. On the ServiceAccount OR in the Pod spec — the Pod spec takes precedence<br>B. Only on the Pod spec<br>C. Only on the ServiceAccount<br>D. On the Namespace — it cascades to all pods
+**Answer:** A (1) – On the ServiceAccount OR in the Pod spec — the Pod spec takes precedence
+**Explanation:** Two opt-out points for token mounting: set automountServiceAccountToken: false in the ServiceAccount manifest (covers every pod using it) OR spec.automountServiceAccountToken: false in the Pod (covers just that pod). Doc-verified: if BOTH specify a value, the POD SPEC wins. Either way the kubelet skips mounting token + CA cert at /var/run/secrets/kubernetes.io/serviceaccount/ — the pod simply can't authenticate to the API.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/" target="_blank">Kubernetes Docs - Configure Service Accounts for Pods</a>
+**Tags:** k8s::kcna topic::rbac topic::security topic::pods src::session
+
+---
+
+<!-- note:1794003812821 model:Many -->
+**Domain:** ServiceAccounts - create token
+**Question:** What does kubectl create token build-robot do?
+**Options:** A. It calls the TokenRequest API, prints a JWT to stdout, and stores nothing in the cluster<br>B. It creates a Secret containing a never-expiring token<br>C. It generates a token valid for 30 days by default<br>D. It requires a --save flag to persist the token
+**Answer:** A (1) – It calls the TokenRequest API, prints a JWT to stdout, and stores nothing in the cluster
+**Explanation:** kubectl create token NAME performs a TokenRequest for that SA and prints the signed JWT — nothing is persisted. Default lifetime is server-decided (~1h); --duration requests a lifetime but the server may return shorter OR longer. --audience sets the intended recipient (default: the API server). --bound-object-kind/name/uid (Pod/Secret/Node kinds) binds the token to an object — it dies when that object or the SA is deleted. Feature is Stable since v1.33.
+**Sources:** <a href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_token/" target="_blank">Kubernetes Docs - kubectl create token</a>
+**Tags:** k8s::kcna topic::rbac topic::kubectl topic::authentication src::session
+
+---
+
+<!-- note:1794003812822 model:Many -->
+**Domain:** ServiceAccounts - long-lived token
+**Question:** Can you get a ServiceAccount token that stays valid as long as the SA exists?
+**Options:** A. Yes — create a Secret of type kubernetes.io/service-account-token annotated kubernetes.io/service-account.name: <sa>; the control plane fills in a token valid until the SA is deleted<br>B. No — all SA tokens expire within hours<br>C. Yes — kubectl create token --forever<br>D. Yes — set expirationSeconds: 0 in the pod spec
+**Answer:** A (1) – Yes — create a Secret of type kubernetes.io/service-account-token annotated kubernetes.io/service-account.name: <sa>; the control plane fills in a token valid until the SA is deleted
+**Explanation:** The manual legacy path still works: kubectl apply a Secret with annotation kubernetes.io/service-account.name: build-robot and type kubernetes.io/service-account-token — the control plane generates a token into .data.token that stays valid until the SA is deleted (auto-cleaned). Pre-1.24 this happened automatically for every SA; now it's opt-in. Docs recommend TokenRequest instead — never-expiring tokens are what 1.24 moved away from. Caution: never display the token field where screens can be seen.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/" target="_blank">Kubernetes Docs - Configure Service Accounts for Pods</a>
+**Tags:** k8s::kcna topic::rbac topic::security topic::secrets src::session
+
+---
+
+<!-- note:1794003812823 model:Many -->
+**Domain:** ServiceAccounts - imagePullSecrets
+**Question:** How can all Pods using a ServiceAccount pull from a private registry without per-pod config?
+**Options:** A. Add imagePullSecrets to the ServiceAccount object — pods using it inherit the registry credentials<br>B. Mount the dockerconfigjson Secret as a volume in each pod<br>C. Store registry credentials in a ConfigMap referenced by env vars<br>D. It is not possible — imagePullSecrets must be set per-pod
+**Answer:** A (1) – Add imagePullSecrets to the ServiceAccount object — pods using it inherit the registry credentials
+**Explanation:** ServiceAccount objects carry an imagePullSecrets field: kubectl patch serviceaccount default -p '{"imagePullSecrets":[{"name":"myregistrykey"}]}' (or kubectl edit serviceaccount/default). Every pod created with that SA inherits the dockerconfigjson credentials — much cleaner than repeating imagePullSecrets in each pod spec for registries many workloads share.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/" target="_blank">Kubernetes Docs - Configure Service Accounts for Pods</a>
+**Tags:** k8s::kcna topic::rbac topic::images src::session
+
+---
+
+<!-- note:1794003812840 model:Cloze -->
+**Text:** Pod spec binding to ServiceAccount 'build-robot' with token mounting disabled:<br><br><code>apiVersion: v1<br>kind: Pod<br>metadata:<br>  name: my-pod<br>spec:<br>  serviceAccountName: {{c1::build-robot}}<br>  automountServiceAccountToken: {{c2::false}}<br>  containers:<br>  - name: app<br>    image: nginx</code>
+**Back Extra:** Set ONLY at pod creation (or in a workload's pod template) — serviceAccountName is immutable on existing pods, like nodeName. Deprecated alias: spec.serviceAccount (set both to empty to remove). The SA must exist in the pod's namespace. Omit the field → 'default' SA auto-assigned. Pod-level automountServiceAccountToken overrides the SA's own setting.
+**Tags:** k8s::kcna topic::rbac topic::yaml src::session
+
+---
+
+<!-- note:1794003812841 model:Cloze -->
+**Text:** Long-lived SA token via manually created Secret:<br><br><code>apiVersion: v1<br>kind: Secret<br>metadata:<br>  name: build-robot-secret<br>  annotations:<br>    kubernetes.io/service-account.name: {{c1::build-robot}}<br>type: {{c2::kubernetes.io/service-account-token}}</code>
+**Back Extra:** The annotation is what triggers token generation — control plane writes the JWT into .data.token; valid until the SA is deleted, then auto-cleaned. This is the manual form of the pre-1.24 automatic behavior. kubectl get secret <name> -o yaml reveals it; kubectl describe shows the annotation. Prefer kubectl create token / TokenRequest for anything new.
+**Tags:** k8s::kcna topic::rbac topic::yaml topic::secrets src::session
+
+---

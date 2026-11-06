@@ -366,3 +366,14 @@
 **Tags:** k8s::kcna topic::rbac topic::security topic::yaml src::session
 
 ---
+
+<!-- note:1793934056843 model:Many -->
+**Domain:** ServiceAccounts - token secrets
+**Question:** Which of the following statements is true regarding service accounts in Kubernetes version 1.24?
+**Options:** A. When a service account is created, it only creates a token access secret but not a regular secret.<br>B. When a service account is created, it only creates a secret but not a token access secret.<br>C. When a service account is created, it no longer automatically creates a secret or a token access secret.<br>D. When a service account is created, it automatically creates a secret and a token access secret.
+**Answer:** C (3) – when a service account is created, it no longer automatically creates a secret or a token access secret
+**Explanation:** Since Kubernetes 1.24 (KEP-2799), creating a ServiceAccount creates ONLY the SA object — no Secret is auto-generated. Before 1.24, kubectl create sa / a pod referencing an SA triggered creation of a kubernetes.io/service-account-token Secret holding a never-expiring JWT mounted into pods. That mechanism was removed because those tokens never expired and couldn't be rotated — pods now get short-lived, audience/time/object-bound tokens via the TokenRequest API and projected serviceAccountToken volumes instead. Legacy auto-created Secrets that already exist are NOT deleted, but they aren't refreshed either — migration path is to delete them and switch workloads to projected tokens.
+**Sources:** <a href="https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/" target="_blank">Kubernetes Docs - Managing Service Accounts</a>
+**Tags:** k8s::kcna topic::serviceaccounts topic::secrets topic::security src::session
+
+---

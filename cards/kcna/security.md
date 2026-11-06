@@ -333,3 +333,14 @@
 **Tags:** k8s::kcna topic::networking topic::networkpolicy topic::cni src::session
 
 ---
+
+<!-- note:1793933047097 model:Many -->
+**Domain:** NetworkPolicy - policyTypes
+**Question:** If you have only the ingress in the policyTypes, what does it mean?
+**Options:** A. Only the ingress traffic is isolated, and all egress traffic is unaffected.<br>B. Only the egress traffic is isolated, and all ingress traffic is unaffected.<br>C. Both ingress and egress traffic are isolated.<br>D. There is no network policy applied.
+**Answer:** A (1) – only the ingress traffic is isolated, and all egress traffic is unaffected
+**Explanation:** policyTypes declares which traffic DIRECTIONS the policy governs. Listing only Ingress means: selected pods get default-deny on inbound traffic, then the policy's ingress rules carve out exceptions — while egress is completely untouched, pods can still initiate any outbound connection. policyTypes: [Egress] does the reverse. The subtle default: if you OMIT policyTypes, Kubernetes infers it — an ingress: rules section implies Ingress, an egress: section implies Egress; and a policy with podSelector but NO rule lists at all defaults to BOTH directions (full isolation). Also note: NetworkPolicy never filters traffic to/from the node itself (hostNetwork/kubelet traffic is exempt).
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/network-policies/" target="_blank">Kubernetes Docs - Network Policies</a>
+**Tags:** k8s::kcna topic::networking topic::networkpolicy topic::yaml src::session
+
+---

@@ -155,3 +155,25 @@
 **Tags:** k8s::kcna src::deck-import topic::delivery topic::mcq
 
 ---
+
+<!-- note:1794082905876 model:Many -->
+**Domain:** Application Delivery - queue load leveling
+**Question:** A microservice application is experiencing high latency during traffic spikes. The team identifies that the database connection pool is exhausted. They want to implement a pattern that helps decouple the microservice from direct database connections and smooth out traffic bursts. Which design pattern should they apply?
+**Options:** A. Bulkhead pattern<br>B. Circuit Breaker pattern<br>C. Queue-based Load Leveling pattern<br>D. Retry pattern
+**Answer:** C (3) – Queue-based Load Leveling pattern
+**Explanation:** Queue-based Load Leveling inserts a message queue (RabbitMQ, SQS, Kafka, etc.) between producer and consumer: requests enqueue instantly and a consumer drains them at a rate the database can sustain — bursts get absorbed as queue depth instead of exhausted connection pools. This is a LOAD-SMOOTHING pattern, not a failure-handling one: Circuit breaker stops calls to FAILING deps, Retry re-attempts failures, Bulkhead partitions resources — none decouple the caller or buffer bursts.
+**Sources:** <a href="https://learn.microsoft.com/en-us/azure/architecture/patterns/queue-based-load-leveling" target="_blank">Microsoft Azure Architecture - Queue-Based Load Leveling</a>
+**Tags:** k8s::kcna topic::application-delivery topic::messaging src::session
+
+---
+
+<!-- note:1794082905877 model:Many -->
+**Domain:** Application Delivery - load leveling mechanism
+**Question:** How does Queue-based Load Leveling actually smooth out traffic bursts?
+**Options:** A. The queue retries failed database writes automatically<br>B. Producers enqueue requests instantly; a consumer processes them at a controlled rate, so bursts become queue depth<br>C. The queue load-balances requests across database replicas<br>D. Producers block until the database has free connections
+**Answer:** B (2) – Producers enqueue requests instantly; a consumer processes them at a controlled rate, so bursts become queue depth
+**Explanation:** Mechanics: producer publishes to queue → queue buffers → consumer(s) pull work at whatever rate the downstream (DB) can handle. Spike = deeper queue, not more concurrent DB connections. Trade-offs: requests become ASYNC (higher latency per request, but bounded); needs a queue tech (RabbitMQ/SQS/Kafka/NATS); consumer count controls throughput. Sibling patterns in the same family: Throttling (reject/slow requests at the edge), Autoscaling (add replicas — helps compute-bound, not a fixed pool like DB connections).
+**Sources:** <a href="https://learn.microsoft.com/en-us/azure/architecture/patterns/queue-based-load-leveling" target="_blank">Microsoft Azure Architecture - Queue-Based Load Leveling</a>
+**Tags:** k8s::kcna topic::application-delivery topic::messaging src::session
+
+---

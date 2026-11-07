@@ -2452,7 +2452,7 @@
 **Question:** A payment API dependency keeps failing. Which pattern makes callers fail fast instead of waiting for it, then probes for recovery?
 **Options:** A. Bulkhead<br>B. Circuit breaker<br>C. Timeout<br>D. Retry
 **Answer:** B (2) – Circuit breaker
-**Explanation:** Circuit breaker monitors calls to a dependency and, after a failure threshold, 'opens' — callers fail fast instead of waiting on a dead service, then periodically 'half-opens' to test recovery. It's about STOPPING traffic to a failing dependency, not partitioning resources (that's bulkhead) or retrying (that's retry's job — dangerous combined with a breaker since retries amplify load).
+**Explanation:** Circuit breaker monitors calls to a dependency and, after a failure threshold, 'opens' — callers fail fast instead of waiting on a dead service, typically returning a FALLBACK response (stale/cached data, default value) so the app keeps working while the dependency recovers. After a cool-down it 'half-opens' to probe recovery. It's about STOPPING traffic to a failing dependency, not partitioning resources (that's bulkhead) or retrying (that's retry's job — dangerous combined with a breaker since retries amplify load).
 **Sources:** <a href="https://microservices.io/patterns/reliability/circuit-breaker.html" target="_blank">microservices.io - Circuit Breaker</a>
 **Tags:** k8s::kcna src::session topic::architecture topic::resiliency
 

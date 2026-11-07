@@ -3453,3 +3453,21 @@
 **Tags:** k8s::kcna topic::pods topic::troubleshooting src::session
 
 ---
+
+<!-- note:1794081542009 model:Many -->
+**Domain:** Kubectl - logs container
+**Question:** You want to view the logs of a container named 'app' inside a pod named 'web-pod-7d4f8'. Which kubectl command should you use?
+**Options:** A. kubectl exec web-pod-7d4f8 -c app -- logs<br>B. kubectl log web-pod-7d4f8 --container app<br>C. kubectl logs web-pod-7d4f8 -c app<br>D. kubectl logs web-pod-7d4f8 app
+**Answer:** C (3) – kubectl logs web-pod-7d4f8 -c app
+**Explanation:** kubectl logs is the verb (always plural — 'log' doesn't exist); the pod name is positional; -c/--container selects WHICH container when the pod has several (default = first container). Distractors: A uses exec — exec runs a NEW command inside the container, it doesn't fetch logs; B has the nonexistent 'log' verb; D passes 'app' as a second positional arg which kubectl rejects. Related flags worth knowing: --previous (logs of the last crashed instance — the CrashLoopBackOff debugging tool), -f/--follow, --tail=N, --since.
+**Sources:** <a href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/" target="_blank">kubectl logs reference</a>
+**Tags:** k8s::kcna topic::kubectl topic::logging src::session
+
+---
+
+<!-- note:1794081542018 model:Cloze -->
+**Text:** kubectl logs cheatsheet:<br><br>Basic: <code>kubectl logs {{c1::pod-name}}</code><br>Specific container: <code>-c {{c2::container-name}}</code><br>Last crashed instance: <code>--{{c3::previous}}</code><br>Follow live: <code>-{{c4::f}}</code> / <code>--follow</code><br>Last N lines: <code>--tail={{c5::N}}</code>
+**Back Extra:** Full family: kubectl logs <pod> [-c container] [--previous] [-f] [--tail=N] [--since=...]. -c needed only for multi-container pods. --previous shows the last terminated instance's logs (crash debugging). --timestamps adds timestamps. kubectl logs -f streams live.
+**Tags:** k8s::kcna topic::kubectl topic::logging src::session
+
+---

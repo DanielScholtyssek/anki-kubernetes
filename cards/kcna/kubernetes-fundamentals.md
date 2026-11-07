@@ -3431,3 +3431,25 @@
 **Tags:** k8s::kcna topic::labels topic::selectors topic::deployments src::session
 
 ---
+
+<!-- note:1794081509520 model:Many -->
+**Domain:** Pod States - CrashLoopBackOff
+**Question:** A container in a pod has been restarted multiple times with 'CrashLoopBackOff' state. What does this indicate?
+**Options:** A. The container is using too much memory<br>B. The container exits with a non-zero exit code soon after starting<br>C. The container is running but not responding to health checks<br>D. The container image cannot be pulled
+**Answer:** B (2) – The container exits with a non-zero exit code soon after starting
+**Explanation:** CrashLoopBackOff = the container STARTS, exits non-zero almost immediately, kubelet restarts it, repeat — with exponential backoff between attempts. The process itself is failing (bad command, missing file, crash on startup, failed liveness probe). Distractors map to OTHER states: unpullable image → ImagePullBackOff/ErrImagePull (never starts); running-but-unhealthy → liveness probe restarts (which CAUSES CrashLoopBackOff but the state itself means exit); memory → OOMKilled. Triage: kubectl logs --previous + kubectl describe pod.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/debug/debug-application/determine-reason-pod-failure/" target="_blank">Kubernetes Docs - Determine Reason for Pod Failure</a>
+**Tags:** k8s::kcna topic::pods topic::troubleshooting src::session
+
+---
+
+<!-- note:1794081509521 model:Many -->
+**Domain:** Pod States - backoff
+**Question:** What does the 'BackOff' part of CrashLoopBackOff mean?
+**Options:** A. Exponential backoff — the kubelet waits progressively longer between restart attempts to avoid hammering a failing container<br>B. The container is backed off from scheduling onto any node<br>C. Kubernetes has given up and will never restart it again<br>D. The container's CPU is throttled to zero
+**Answer:** A (1) – Exponential backoff — the kubelet waits progressively longer between restart attempts to avoid hammering a failing container
+**Explanation:** The 'BackOff' suffix means the restart delay grows exponentially (10s, 20s, 40s, up to 5min cap) — kubelet won't hot-loop a crash-looping container forever. You see it in events as 'Back-off restarting failed container'. The loop only breaks when the container stays up past the failure window or the pod is fixed/deleted. To debug the ACTUAL cause use 'kubectl logs <pod> --previous' (last crashed instance) — current logs may be empty if it's mid-backoff.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/" target="_blank">Kubernetes Docs - Pod Lifecycle</a>
+**Tags:** k8s::kcna topic::pods topic::troubleshooting src::session
+
+---

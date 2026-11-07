@@ -523,3 +523,32 @@ completely managed by the platform, allowing developers to focus on code.
 **Tags:** k8s::kcna topic::networking topic::cni topic::yaml src::session
 
 ---
+
+<!-- note:1794078127989 model:Many -->
+**Domain:** Resiliency Patterns - bulkhead
+**Question:** Which resiliency pattern prevents a cascade of failures by isolating each component so a failure in one does not affect others?
+**Options:** A. Retry<br>B. Circuit breaker<br>C. Timeout<br>D. Bulkhead
+**Answer:** D (4) – Bulkhead
+**Explanation:** Bulkhead isolates resources — separate thread pools, connection pools, or replicas per dependency — so one failing component can't consume everything and cascade. Named after ship compartments: a hull breach floods one section, not the ship. Contrast with the others: Circuit breaker stops CALLING a failing dependency (failure handling, not isolation); Timeout caps how long a caller waits; Retry re-attempts failed calls. Bulkhead is the only one that prevents failure PROPAGATION by partitioning capacity.
+**Sources:** <a href="https://microservices.io/patterns/reliability/bulkhead-pattern.html" target="_blank">microservices.io - Bulkhead Pattern</a>
+**Tags:** k8s::kcna topic::architecture topic::resiliency src::session
+
+---
+
+<!-- note:1794078127990 model:Many -->
+**Domain:** Resiliency Patterns - circuit breaker
+**Question:** A payment API dependency keeps failing. Which pattern makes callers fail fast instead of waiting for it, then probes for recovery?
+**Options:** A. Bulkhead<br>B. Circuit breaker<br>C. Timeout<br>D. Retry
+**Answer:** B (2) – Circuit breaker
+**Explanation:** Circuit breaker monitors calls to a dependency and, after a failure threshold, 'opens' — callers fail fast instead of waiting on a dead service, then periodically 'half-opens' to test recovery. It's about STOPPING traffic to a failing dependency, not partitioning resources (that's bulkhead) or retrying (that's retry's job — dangerous combined with a breaker since retries amplify load).
+**Sources:** <a href="https://microservices.io/patterns/reliability/circuit-breaker.html" target="_blank">microservices.io - Circuit Breaker</a>
+**Tags:** k8s::kcna topic::architecture topic::resiliency src::session
+
+---
+
+<!-- note:1794078127998 model:Cloze -->
+**Text:** Resiliency pattern family — purpose of each:<br><br>{{c1::Retry}} — re-attempt a failed call (transient errors)<br>{{c2::Timeout}} — cap how long a caller waits<br>{{c3::Circuit breaker}} — stop calling a failing dependency, probe for recovery<br>{{c4::Bulkhead}} — isolate resources so one component's failure can't cascade
+**Back Extra:** Full mapping: Retry = re-attempt transient failures (watch for retry storms amplifying load); Timeout = cap caller wait (frees threads but doesn't isolate); Circuit breaker = fail-fast + probe recovery on a failing dependency; Bulkhead = partition resources so one failure can't cascade. In Kubernetes these are app-level patterns — the platform gives you probes/replicas, but the code implements the patterns.
+**Tags:** k8s::kcna topic::architecture topic::resiliency src::session
+
+---

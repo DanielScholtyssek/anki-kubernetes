@@ -265,3 +265,14 @@
 **Tags:** k8s::kcna src::deck-import topic::architecture topic::mcq
 
 ---
+
+<!-- note:1794083436738 model:Many -->
+**Domain:** Cluster DNS - FQDN
+**Question:** What is a Fully Qualified Domain Name (FQDN)?
+**Options:** A. The shortest possible name for a resource inside a cluster<br>B. An absolute domain name giving the complete path from the DNS root — unambiguous no matter where the query originates<br>C. A name that only resolves inside the namespace where it was created<br>D. The IP address assigned to a Service
+**Answer:** B (2) – An absolute domain name giving the complete path from the DNS root — unambiguous no matter where the query originates
+**Explanation:** FQDN = Fully Qualified Domain Name: the COMPLETE, absolute name — every label spelled out from the root down, e.g. my-svc.my-namespace.svc.cluster.local. Because it's absolute, it resolves identically no matter which pod/namespace asks (technically it ends at the root '.'). Contrast with SHORT names like 'my-svc' or 'my-svc.my-namespace' — those only resolve because /etc/resolv.conf search domains expand them. In Kubernetes every DNS record IS an FQDN under the cluster.local root zone; short forms are just conveniences.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/" target="_blank">Kubernetes Docs - DNS for Services and Pods</a>
+**Tags:** k8s::kcna topic::networking topic::dns src::session
+
+---

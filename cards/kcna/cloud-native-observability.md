@@ -251,3 +251,32 @@ in a specific format that Prometheus can then periodically scrape.
 **Tags:** k8s::kcna topic::promql topic::prometheus src::session
 
 ---
+
+<!-- note:1794079087773 model:Many -->
+**Domain:** Observability - practices select-two
+**Question:** Which TWO are recommended practices for achieving observability in a Kubernetes cluster?
+**Options:** A. Use a single centralized logging solution to aggregate logs from all components<br>B. Store all debug logs for a minimum of 90 days for compliance<br>C. Include correlation IDs in structured logs to enable tracing across services<br>D. Disable leader election for monitoring components to reduce complexity<br>E. Use Prometheus with a pull-based model to scrape metrics from pods
+**Answer:** C, E – correlation IDs for tracing + Prometheus pull-based scraping
+**Explanation:** (Select TWO) Correlation IDs in structured logs let you stitch one request's journey across pods/services — essential for microservices debugging. Prometheus' pull model is the Kubernetes standard: the server scrapes /metrics endpoints on its own schedule, so targets can't flood it and it's easy to scale horizontally. The rejected options are all anti-patterns: a SINGLE centralized log sink is a SPOF (prefer HA/aggregation layers); debug logs aren't compliance data (audit logs are — selective retention); leader election in HA monitoring PREVENTS duplicate scraping/alerting, disabling it causes duplicates.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/cluster-administration/logging/" target="_blank">Kubernetes Docs - Logging Architecture</a>
+**Tags:** k8s::kcna topic::observability topic::logging topic::metrics src::session
+
+---
+
+<!-- note:1794079087774 model:Many -->
+**Domain:** Observability - pull vs push
+**Question:** How does Prometheus primarily collect metrics?
+**Options:** A. Prometheus pulls — it scrapes targets on its schedule; push only happens via Pushgateway for jobs that can't be scraped<br>B. Applications push metrics directly to Prometheus storage<br>C. Prometheus requires agents on every pod to push metrics<br>D. Pull and push are equivalent — it's just a config choice
+**Answer:** A (1) – Prometheus pulls — it scrapes targets on its schedule; push only happens via Pushgateway for jobs that can't be scraped
+**Explanation:** Prometheus is pull-based by design: it periodically HTTP-scrapes each target's /metrics endpoint. Advantages: the server controls scrape rate/targets, targets can't overwhelm it, dead targets are detected (up=0) rather than silently stale, and it's horizontally scalable. The exception is the PUSHGATEWAY — for short-lived batch jobs that may not exist when Prometheus scrapes; they push metrics to it instead. Alertmanager is also pull-adjacent (it pulls alerts from Prometheus).
+**Sources:** <a href="https://prometheus.io/docs/introduction/overview/" target="_blank">Prometheus Docs - Overview</a>
+**Tags:** k8s::kcna topic::observability topic::metrics topic::prometheus src::session
+
+---
+
+<!-- note:1794079087783 model:Cloze -->
+**Text:** Observability practices that exams test:<br><br>{{c1::Correlation IDs}} in structured logs → trace one request across services<br>{{c2::Prometheus pull model}} → server scrapes /metrics; standard for K8s<br>{{c3::Pushgateway}} → the exception: short-lived jobs that can't be scraped<br>{{c4::Leader election}} → HA monitoring needs it to avoid duplicate scrapes/alerts
+**Back Extra:** The observability three pillars (logs/metrics/traces) each get a practice: correlation IDs make logs traceable, pull-model Prometheus scrapes metrics, and tracing systems (Jaeger/Tempo/OpenTelemetry) follow requests across services. Anti-patterns to avoid: single log sink SPOF, storing debug logs long-term, disabling leader election in HA setups.
+**Tags:** k8s::kcna topic::observability topic::logging topic::metrics src::session
+
+---

@@ -3515,3 +3515,25 @@
 **Tags:** k8s::kcna topic::architecture topic::kubelet src::session
 
 ---
+
+<!-- note:1794082761997 model:Many -->
+**Domain:** Storage - emptyDir lifecycle
+**Question:** A developer creates a Pod with a container that writes logs to a file in an emptyDir volume. The Pod is then deleted, and a new Pod is created with the same emptyDir volume definition. What happens to the data in the emptyDir volume?
+**Options:** A. The data is preserved because emptyDir volumes persist across Pod deletions<br>B. The data is lost because emptyDir volumes are deleted when the Pod is deleted<br>C. The data is preserved if the emptyDir volume is mounted with a persistentVolumeClaim<br>D. The data is preserved if the new Pod is scheduled to the same node
+**Answer:** B (2) – The data is lost because emptyDir volumes are deleted when the Pod is deleted
+**Explanation:** emptyDir lifetime = the POD's lifetime, not the node's. Created when the pod is scheduled, deleted when the pod is deleted — a replacement pod gets a FRESH emptyDir even on the same node. It CAN'T be backed by a PVC (that's not how volume types compose — PVC backs a PersistentVolume directly). For data that must survive pod deletion you need PVC→PV, or accept loss. emptyDir's real jobs: scratch space and sharing files BETWEEN CONTAINERS of the same pod.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/volumes/#emptydir" target="_blank">Kubernetes Docs - emptyDir volume</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794082761998 model:Many -->
+**Domain:** Storage - emptyDir use case
+**Question:** Which scenario is the BEST fit for an emptyDir volume?
+**Options:** A. Storing a database that must survive pod restarts<br>B. Persisting user uploads across deployments<br>C. Sharing a scratch/cache directory between an app container and a sidecar in the same pod<br>D. Keeping logs after the pod is deleted for later debugging
+**Answer:** C (3) – Sharing a scratch/cache directory between an app container and a sidecar in the same pod
+**Explanation:** emptyDir = pod-scoped temporary storage: exists only while THAT pod runs, deleted with it. Perfect for: scratch space, build caches, and sharing files between containers IN THE SAME POD (e.g. app writes to emptyDir, sidecar ships the logs). WRONG for anything surviving pod deletion — pod logs you want to keep, databases, user uploads → PVC/PV. Same-node scheduling doesn't help: the volume is bound to the pod, not the node.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/volumes/#emptydir" target="_blank">Kubernetes Docs - emptyDir volume</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---

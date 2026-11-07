@@ -344,3 +344,14 @@ completely managed by the platform, allowing developers to focus on code.
 **Tags:** k8s::kcna topic::networking topic::cni src::session
 
 ---
+
+<!-- note:1794010073685 model:Many -->
+**Domain:** CNI - runtime responsibility
+**Question:** What is the responsibility of a container runtime in terms of networking?
+**Options:** A. All of the options are correct<br>B. Identifying and attaching namespaces to the appropriate network<br>C. Calling the appropriate network plugin<br>D. Creating container network namespaces
+**Answer:** A (1) – All of the options are correct
+**Explanation:** All three are genuine runtime jobs in the CNI flow: the container runtime (containerd/CRI-O) creates each container's network namespace, selects which CNI configuration applies (the .conflist in /etc/cni/net.d/), and invokes the CNI plugin's ADD/DEL commands to attach that namespace to the configured network. The kubelet delegates this via CRI — the runtime is the component that actually calls CNI; the plugin then does the hands-on work (veth pair, bridge, IPAM). Runtime orchestrates, plugin executes.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/" target="_blank">Kubernetes Docs - Network Plugins</a>
+**Tags:** k8s::kcna topic::networking topic::cni topic::cri-oci src::session
+
+---

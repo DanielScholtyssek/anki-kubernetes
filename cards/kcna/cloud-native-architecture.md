@@ -450,3 +450,76 @@ completely managed by the platform, allowing developers to focus on code.
 **Tags:** k8s::kcna topic::networking topic::cni topic::podnetwork src::session
 
 ---
+
+<!-- note:1794076936965 model:Many -->
+**Domain:** CNI Config - conflist structure
+**Question:** What are the top-level keys of a CNI .conflist network configuration?
+**Options:** A. cniVersion/cniVersions, name, and plugins[] — bridge/ipam/dns live INSIDE each plugin object<br>B. bridge, ipam, dns, and name at the top level<br>C. Only name and type — everything else is optional<br>D. YAML keys: apiVersion, kind, metadata like other K8s objects
+**Answer:** A (1) – cniVersion/cniVersions, name, and plugins[] — bridge/ipam/dns live INSIDE each plugin object
+**Explanation:** A .conflist network config is a JSON object with top-level keys: cniVersion (spec version string like "1.1.0") or cniVersions (list of supported versions), name (unique network name per host), and plugins — an array of plugin config objects. Fields like type, bridge, ipam, dns, capabilities are PER-PLUGIN, nested inside each plugins[] entry — not top-level. Think of it as: envelope (version+name) → list of plugin instructions.
+**Sources:** <a href="https://www.cni.dev/docs/spec/" target="_blank">CNI Spec - Network configuration format</a>
+**Tags:** k8s::kcna topic::networking topic::cni topic::yaml src::session
+
+---
+
+<!-- note:1794076936966 model:Many -->
+**Domain:** CNI Config - type binary
+**Question:** In a CNI plugin config, what does the "type" field specify?
+**Options:** A. The filename of the plugin executable in the CNI bin dir — type: bridge → /opt/cni/bin/bridge<br>B. The network type like bridge or vlan only<br>C. The plugin's version number<br>D. Whether the plugin is enabled or disabled
+**Answer:** A (1) – The filename of the plugin executable in the CNI bin dir — type: bridge → /opt/cni/bin/bridge
+**Explanation:** Each plugin object's "type" field names the plugin BINARY on disk — it's how the config points at the executable: type: "bridge" makes the runtime look for /opt/cni/bin/bridge. This is the exact mechanism from your lecture: config in net.d identifies the script name, runtime finds that binary in the bin dir and executes it with ADD/DEL. Same for ipam.type — it names the IPAM plugin's executable, not a behavior.
+**Sources:** <a href="https://www.cni.dev/docs/spec/" target="_blank">CNI Spec - Plugin configuration objects</a>
+**Tags:** k8s::kcna topic::networking topic::cni src::session
+
+---
+
+<!-- note:1794076936967 model:Many -->
+**Domain:** CNI Config - plugin chaining
+**Question:** What does the plugins[] array in a .conflist enable?
+**Options:** A. Multiple plugins can be chained — a main plugin (bridge) plus meta plugins (tuning, portmap, firewall) that adjust the result<br>B. Only one plugin can ever be configured per network<br>C. plugins[] lists backup plugins used if the first fails<br>D. Each plugins[] entry runs on a different node
+**Answer:** A (1) – Multiple plugins can be chained — a main plugin (bridge) plus meta plugins (tuning, portmap, firewall) that adjust the result
+**Explanation:** The plugins[] array enables CHAINING: the runtime executes each plugin in order, passing each one's result (prevResult) to the next. Typically the first entry is the 'interface' plugin that creates the interface+IP (bridge), followed by 'meta' plugins that modify the already-created interface — tuning (sysctl, MAC), portmap (hostPort mapping), firewall, bandwidth. Spec v0.3.0 introduced chaining; v1.0.0 then REQUIRED the plugins array even for a single plugin.
+**Sources:** <a href="https://www.cni.dev/docs/spec/" target="_blank">CNI Spec - plugin chaining</a>
+**Tags:** k8s::kcna topic::networking topic::cni src::session
+
+---
+
+<!-- note:1794076936968 model:Many -->
+**Domain:** CNI Config - spec versions
+**Question:** Since CNI spec v1.0.0, can a network config omit the plugins[] array for a single plugin?
+**Options:** A. No — spec v1.0.0 removed non-list configs; every network config must use the plugins[] array<br>B. Yes — bare single-plugin configs are still valid<br>C. Only on Windows nodes<br>D. Only if cniVersion is below 1.0.0
+**Answer:** A (1) – No — spec v1.0.0 removed non-list configs; every network config must use the plugins[] array
+**Explanation:** Spec history that matters: v0.3.0 added plugin chaining + rich results; v0.4.0 added CHECK; v1.0.0 REMOVED non-list configurations — a bare single-plugin JSON without plugins[] is invalid in modern CNI; v1.1.0 added STATUS and GC commands plus cniVersions for multi-version support. So even a one-plugin network must be wrapped: {"cniVersion":"1.0.0","name":"x","plugins":[{"type":"bridge",...}]}. The cniVersions list field lets one config declare which spec versions it supports.
+**Sources:** <a href="https://www.cni.dev/docs/spec/" target="_blank">CNI Spec - version history</a>
+**Tags:** k8s::kcna topic::networking topic::cni src::session
+
+---
+
+<!-- note:1794076936969 model:Many -->
+**Domain:** CNI Config - env params
+**Question:** What parameters does the container runtime pass to CNI plugins? (Select all that apply)
+**Options:** A. CNI_CONTAINERID — the unique container identifier<br>B. CNI_NETNS — path to the container's network namespace<br>C. CNI_IFNAME — the interface name to create in the container<br>D. CNI_PATH — the plugin binary search path
+**Answer:** A, B, C, D – CNI_CONTAINERID, CNI_NETNS, CNI_IFNAME, CNI_ARGS/CNI_PATH all passed by the runtime
+**Explanation:** (Select all that apply) The runtime passes per-attachment context to plugins via env vars/parameters: CNI_CONTAINERID (unique container ID), CNI_NETNS (path to the container's network namespace, e.g. /run/netns/...), CNI_IFNAME (interface name to create inside the container), CNI_ARGS (extra key-value args), and CNI_PATH (the plugin search path so plugins can find delegated binaries like IPAM). These are what the ADD/DEL calls carry — the 'name and namespaceID' your lecture mentioned.
+**Sources:** <a href="https://www.cni.dev/docs/spec/" target="_blank">CNI Spec - Attachment Parameters</a>
+**Tags:** k8s::kcna topic::networking topic::cni src::session
+
+---
+
+<!-- note:1794076936970 model:Many -->
+**Domain:** CNI Config - lifecycle rules
+**Question:** Which lifecycle rules does the CNI spec mandate? (Select all that apply)
+**Options:** A. The runtime creates the network namespace before invoking plugins and cleans it up itself<br>B. Every ADD must eventually be followed by a DEL — even if the ADD failed<br>C. The network config must not change between ADD and DEL<br>D. Plugins create and destroy the network namespace themselves
+**Answer:** A, B, C – runtime creates netns first; add must be followed by delete; delete runs even if add fails; runtime owns netns cleanup
+**Explanation:** (Select all that apply) Spec-mandated lifecycle: the runtime creates the container's network namespace BEFORE invoking any plugin and is responsible for cleaning it up afterward; every ADD must eventually be followed by a DEL (even if ADD failed); DEL may be retried; config must not change between add and delete; runtimes may parallelize across containers but not for the same container; GC operations must not overlap with add/delete.
+**Sources:** <a href="https://www.cni.dev/docs/spec/" target="_blank">CNI Spec - Lifecycle & Ordering</a>
+**Tags:** k8s::kcna topic::networking topic::cni src::session
+
+---
+
+<!-- note:1794076936975 model:Cloze -->
+**Text:** Spec example — 'dbnet' conflist chaining bridge + tuning + portmap:<br><br><code>{<br>  cniVersion: {{c1::"1.1.0"}},<br>  name: {{c2::dbnet}},<br>  plugins: [<br>    { type: {{c3::bridge}}, bridge: cni0,<br>      ipam: { type: {{c4::host-local}}, subnet: 10.1.0.0/16 } },<br>    { type: {{c5::tuning}}, capabilities: { mac: true } },<br>    { type: {{c6::portmap}}, capabilities: { portMappings: true } }<br>  ]<br>}</code>
+**Back Extra:** dbnet example from the spec: bridge creates cni0 + assigns IP via host-local IPAM (10.1.0.0/16, gw 10.1.0.1, default route); dns sets pod resolv.conf nameserver; tuning adjusts sysctls/MAC via capabilities; portmap exposes hostPort mappings via capabilities.portMappings. 'type' in each entry = binary filename in /opt/cni/bin. ipam is itself a plugin delegation (ipam.type = IPAM binary).
+**Tags:** k8s::kcna topic::networking topic::cni topic::yaml src::session
+
+---

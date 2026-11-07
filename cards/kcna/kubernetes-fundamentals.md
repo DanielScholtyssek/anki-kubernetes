@@ -3388,3 +3388,24 @@
 **Tags:** k8s::kcna src::deck-import topic::fundamentals topic::mcq
 
 ---
+<!-- note:1794080455329 model:Many -->
+**Domain:** Services - troubleshooting
+**Question:** A user reports that a web application is not accessible via its Service. The Service is of type ClusterIP. Which TWO steps should be taken to troubleshoot?
+**Options:** A. Verify that the kube-proxy is running on the node<br>B. Check that the container runtime is working<br>C. Check the kube-apiserver status<br>D. Check if the Service has any endpoints using 'kubectl get endpoints'<br>E. Restart all nodes in the cluster
+**Answer:** A, D – verify kube-proxy is running on the node AND check the Service has endpoints via kubectl get endpoints
+**Explanation:** (Select TWO) ClusterIP traffic flows: client -> ClusterIP -> kube-proxy iptables/IPVS rules -> ready Pod IPs. Two failure points to check first: (A) kube-proxy down on the node = no DNAT rules programmed, ClusterIP goes nowhere; (D) empty endpoints = the Service selector matches no READY pods — the most common cause (pods crashed, labels changed, readiness failing). Distractors: container runtime failure breaks pods broadly, not Service-specific; kube-apiserver down breaks kubectl itself; restarting all nodes is disruptive non-diagnostic.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/service/" target="_blank">Kubernetes Docs - Service</a>
+**Tags:** k8s::kcna topic::services topic::endpoints src::session
+
+---
+
+<!-- note:1794080455330 model:Many -->
+**Domain:** Services - endpoints empty
+**Question:** kubectl get endpoints <service-name> shows no addresses for a ClusterIP Service. What is the most likely cause?
+**Options:** A. The selector matches no ready pods — Endpoints only lists pods that are Running AND Ready<br>B. The ClusterIP was never allocated by the apiserver<br>C. kube-proxy hasn't synced yet — wait 24 hours<br>D. Endpoints only populate for NodePort services
+**Answer:** A (1) – The selector matches no ready pods — Endpoints only lists pods that are Running AND Ready
+**Explanation:** The Endpoints object is auto-populated by the control plane with the IPs of pods matching the Service's selector that are Ready. Empty endpoints = kube-proxy has nothing to DNAT to, so the ClusterIP accepts nothing. Causes: selector/label mismatch, pods CrashLoopBackOff, readiness probe failing, or pods in wrong namespace. Inspect with 'kubectl get endpoints <svc>' or 'kubectl describe svc <svc>' (shows Endpoints: field). Note: modern clusters use EndpointSlices internally, but 'kubectl get endpoints' still works.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/service/" target="_blank">Kubernetes Docs - Service</a>
+**Tags:** k8s::kcna topic::services topic::endpoints src::session
+
+---

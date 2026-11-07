@@ -355,3 +355,98 @@ completely managed by the platform, allowing developers to focus on code.
 **Tags:** k8s::kcna topic::networking topic::cni topic::cri-oci src::session
 
 ---
+
+<!-- note:1794016331742 model:Many -->
+**Domain:** Pod Networking - requirements
+**Question:** What does the Kubernetes network model require of pod networking? (Select all that apply)
+**Options:** A. Every Pod gets its own IP address<br>B. Pods on the same node can communicate with each other<br>C. Pods on different nodes can communicate without NAT<br>D. Pods must communicate with each other through a NAT gateway<br>E. Every Pod must have a unique MAC address cluster-wide
+**Answer:** A, B, C – every pod gets an IP; same-node pods reach each other; cross-node pods reach each other WITHOUT NAT
+**Explanation:** (Select all that apply) The Kubernetes network model's core requirements: every Pod gets its own routable IP address; Pods on the same node communicate (localhost/bridge); Pods on DIFFERENT nodes communicate directly — WITHOUT NAT, meaning pod IPs are end-to-end routable across the cluster network. 'Without NAT' is the key constraint — it forbids hiding pod IPs behind node IPs for in-cluster traffic (that's what masquerade does only for EXTERNAL egress).
+**Sources:** <a href="https://kubernetes.io/docs/concepts/cluster-administration/networking/" target="_blank">Kubernetes Docs - Cluster Networking</a>
+**Tags:** k8s::kcna topic::networking topic::podnetwork src::session
+
+---
+
+<!-- note:1794016331743 model:Many -->
+**Domain:** Pod Networking - who implements
+**Question:** Kubernetes does not solve pod networking itself — what actually implements it?
+**Options:** A. CNI plugins via the container runtime — Kubernetes only defines the requirements<br>B. kube-proxy alone handles all pod networking<br>C. The kube-apiserver assigns pod IPs directly<br>D. kubelet writes iptables rules for pod traffic
+**Answer:** A (1) – CNI plugins via the container runtime — Kubernetes only defines the requirements
+**Explanation:** Kubernetes deliberately does NOT implement pod networking — it specifies what must be true (IP per pod, NAT-free pod-to-pod) and lets CNIs satisfy it. The container runtime on each node invokes CNI plugins (bridge, Calico, Cilium, flannel…) which actually create interfaces, assign IPs, and wire routes. Many vendor CNIs exist offering different features — basic interface management up to integrated NetworkPolicy, advanced IPAM, multi-plugin chaining.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/cluster-administration/networking/" target="_blank">Kubernetes Docs - Cluster Networking</a>
+**Tags:** k8s::kcna topic::networking topic::cni src::session
+
+---
+
+<!-- note:1794016331744 model:Many -->
+**Domain:** Pod Networking - IP allocation
+**Question:** Who assigns IP addresses to Pods, Services, and Nodes respectively?
+**Options:** A. Network plugin assigns Pod IPs, kube-apiserver assigns Service IPs, kubelet/cloud-controller-manager assigns Node IPs<br>B. kube-apiserver assigns all three types<br>C. kubelet assigns Pod and Node IPs, network plugin assigns Service IPs<br>D. The CNI plugin assigns Service IPs too
+**Answer:** A (1) – Network plugin assigns Pod IPs, kube-apiserver assigns Service IPs, kubelet/cloud-controller-manager assigns Node IPs
+**Explanation:** Three different allocators for three object types, all from non-overlapping configured ranges: the NETWORK PLUGIN (CNI/IPAM) assigns Pod IPs; the kube-APISERVER assigns Service ClusterIPs; the KUBELET or cloud-controller-manager assigns Node IPs (cloud provider reports them). Knowing who owns which range matters for debugging IP conflicts and understanding why pod IPs and service IPs live in different CIDRs.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/cluster-administration/networking/" target="_blank">Kubernetes Docs - Cluster Networking</a>
+**Tags:** k8s::kcna topic::networking topic::services src::session
+
+---
+
+<!-- note:1794016331745 model:Many -->
+**Domain:** Pod Networking - NAT-free
+**Question:** Why does the Kubernetes network model require pod-to-pod communication WITHOUT NAT?
+**Options:** A. Pod IPs must be end-to-end routable — NAT would hide the real pod IP and break the return path/identity<br>B. NAT is faster than direct routing for pod traffic<br>C. Kubernetes requires NAT for pod-to-pod encryption<br>D. NAT is only needed on Windows nodes
+**Answer:** A (1) – Pod IPs must be end-to-end routable — NAT would hide the real pod IP and break the return path/identity
+**Explanation:** 'Without NAT' means pod-to-pod packets keep their real pod IPs all the way across nodes — the cluster network routes them directly. NAT is only acceptable for traffic LEAVING the cluster (that's what CNI masquerade/ipMasq does for external egress). If pod-to-pod used NAT, source identity would collapse to node IPs, conntrack state would multiply, and asymmetric paths could break replies — the model forbids it so pods have stable, meaningful IPs everywhere in the cluster.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/cluster-administration/networking/" target="_blank">Kubernetes Docs - Cluster Networking</a>
+**Tags:** k8s::kcna topic::networking topic::cni src::session
+
+---
+
+<!-- note:1794016331746 model:Many -->
+**Domain:** Pod Networking - CNI commands
+**Question:** What commands does a CNI plugin implement for the container lifecycle?
+**Options:** A. ADD connects the container to the network; DEL tears the interfaces down; plus CHECK and VERSION<br>B. Only ADD and DELETE — no other commands exist<br>C. START and STOP like systemd services<br>D. Only VERSION — the runtime does all the work
+**Answer:** A (1) – ADD connects the container to the network; DEL tears the interfaces down; plus CHECK and VERSION
+**Explanation:** A CNI plugin is an executable that implements spec commands: ADD — called when a container is created, attaches its interface to the network (veth, IP, routes); DEL — called on teardown, removes interfaces and releases the IP; CHECK — verifies config is still applied (optional); VERSION — reports supported spec version. The runtime invokes these per container lifecycle — 'the script' your lecture demoed is exactly this ADD/DEL contract.
+**Sources:** <a href="https://www.cni.dev/docs/spec/" target="_blank">CNI Spec - Container Network Interface</a>
+**Tags:** k8s::kcna topic::networking topic::cni src::session
+
+---
+
+<!-- note:1794016331747 model:Many -->
+**Domain:** Pod Networking - cni dirs
+**Question:** What do --cni-conf-dir and --cni-bin-dir point at?
+**Options:** A. kubelet --cni-conf-dir=/etc/cni/net.d holds the .conflist configs; --cni-bin-dir=/opt/cni/bin holds the plugin executables<br>B. --cni-conf-dir holds binaries; --cni-bin-dir holds configs<br>C. Both flags point at /etc/cni by default<br>D. These are containerd flags, not kubelet flags
+**Answer:** A (1) – kubelet --cni-conf-dir=/etc/cni/net.d holds the .conflist configs; --cni-bin-dir=/opt/cni/bin holds the plugin executables
+**Explanation:** Two kubelet flags wire CNI in: --cni-conf-dir (default /etc/cni/net.d) contains the network CONFIG files — JSON .conflist files naming which plugins/IPAM to use (this is where 'bridge', 'host-local' etc. get selected); --cni-bin-dir (default /opt/cni/bin) contains the plugin EXECUTABLES the configs point at. Flow: kubelet reads the conflist → picks plugin name → runtime executes that binary from bin-dir with ADD + the container's ID/netns. Wrong dir or missing binary = pods stuck in ContainerCreating.
+**Sources:** <a href="https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/parameters/" target="_blank">Kubernetes Docs - kubelet parameters</a>
+**Tags:** k8s::kcna topic::networking topic::cni topic::kubelet src::session
+
+---
+
+<!-- note:1794016331748 model:Many -->
+**Domain:** Pod Networking - who solves what
+**Question:** Which component solves which networking problem?
+**Options:** A. pod-to-pod is CNI's job; pod-to-Service and external-to-Service are Services' job<br>B. CNI handles everything including Service load balancing<br>C. kube-proxy handles pod-to-pod; CNI handles Services<br>D. The kube-apiserver routes all four types
+**Answer:** A (1) – pod-to-pod is CNI's job; pod-to-Service and external-to-Service are Services' job
+**Explanation:** The docs split cluster networking into 4 problems with different owners: container-to-container on one pod = localhost (free); POD-TO-POD = CNI plugins (the network model — IPs, interfaces, routes); POD-TO-SERVICE and EXTERNAL-TO-SERVICE = Services (ClusterIP, kube-proxy, Ingress). This is why kube-proxy doesn't assign pod IPs (CNI does) and CNI doesn't load-balance service names (Services do) — complementary layers, not competing ones.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/cluster-administration/networking/" target="_blank">Kubernetes Docs - Cluster Networking</a>
+**Tags:** k8s::kcna topic::networking topic::cni topic::services src::session
+
+---
+
+<!-- note:1794016331749 model:Many -->
+**Domain:** Pod Networking - IP families
+**Question:** How are Kubernetes clusters categorized by IP family?
+**Options:** A. IPv4-only, IPv6-only, or dual-stack — and all components must agree on the primary IP family<br>B. Only IPv4 is supported for pod networking<br>C. Dual-stack requires a special CNI license<br>D. Each node can independently choose its IP family
+**Answer:** A (1) – IPv4-only, IPv6-only, or dual-stack — and all components must agree on the primary IP family
+**Explanation:** Clusters are categorized by configured IP families: IPv4-only, IPv6-only, or dual-stack (IPv4/IPv6 or IPv6/IPv4). For dual-stack ALL components must agree — network plugin assigns both families to pods, kube-apiserver assigns both to services, kubelet/CCM assigns node IPs, and they must agree on which family is PRIMARY. Only IPs in pod.status.ips/node.status.addresses count for the model — extra interface IPs are ignored.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/cluster-administration/networking/" target="_blank">Kubernetes Docs - Cluster Networking</a>
+**Tags:** k8s::kcna topic::networking topic::cluster-setup src::session
+
+---
+
+<!-- note:1794016331753 model:Cloze -->
+**Text:** Kubernetes pod networking model — the requirements and who implements them:<br><br>K8s requires: every Pod gets {{c1::its own IP address}}; Pods on the same node can {{c2::communicate}}; Pods on different nodes can communicate {{c3::without NAT}}.<br><br>K8s does NOT implement this — the {{c4::container runtime}} invokes {{c5::CNI plugins}} on each node.<br><br>IP allocation: {{c6::network plugin}} → Pod IPs; {{c7::kube-apiserver}} → Service IPs; {{c8::kubelet/cloud-controller-manager}} → Node IPs.
+**Back Extra:** K8s defines the WHAT, CNIs provide the HOW — the container runtime invokes CNI plugins per node. IP owners: network plugin→Pods, kube-apiserver→Services, kubelet/CCM→Nodes (all non-overlapping). Pod-to-pod = CNI; pod/service/external-to-service = Services. Runtime reads .conflist from --cni-conf-dir, executes plugin from --cni-bin-dir with ADD/DEL commands.
+**Tags:** k8s::kcna topic::networking topic::cni topic::podnetwork src::session
+
+---

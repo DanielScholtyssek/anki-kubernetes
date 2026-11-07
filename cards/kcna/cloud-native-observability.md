@@ -338,3 +338,25 @@
 **Tags:** k8s::kcna topic::observability topic::tracing src::session
 
 ---
+
+<!-- note:1794082944798 model:Many -->
+**Domain:** Observability - log collection
+**Question:** A DevOps team wants to collect and forward logs from all nodes in a Kubernetes cluster to a centralized logging backend. Which component is specifically designed for lightweight log collection and forwarding?
+**Options:** A. Fluent Bit<br>B. Prometheus<br>C. Jaeger<br>D. Grafana
+**Answer:** A (1) – Fluent Bit
+**Explanation:** Fluent Bit = lightweight, low-memory log shipper, deployed as a DaemonSet (one pod per node) that tails container logs and forwards to a backend (Elasticsearch, Loki, CloudWatch, etc.). The observability tool map: Prometheus = METRICS scraping; Jaeger/Tempo = TRACES; Grafana = visualization only (queries backends, collects nothing); Fluent Bit/Fluentd/Promtail = LOG collection/forwarding.
+**Sources:** <a href="https://fluentbit.io/" target="_blank">Fluent Bit</a>
+**Tags:** k8s::kcna topic::observability topic::logging src::session
+
+---
+
+<!-- note:1794082944799 model:Many -->
+**Domain:** Observability - fluent bit vs fluentd
+**Question:** What is the key difference between Fluent Bit and Fluentd for Kubernetes log collection?
+**Options:** A. Fluent Bit is heavier and more feature-rich than Fluentd<br>B. Fluent Bit = lightweight shipper (C, low memory, DaemonSet); Fluentd = heavier processor with richer filtering/transformation<br>C. Fluentd replaced Fluent Bit as the CNCF standard<br>D. They are interchangeable with no meaningful difference
+**Answer:** B (2) – Fluent Bit = lightweight shipper (C, low memory, DaemonSet); Fluentd = heavier processor with richer filtering/transformation
+**Explanation:** Both are CNCF graduated log processors but sized differently: Fluent Bit is C-based, ~1MB memory footprint, built for edge/node-level tailing-and-shipping on every node via DaemonSet. Fluentd is Ruby-based, heavier, supports complex filtering/parsing/routing — used when you need rich processing, often behind Fluent Bit in a two-tier pipeline (Bit collects at edge → Fluentd aggregates centrally). Modern alternatives: Promtail/Grafana Alloy, Vector, Filebeat.
+**Sources:** <a href="https://fluentbit.io/faqs/" target="_blank">Fluent Bit FAQ</a>
+**Tags:** k8s::kcna topic::observability topic::logging src::session
+
+---

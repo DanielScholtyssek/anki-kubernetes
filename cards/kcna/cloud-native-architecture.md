@@ -322,3 +322,14 @@ completely managed by the platform, allowing developers to focus on code.
 **Tags:** k8s::kcna topic::networking topic::cni src::session
 
 ---
+
+<!-- note:1794009827922 model:Many -->
+**Domain:** CNI - isGateway
+**Question:** What does the "isGateway" field in a Container Network Interface (CNI) plugin configuration file determine?
+**Options:** A. Whether the bridge network should act as a gateway<br>B. Whether the bridge network should have an assigned IP address<br>C. Whether the plugin configuration file is valid<br>D. Whether the plugin supports gateway functionality
+**Answer:** A (1) – Whether the bridge network should act as a gateway
+**Explanation:** isGateway (default false) tells the bridge plugin to assign the bridge the IPAM-provided gateway IP — turning the bridge into the containers' gateway so pod traffic can route out of the pod network. Without it the bridge is pure L2 (container-to-container on the host only, no routing). Getting an IP is the mechanism; acting as gateway is the purpose — pods' default route points at the bridge IP. Sibling field isDefaultGateway additionally makes that IP the containers' default route. Like ipMasq, it CONFIGURES behavior — doesn't validate the file or declare plugin capability.
+**Sources:** <a href="https://www.cni.dev/plugins/current/main/bridge/" target="_blank">CNI Docs - bridge plugin</a>
+**Tags:** k8s::kcna topic::networking topic::cni src::session
+
+---

@@ -3471,3 +3471,25 @@
 **Tags:** k8s::kcna topic::kubectl topic::logging src::session
 
 ---
+
+<!-- note:1794082133043 model:Many -->
+**Domain:** Pod Events - timeline read
+**Question:** A pod 'my-pod' shows repeated 'BackOff' events after the container starts. Which is the most likely cause?
+**Options:** A. The image 'myapp:v2' does not exist<br>B. The container exceeds its memory limit<br>C. The liveness probe is failing<br>D. The application crashes shortly after starting
+**Answer:** D (4) – The application crashes shortly after starting
+**Explanation:** Read events CHRONOLOGICALLY: Pulling → Pulled → Created → Started all succeeded — the image exists and the container RAN. Then BackOff = it exited and kubelet is delaying restart. So the failure is POST-start: app crash (bad config, missing env, port conflict, liveness probe killing it). Distractors fail the timeline test: missing image would show ErrImagePull/ImagePullBackOff INSTEAD of Started; OOMKilled shows reason OOMKilled + exit 137; liveness failure shows 'Unhealthy' probe events before restart. Rule: Started followed by BackOff = runtime crash, not pull/scheduling problem.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/debug/debug-application/determine-reason-pod-failure/" target="_blank">Kubernetes Docs - Determine Reason for Pod Failure</a>
+**Tags:** k8s::kcna topic::pods topic::troubleshooting topic::kubectl src::session
+
+---
+
+<!-- note:1794082133044 model:Many -->
+**Domain:** Kubectl - events command
+**Question:** How do you list Kubernetes events for a specific pod named 'my-pod'?
+**Options:** A. kubectl logs my-pod --events<br>B. kubectl get events --field-selector involvedObject.name=my-pod<br>C. kubectl describe events my-pod<br>D. kubectl get pods --show-events my-pod
+**Answer:** B (2) – kubectl get events --field-selector involvedObject.name=my-pod — filters cluster events to just that pod
+**Explanation:** kubectl get events lists cluster events newest-first (LAST SEEN, TYPE, REASON, OBJECT, MESSAGE). --field-selector involvedObject.name=<name> scopes to one object — essential since busy clusters flood the list. TYPE is Normal (info: Pulled, Started, Scheduled) or Warning (problems: BackOff, Failed, Unhealthy, FailedScheduling). Pair with kubectl describe pod <pod> which shows the same events inline plus pod conditions. For a specific reason: --field-selector reason=BackOff.
+**Sources:** <a href="https://kubernetes.io/docs/reference/kubectl/generated/kubectl_get/kubectl_get_events/" target="_blank">kubectl get events reference</a>
+**Tags:** k8s::kcna topic::kubectl topic::troubleshooting src::session
+
+---

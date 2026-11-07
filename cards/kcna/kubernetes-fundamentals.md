@@ -3409,3 +3409,25 @@
 **Tags:** k8s::kcna topic::services topic::endpoints src::session
 
 ---
+
+<!-- note:1794081107268 model:Many -->
+**Domain:** Labels Selectors - quiz
+**Question:** Which THREE statements about Labels and Selectors are correct?
+**Options:** A. Services use selectors to determine which Pods receive traffic<br>B. Selectors are used by Deployments to identify the Pods they manage<br>C. Labels can be used to organize and select subsets of objects<br>D. Labels must be unique within a namespace<br>E. Annotations are used for identification and selection
+**Answer:** A, B, C – Services select pods for traffic, Deployments select pods they manage, labels organize/select subsets
+**Explanation:** (Select THREE) Labels are arbitrary key/value metadata on objects; SELECTORS are the query mechanism that consumes them. True statements: (A) Service spec.selector matches pod labels → those pods receive traffic; (B) Deployment/ReplicaSet spec.selector.matchLabels determines which pods it OWNS and manages (adoption, not just traffic); (C) labels group objects and enable subset selection via equality- or set-based selectors. Distractors: (D) labels need NOT be unique in a namespace — many objects share labels, that's the point of grouping; (E) annotations are non-identifying metadata and CANNOT be used by selectors — only labels are queryable.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/" target="_blank">Kubernetes Docs - Labels and Selectors</a>
+**Tags:** k8s::kcna topic::labels topic::selectors src::session
+
+---
+
+<!-- note:1794081107269 model:Many -->
+**Domain:** Selectors - workload ownership
+**Question:** Which field does a Deployment use to determine which Pods it owns and manages?
+**Options:** A. spec.template.metadata.labels — the labels it stamps on new pods<br>B. spec.selector.matchLabels — the Deployment's selector determines which pods it owns and manages<br>C. spec.selector — a flat map like a Service uses<br>D. Annotations on the pod template
+**Answer:** B (2) – spec.selector.matchLabels — the Deployment's selector determines which pods it owns and manages
+**Explanation:** Workload controllers (Deployment, ReplicaSet, StatefulSet, DaemonSet) use spec.selector.matchLabels (or matchExpressions for set-based) to determine which pods they OWN — the controller adopts matching pods and manages their lifecycle. Two traps: spec.template.metadata.labels is where the controller SETS labels on pods it creates (the producer side, not the selector); and the selector is IMMUTABLE after creation — changing it requires recreating the workload. Services use a different field (spec.selector) purely for traffic routing.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" target="_blank">Kubernetes Docs - Deployments</a>
+**Tags:** k8s::kcna topic::labels topic::selectors topic::deployments src::session
+
+---

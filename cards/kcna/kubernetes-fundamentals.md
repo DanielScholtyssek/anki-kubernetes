@@ -862,3 +862,14 @@ D. etcd
 **Tags:** k8s::kcna topic::networking topic::services src::session
 
 ---
+
+<!-- note:1794077951412 model:Many -->
+**Domain:** Pod Phases - Pending triage
+**Question:** A pod is in 'Pending' state for a long time. Which is the most likely cause?
+**Options:** A. The pod's liveness probe is failing<br>B. No node has enough CPU or memory to meet the pod's requests<br>C. The pod's readiness probe is not configured<br>D. The container image does not exist
+**Answer:** B (2) – No node has enough CPU or memory to meet the pod's requests
+**Explanation:** Pending means the pod never got SCHEDULED — it exists in the API but no kube-scheduler bound it to a node, almost always because every node's allocatable CPU/memory minus existing requests can't fit this pod's requests. The distractors all fail at a LATER stage: a failing liveness probe crashes a RUNNING container (restarts, not Pending); a missing image fails in ContainerCreating (ErrImagePull/ImagePullBackOff); a missing readiness probe doesn't block scheduling. Triage rule: Pending = scheduling problem; check 'kubectl describe pod' events for 'Insufficient cpu/memory'.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/" target="_blank">Kubernetes Docs - Pod Lifecycle</a>
+**Tags:** k8s::kcna topic::pods topic::scheduling topic::resources src::session
+
+---

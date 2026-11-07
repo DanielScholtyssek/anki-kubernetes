@@ -32,7 +32,7 @@ import re
 import sys
 from pathlib import Path
 
-CARD_RE = re.compile(r"^<!--\s*note:(\d+)\s+model:(\S+)\s*-->\s*$")
+CARD_RE = re.compile(r"^<!--\s*note:(\d+)\s+model:(.+?)\s*-->\s*$")
 FIELD_RE = re.compile(r"^\*\*([^*]+):\*\*\s?(.*)$")
 DECK_RE = re.compile(r"^>\s*Deck:\s*`([^`]+)`")
 STOP_RE = re.compile(r"^(---|#|>|<!--)")
@@ -57,7 +57,7 @@ def parse_file(path: Path):
         m = CARD_RE.match(line)
         if m:
             flush()
-            cur = {"note_id": int(m.group(1)), "model": m.group(2),
+            cur = {"note_id": int(m.group(1)), "model": m.group(2).strip(),
                    "fields": {}, "tags": [], "last": None, "blanks": 0}
             continue
         if cur is None:

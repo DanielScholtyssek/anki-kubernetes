@@ -333,3 +333,14 @@ completely managed by the platform, allowing developers to focus on code.
 **Tags:** k8s::kcna topic::networking topic::cni src::session
 
 ---
+
+<!-- note:1794009945361 model:Many -->
+**Domain:** CNI - ipam type
+**Question:** In a CNI plugin configuration file, what does the "type" field indicate when set to "host-local" under the IPAM section?
+**Options:** A. The type of DNS resolution method used for pods<br>B. The type of network protocol used for pod communication<br>C. The type of network interface used for communication<br>D. The type of IP address management used for pods
+**Answer:** D (4) – The type of IP address management used for pods
+**Explanation:** ipam.type selects WHICH IPAM plugin allocates pod IPs: host-local = file-based allocation on each node from its podCIDR slice (the standard choice — no central allocator needed); dhcp delegates to an external DHCP server; static uses fixed IPs; whereabouts coordinates a shared pool across nodes. Watch the nesting: the TOP-LEVEL type field picks the main plugin (bridge, vlan…), while ipam.type picks only the address allocator — two different 'type' fields at different levels of the same JSON.
+**Sources:** <a href="https://www.cni.dev/plugins/current/ipam/host-local/" target="_blank">CNI Docs - host-local IPAM plugin</a>
+**Tags:** k8s::kcna topic::networking topic::cni src::session
+
+---

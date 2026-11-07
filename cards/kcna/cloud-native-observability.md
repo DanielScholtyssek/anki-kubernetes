@@ -316,3 +316,25 @@
 **Tags:** k8s::kcna src::deck-import topic::fundamentals topic::mcq
 
 ---
+
+<!-- note:1794081862020 model:Many -->
+**Domain:** Observability - tracing span
+**Question:** In the context of distributed tracing, what is a 'span'?
+**Options:** A. A metric that measures request latency<br>B. A tool for collecting logs from containers<br>C. The entire end-to-end transaction across services<br>D. A single logical operation within a service, with a start and end time
+**Answer:** D (4) – A single logical operation within a service, with a start and end time
+**Explanation:** A span = ONE named, timed operation inside a service (e.g. 'GET /api/users', 'db.query'). Spans nest to form a TRACE — the end-to-end journey of one request across services. Root span = the incoming request; child spans = downstream calls. Distractors: latency metric = metrics pillar; log collector = logging pillar; whole transaction = that's the TRACE, not a span.
+**Sources:** <a href="https://opentelemetry.io/docs/concepts/signals/traces/" target="_blank">OpenTelemetry Docs - Traces</a>
+**Tags:** k8s::kcna topic::observability topic::tracing src::session
+
+---
+
+<!-- note:1794081862021 model:Many -->
+**Domain:** Observability - trace vs span
+**Question:** What is the relationship between a trace and a span in distributed tracing?
+**Options:** A. Span = whole request; trace = one operation<br>B. Trace = the end-to-end request journey across services; span = one timed operation within it<br>C. Trace and span are the same thing<br>D. Spans only exist in metrics systems
+**Answer:** B (2) – Trace = the end-to-end request journey across services; span = one timed operation within it
+**Explanation:** Hierarchy: TRACE (whole request, e.g. 'checkout') contains SPANS (operations: auth check, db write, payment call) which nest parent→child. Each span has name, start/end timestamps, attributes, and events. Tools: Jaeger, Zipkin, Tempo, OpenTelemetry (vendor-neutral instrumentation standard). This is the third observability pillar alongside logs and metrics — correlation IDs (already carded) are what let you JOIN traces to log lines.
+**Sources:** <a href="https://opentelemetry.io/docs/concepts/signals/traces/" target="_blank">OpenTelemetry Docs - Traces</a>
+**Tags:** k8s::kcna topic::observability topic::tracing src::session
+
+---

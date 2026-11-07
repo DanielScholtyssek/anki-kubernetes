@@ -588,3 +588,14 @@ essential for their function, reducing the potential impact of a compromise.
 **Tags:** k8s::kcna topic::images topic::yaml topic::secrets src::session
 
 ---
+
+<!-- note:1794078034941 model:Many -->
+**Domain:** Container Images - Dockerfile CMD
+**Question:** In a container image built from a Dockerfile, what is the purpose of the CMD instruction?
+**Options:** A. To specify a command that always runs at build time<br>B. To copy files into the image<br>C. To provide default arguments for the ENTRYPOINT instruction<br>D. To define environment variables
+**Answer:** C (3) – To provide default arguments for the ENTRYPOINT instruction
+**Explanation:** CMD provides DEFAULT arguments — consumed by ENTRYPOINT if one exists, or executed as the command itself if it doesn't. It's overridable at runtime: 'docker run image myargs' replaces CMD's args but keeps ENTRYPOINT; 'docker run image --entrypoint x' replaces ENTRYPOINT. Contrast: ENTRYPOINT defines the fixed executable (the 'what'), CMD defines default params (the 'how') — the entrypoint+cmd pair lets you ship one image used many ways (e.g. ENTRYPOINT ["/docker-entrypoint.sh"], CMD ["postgres"]).
+**Sources:** <a href="https://docs.docker.com/reference/dockerfile/#cmd" target="_blank">Docker Docs - Dockerfile CMD</a>
+**Tags:** k8s::kcna topic::containers topic::dockerfile src::session
+
+---

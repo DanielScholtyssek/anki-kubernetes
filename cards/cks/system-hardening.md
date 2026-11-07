@@ -107,7 +107,7 @@
 
 <!-- note:1772498525727 model:Basic+ -->
 **Front:** How do you configure Docker to listen on a TCP interface for remote access?
-**Back:** Start the Docker daemon with `dockerd --host=tcp://<IP>:<PORT>` to enable TCP listening. Set `DOCKER_HOST` environment variable to connect remotely.
+**Back:** Start the Docker daemon with `dockerd --host=tcp://<ip>:<port>` to enable TCP listening. Set `DOCKER_HOST` environment variable to connect remotely.</port></ip>
 **Tags:** ankidote docker remote-access tcp
 
 ---

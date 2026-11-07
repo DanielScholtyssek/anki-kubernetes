@@ -298,3 +298,14 @@
 **Tags:** k8s::kcna topic::networking topic::dns src::session
 
 ---
+
+<!-- note:1794083549726 model:Many -->
+**Domain:** Cluster DNS - subdomain branches
+**Question:** Pod IP-based DNS records like 10-244-1-1.apps.pod.cluster.local live under which subdomain branch of cluster.local?
+**Options:** A. svc.cluster.local — same branch as Services<br>B. pod.cluster.local — a dedicated branch parallel to svc.cluster.local<br>C. cluster.local root directly — pods have no subdomain<br>D. apps.cluster.local — the namespace becomes the branch
+**Answer:** B (2) – pod.cluster.local — a dedicated branch parallel to svc.cluster.local
+**Explanation:** cluster.local is the ROOT zone; below it sit dedicated subdomain branches: svc.cluster.local holds SERVICE records (<svc>.<ns>.svc.cluster.local) and pod.cluster.local holds POD IP-based records (<ip-dashes>.<ns>.pod.cluster.local). Reading 10-244-1-1.apps.pod.cluster.local right-to-left: pod.cluster.local branch → namespace 'apps' → the dashed-IP label. The namespace is a LEVEL inside the branch, not the branch itself — 'apps' is not a top-level subdomain.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/" target="_blank">Kubernetes Docs - DNS for Services and Pods</a>
+**Tags:** k8s::kcna topic::networking topic::dns src::session
+
+---

@@ -3493,3 +3493,25 @@
 **Tags:** k8s::kcna topic::kubectl topic::troubleshooting src::session
 
 ---
+
+<!-- note:1794082210325 model:Many -->
+**Domain:** Cluster Architecture - kubelet reconcile
+**Question:** Which component runs on every worker node and is responsible for ensuring that containers are running in a pod according to the pod specification?
+**Options:** A. kube-scheduler<br>B. kubelet<br>C. container runtime<br>D. kube-proxy
+**Answer:** B (2) – kubelet
+**Explanation:** The kubelet is the node agent that runs a reconcile loop: it watches the API server for pods BOUND to its node, compares desired state (pod spec) vs actual state, and drives the container runtime via CRI to start/stop containers, run probes, and report status. The container runtime is tempting — it does launch the container processes — but it only executes what the kubelet asks; it never reads pod specs itself. kube-scheduler assigns pods (control plane); kube-proxy manages Service network rules, not pod lifecycle.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/overview/components/#kubelet" target="_blank">Kubernetes Docs - kubelet</a>
+**Tags:** k8s::kcna topic::architecture topic::kubelet src::session
+
+---
+
+<!-- note:1794082210326 model:Many -->
+**Domain:** Cluster Architecture - kubelet duties
+**Question:** Which of the following are responsibilities of the kubelet? (Select all that apply)
+**Options:** A. Watches for pods assigned to its node and starts/stops their containers<br>B. Runs liveness and readiness probes against containers<br>C. Assigns pods to nodes based on resource availability<br>D. Maintains iptables/IPVS rules for Service traffic<br>E. Registers the node and reports pod/node status to the API server
+**Answer:** A, B, E – watches pod specs & drives containers; runs probes; registers node & reports status
+**Explanation:** Kubelet duties (select all): (A) watches API server for pods bound to its node and starts/stops containers via the runtime — YES; (B) executes liveness/readiness/startup probes — YES; (E) registers the node and reports pod/node status back — YES. NOT kubelet: (C) pod-to-node assignment is the kube-scheduler (control plane); (D) Service traffic rules are kube-proxy. Division of labor: kubelet decides WHAT should run; container runtime (containerd/CRI-O) does the actual container mechanics via CRI.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/overview/components/#kubelet" target="_blank">Kubernetes Docs - kubelet</a>
+**Tags:** k8s::kcna topic::architecture topic::kubelet src::session
+
+---

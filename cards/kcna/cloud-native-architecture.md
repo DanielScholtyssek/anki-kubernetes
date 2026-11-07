@@ -311,3 +311,14 @@ completely managed by the platform, allowing developers to focus on code.
 **Tags:** k8s::kcna topic::networking topic::cni src::session
 
 ---
+
+<!-- note:1794009611473 model:Many -->
+**Domain:** CNI - disabling masquerade
+**Question:** When would you set ipMasquerade/ipMasq to false in a CNI configuration? (Select all that apply)
+**Options:** A. Pod CIDRs are routable outside the cluster and you need end-to-end pod addressing<br>B. External systems must see real pod source IPs for whitelists or audit<br>C. Pods never need external connectivity — internal-only or air-gapped<br>D. Pods need outbound internet access
+**Answer:** A, B, C – routable pod CIDR / source-IP preservation / internal-only clusters
+**Explanation:** (Select all that apply) Masquerade trades source-IP fidelity for reachability — disable it (ipMasq/ipMasquerade/natOutgoing=false) when: pod CIDRs are externally routable and you want end-to-end pod addressing (routed/BGP networks); external systems must see REAL pod source IPs for whitelisting or audit (masquerade hides every pod behind its node's IP); or pods never need external connectivity (air-gapped/internal-only) so NAT is pure overhead. NOT a reason: pods needing internet access — that's exactly when masquerade must stay ON.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/cluster-administration/networking/" target="_blank">Kubernetes Docs - Cluster Networking</a>
+**Tags:** k8s::kcna topic::networking topic::cni src::session
+
+---

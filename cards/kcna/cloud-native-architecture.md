@@ -276,3 +276,25 @@
 **Tags:** k8s::kcna topic::networking topic::dns src::session
 
 ---
+
+<!-- note:1794083495923 model:Many -->
+**Domain:** Cluster DNS - pod IP records
+**Question:** A Pod has IP address 10.244.1.5 and runs in namespace 'prod'. What is its IP-based DNS name (assuming cluster domain cluster.local)?
+**Options:** A. 10.244.1.5.prod.pod.cluster.local<br>B. 10-244-1-5.prod.pod.cluster.local<br>C. 10-244-1-5.prod.svc.cluster.local<br>D. prod.10-244-1-5.pod.cluster.local
+**Answer:** B (2) – 10-244-1-5.prod.pod.cluster.local
+**Explanation:** Every Pod gets an A/AAAA DNS record built from its IP: replace each DOT with a DASH (DNS labels can't contain dots), then append <namespace>.pod.cluster.local. So 10.244.1.5 in namespace prod → 10-244-1-5.prod.pod.cluster.local. Dots can't appear inside a DNS label, which is WHY the transformation exists. Note the .pod. subdomain — distinct from .svc. which is for Services. Pods can ALSO get friendlier names via spec.hostname+spec.subdomain (the StatefulSet pattern) and service-associated records.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/" target="_blank">Kubernetes Docs - DNS for Services and Pods</a>
+**Tags:** k8s::kcna topic::networking topic::dns src::session
+
+---
+
+<!-- note:1794083495924 model:Many -->
+**Domain:** Cluster DNS - pod name forms
+**Question:** Which DNS names can a Pod have? (Select all that apply)
+**Options:** A. <pod-ip-with-dashes>.<namespace>.pod.cluster.local<br>B. <hostname>.<subdomain>.<namespace>.svc.cluster.local<br>C. <pod-name>.<namespace>.svc.cluster.local (automatic for every pod)<br>D. <pod-ip-with-dots>.<namespace>.pod.cluster.local
+**Answer:** A, B – IP-dashes form always; hostname.subdomain form when spec.hostname+subdomain set
+**Explanation:** Pod DNS names come in forms (select all that apply): (A) <ip-dashes>.<ns>.pod.cluster.local — created for EVERY pod from its IP; (B) <hostname>.<subdomain>.<ns>.svc.cluster.local — when spec.hostname AND spec.subdomain are set (StatefulSet pods get pod-name + service-name, e.g. busybox-1.busybox-subdomain.ns.svc.cluster.local); pods backing a service can also get <ip-dashes>.<svc>.<ns>.svc.cluster.local. NOT valid: <pod-name>.<ns>.svc.cluster.local is NOT automatic — pod names aren't DNS records unless hostname/subdomain configured; and IPs keep dashes, never dots, inside a label.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/" target="_blank">Kubernetes Docs - DNS for Services and Pods</a>
+**Tags:** k8s::kcna topic::networking topic::dns src::session
+
+---

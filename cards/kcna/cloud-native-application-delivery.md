@@ -177,3 +177,120 @@
 **Tags:** k8s::kcna topic::application-delivery topic::messaging src::session
 
 ---
+
+<!-- note:1794096372824 model:Many -->
+**Domain:** Application Delivery - ingress vs service
+**Question:** What problem does Ingress solve that exposing each Service via type LoadBalancer cannot?
+**Options:** A. Pod-to-pod communication across nodes<br>B. Giving every Service its own L4 load balancer — expensive at scale<br>C. A single L7 entry point routing HTTP/HTTPS by host and path, with TLS termination — one LB instead of many<br>D. Encrypting traffic between pods inside the cluster
+**Answer:** C (3) – A single L7 entry point routing HTTP/HTTPS by host and path, with TLS termination — one LB instead of many
+**Explanation:** type: LoadBalancer on every Service = one cloud LB (cost + IP) PER service — doesn't scale. Ingress is a Layer-7 (HTTP/HTTPS only!) reverse proxy: ONE exposed endpoint routes to many Services by Host header and URL path, terminates TLS, does name-based virtual hosting. Services still handle L4 pod selection — ingress sits in front of them. Rule of thumb: Service LB/NodePort for non-HTTP protocols or exposing a single service; Ingress when many HTTP services share one entry point.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/ingress/" target="_blank">Kubernetes Docs - Ingress</a>
+**Tags:** k8s::kcna topic::networking topic::ingress src::session
+
+---
+
+<!-- note:1794096372825 model:Many -->
+**Domain:** Application Delivery - ingress controller
+**Question:** What actually implements the routing rules defined in an Ingress resource?
+**Options:** A. kube-proxy — it programs the iptables rules for ingress<br>B. CoreDNS — it resolves ingress hostnames<br>C. An Ingress controller — a third-party reverse proxy (nginx, Traefik, HAProxy, AWS ALB…) deployed in the cluster<br>D. kube-apiserver — it proxies requests to backend services
+**Answer:** C (3) – An Ingress controller — a third-party reverse proxy (nginx, Traefik, HAProxy, AWS ALB…) deployed in the cluster
+**Explanation:** The Ingress resource is ONLY config — Kubernetes ships no built-in implementation. You must deploy an ingress controller (nginx-ingress, Traefik, HAProxy Ingress, AWS Load Balancer Controller, etc.); it watches Ingress resources and programs its proxy/LB accordingly. Exam trap: Ingress ≠ the load balancer itself — it's the API object describing desired routing; the controller is the thing that implements it.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/ingress/" target="_blank">Kubernetes Docs - Ingress</a>
+**Tags:** k8s::kcna topic::networking topic::ingress src::session
+
+---
+
+<!-- note:1794096372826 model:Many -->
+**Domain:** Application Delivery - ingress controller deployment
+**Question:** To manually deploy an nginx ingress controller you need which objects? (Select all that apply)
+**Options:** A. Deployment — runs the controller pods<br>B. ConfigMap — holds controller args/configuration<br>C. Service (type NodePort or LoadBalancer) — exposes the controller to traffic<br>D. ServiceAccount + RBAC — permissions to watch Ingress/Services/Endpoints<br>E. PersistentVolumeClaim — required storage for routing rules<br>F. Ingress resource — defines the actual host/path routing rules
+**Answer:** A, B, C, D – Deployment, ConfigMap, Service, ServiceAccount/RBAC
+**Explanation:** The classic four-object pattern for a manual controller deploy: Deployment runs the controller pods; ConfigMap carries args/config; Service (NodePort or LoadBalancer) is the ONE exposed endpoint — the single LB you actually pay for; ServiceAccount+RBAC grant it permission to watch Ingresses/Services/Endpoints and update status. NOT required: a PVC (routing state lives in the Ingress resources/etcd, not controller storage). The Ingress resource itself comes AFTER — it defines routing rules, not the controller.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/" target="_blank">Kubernetes Docs - Ingress Controllers</a>
+**Tags:** k8s::kcna topic::networking topic::ingress src::session
+
+---
+
+<!-- note:1794096372827 model:Many -->
+**Domain:** Application Delivery - ingress path types
+**Question:** An Ingress rule has path /api with pathType Prefix. Which requests match?
+**Options:** A. Only exactly /api<br>B. /api, /api/, /api/v1/users — but NOT /apiserver<br>C. Any path containing the string 'api' anywhere<br>D. /api and /apiserver both
+**Answer:** B (2) – /api, /api/, /api/v1/users — but NOT /apiserver
+**Explanation:** Prefix matching is ELEMENT-WISE on '/'-separated segments and case-sensitive: /api matches /api/v1/users but NOT /apiserver (last segment differs) and NOT /API (case). Exact = full path identical, case-sensitive (/foo ≠ /foo/). ImplementationSpecific = up to the controller (may behave as Prefix or Exact). When multiple rules match: longest path wins; on tie, Exact beats Prefix. No host in a rule = matches ALL hosts.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/ingress/" target="_blank">Kubernetes Docs - Ingress</a>
+**Tags:** k8s::kcna topic::networking topic::ingress src::session
+
+---
+
+<!-- note:1794096372828 model:Many -->
+**Domain:** Application Delivery - ingress TLS
+**Question:** Where does TLS terminate for traffic passing through an Ingress?
+**Options:** A. At the backend pod — end-to-end encryption<br>B. At the ingress controller — client↔LB leg is TLS, controller→Service→pods is plaintext HTTP<br>C. At kube-proxy on each node<br>D. TLS is not supported by Ingress at all
+**Answer:** B (2) – At the ingress controller — client↔LB leg is TLS, controller→Service→pods is plaintext HTTP
+**Explanation:** Ingress supports ONE TLS port (443) and assumes TERMINATION at the ingress point: spec.tls references a Secret of type kubernetes.io/tls containing tls.crt + tls.key; the cert CN/FQDN must match the rule's host. Multiple TLS hosts multiplex on 443 via SNI. Backend traffic controller→pods is PLAINTEXT — TLS does not extend to pods (end-to-end encryption needs service mesh mTLS, not Ingress). Wildcard/default rules can't do TLS — certs must match specific hosts.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/ingress/" target="_blank">Kubernetes Docs - Ingress</a>
+**Tags:** k8s::kcna topic::networking topic::ingress topic::tls src::session
+
+---
+
+<!-- note:1794096372829 model:Many -->
+**Domain:** Application Delivery - ingress class
+**Question:** How does an Ingress resource specify which ingress controller should implement it?
+**Options:** A. Via a kubernetes.io/ingress.class annotation only — the modern way<br>B. Via spec.ingressClassName referencing an IngressClass resource, whose spec.controller names the controller<br>C. Via the controller's namespace — it only sees Ingresses in its own namespace<br>D. Automatically — the first deployed controller takes all Ingresses
+**Answer:** B (2) – Via spec.ingressClassName referencing an IngressClass resource, whose spec.controller names the controller
+**Explanation:** spec.ingressClassName → IngressClass resource → spec.controller (e.g. k8s.io/ingress-nginx) tells WHICH implementation handles the Ingress. IngressClass is cluster-scoped and can carry parameters (Cluster or Namespace scope) for controller config — e.g. which LB algorithm to use. The old kubernetes.io/ingress.class annotation is DEPRECATED. A default class is set via annotation ingressclass.kubernetes.io/is-default-class: "true" — at most ONE default allowed, otherwise the admission controller rejects Ingresses without ingressClassName.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/ingress/" target="_blank">Kubernetes Docs - Ingress</a>
+**Tags:** k8s::kcna topic::networking topic::ingress src::session
+
+---
+
+<!-- note:1794096372830 model:Many -->
+**Domain:** Application Delivery - ingress wildcards
+**Question:** Which hosts does an Ingress rule with host '*.foo.com' match?
+**Options:** A. foo.com and bar.foo.com<br>B. bar.foo.com only — one DNS label; NOT foo.com itself, NOT baz.bar.foo.com<br>C. Any host ending in .foo.com at any depth<br>D. All hosts in the cluster
+**Answer:** B (2) – bar.foo.com only — one DNS label; NOT foo.com itself, NOT baz.bar.foo.com
+**Explanation:** Wildcard host *.foo.com covers exactly ONE DNS label: matches bar.foo.com but NOT foo.com (the wildcard needs that extra label to exist) and NOT baz.bar.foo.com (two labels deep — wildcard doesn't recurse). Precise hosts like foo.bar.com require exact Host header match. A rule with NO host field matches ALL hosts — that's the default/fallback route.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/services-networking/ingress/" target="_blank">Kubernetes Docs - Ingress</a>
+**Tags:** k8s::kcna topic::networking topic::ingress src::session
+
+---
+
+<!-- note:1794096372831 model:Many -->
+**Domain:** Application Delivery - gateway api overview
+**Question:** What is the Gateway API in Kubernetes?
+**Options:** A. A replacement Service type for Layer-4 load balancing<br>B. The next-generation, role-oriented API for L4/L7 traffic routing — successor to Ingress, covering north-south ingress AND east-west mesh<br>C. A mandatory component installed by kubeadm<br>D. An API for managing TLS certificates
+**Answer:** B (2) – The next-generation, role-oriented API for L4/L7 traffic routing — successor to Ingress, covering north-south ingress AND east-west mesh
+**Explanation:** Gateway API (kubernetes-sigs project, graduated to official Kubernetes project) is the next-gen standard for service networking: Gateway/GatewayClass/HTTPRoute resources. Design goals: ROLE-ORIENTED (infra provider / cluster operator / app developer personas), portable across implementations, EXPRESSIVE (header matching, traffic weights — no annotations needed), extensible. Key fact: Kubernetes docs now RECOMMEND Gateway over Ingress — the Ingress API is GA but NO LONGER BEING DEVELOPED. Gateway+GatewayClass+HTTPRoute reached Standard channel (stable) in v0.5.0; GAMMA service-mesh support GA in v1.1.0.
+**Sources:** <a href="https://gateway-api.sigs.k8s.io/" target="_blank">Gateway API</a>
+**Tags:** k8s::kcna topic::networking topic::gateway-api src::session
+
+---
+
+<!-- note:1794096372832 model:Many -->
+**Domain:** Application Delivery - gateway api resources
+**Question:** In Gateway API, which resource holds the actual routing rules (hostnames, paths, backends)?
+**Options:** A. Gateway — it contains all route rules<br>B. GatewayClass — it defines routing logic per controller type<br>C. HTTPRoute (or GRPCRoute etc.) — route resources attach to Gateways and define matches/backends<br>D. Ingress — Gateway API reuses Ingress rules
+**Answer:** C (3) – HTTPRoute (or GRPCRoute etc.) — route resources attach to Gateways and define matches/backends
+**Explanation:** Role-oriented split of responsibilities: GatewayClass = the KIND of controller implementation (like IngressClass — 'nginx', 'istio'); Gateway = an instance/point of access bound to a GatewayClass (holds the LB VIP); HTTPRoute/GRPCRoute/TCPRoute/TLSRoute = the routing RULES attached to a Gateway (match host/path/headers → backend Service or other typed backend). The separation lets multiple teams share one Gateway safely — routes attach via labels/sectionName without coordinating on the Gateway object itself. For service mesh (GAMMA), routes attach directly to Services instead.
+**Sources:** <a href="https://gateway-api.sigs.k8s.io/" target="_blank">Gateway API</a>
+**Tags:** k8s::kcna topic::networking topic::gateway-api src::session
+
+---
+
+<!-- note:1794096372833 model:Many -->
+**Domain:** Application Delivery - gateway vs ingress
+**Question:** Which capability does Gateway API provide that Ingress could only achieve via custom annotations?
+**Options:** A. Path-based routing<br>B. TLS termination<br>C. Header/method/query matching and traffic weighting across backends<br>D. Hostname-based virtual hosting
+**Answer:** C (3) – Header/method/query matching and traffic weighting across backends
+**Explanation:** Native Ingress does host+path→service ONLY — header matching, HTTP method matching, query param matching, and traffic splitting/weights required controller-specific annotations (non-portable, breaks if you switch controllers). Gateway API bakes all of these into typed Route resources portably across implementations. Path routing, TLS termination, and hostname vhosts are native to BOTH — those aren't differentiators.
+**Sources:** <a href="https://gateway-api.sigs.k8s.io/" target="_blank">Gateway API</a>
+**Tags:** k8s::kcna topic::networking topic::gateway-api src::session
+
+---
+
+<!-- note:1794096386555 model:Cloze -->
+**Text:** Minimal Ingress manifest — the routing skeleton:<br><br>apiVersion: networking.k8s.io/v1<br>kind: {{c1::Ingress}}<br>metadata:<br>  name: {{c2::my-ingress}}<br>spec:<br>  ingressClassName: {{c3::nginx}}<br>  rules:<br>  - host: {{c4::app.example.com}}<br>    http:<br>      paths:<br>      - path: {{c5::/api}}<br>        pathType: {{c6::Prefix}}<br>        backend:<br>          service:<br>            name: {{c7::my-service}}<br>            port:<br>              number: {{c8::80}}
+**Back Extra:** Fill-ins: metadata.name = any name for the object; ingressClassName picks the controller (must match an IngressClass's spec.controller, e.g. k8s.io/ingress-nginx — omit only if a default class exists); host = the DNS name clients use (must match cert CN if TLS); path+pathType = Exact|Prefix|ImplementationSpecific; backend.service.name/port = the target Service and its port (name or number). spec.tls adds a secretName referencing a kubernetes.io/tls Secret (tls.crt+tls.key) whose hosts must match rule hosts. spec.defaultBackend catches requests matching no rule.
+**Tags:** k8s::kcna topic::networking topic::ingress src::session
+
+---

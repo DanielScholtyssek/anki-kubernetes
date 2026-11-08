@@ -594,3 +594,94 @@
 **Tags:** k8s::kcna src::deck-import topic::fundamentals topic::mcq
 
 ---
+
+<!-- note:1794104172292 model:Many -->
+**Domain:** Envoy - what it is
+**Question:** What is Envoy?
+**Options:** A. Kubernetes' built-in service mesh<br>B. A CNCF-graduated L7 proxy and communication bus designed for service-oriented architectures<br>C. A container runtime like containerd<br>D. The default Ingress controller bundled with Kubernetes
+**Answer:** B (2) – A CNCF-graduated L7 proxy and communication bus designed for service-oriented architectures
+**Explanation:** Envoy = open-source high-performance proxy (originally built at Lyft, now a CNCF graduated project). It is an L7 (HTTP-aware) proxy with L3/L4 capability, designed around the belief that 'the network should be transparent to applications' — apps send/receive via localhost unaware of topology. It is NOT part of Kubernetes core: it is a standalone data-plane proxy used BY service meshes (Istio, Linkerd) and by ingress/gateway implementations (Contour, Envoy Gateway, Gloo). Think 'the proxy everything else is built on' in cloud-native networking.
+**Sources:** <a href="https://www.envoyproxy.io/docs/envoy/latest/intro/what_is_envoy" target="_blank">Envoy Docs - What is Envoy</a>
+**Tags:** k8s::kcna topic::envoy topic::networking src::session
+
+---
+
+<!-- note:1794104172293 model:Many -->
+**Domain:** Envoy - out-of-process architecture
+**Question:** Why does Envoy run as a sidecar process next to each application instead of being embedded as a library?
+**Options:** A. Because Kubernetes requires every pod to have two containers<br>B. Language-agnostic mesh + independent upgrades: one Envoy build serves Java/Go/Python/etc apps, and proxy upgrades don't require rebuilding or redeploying app code<br>C. Because shared libraries cannot perform TLS termination<br>D. To give each application container its own IP address
+**Answer:** B (2) – Language-agnostic mesh + independent upgrades: one Envoy build serves Java/Go/Python/etc apps, and proxy upgrades don't require rebuilding or redeploying app code
+**Explanation:** This is Envoy's core design bet: an OUT-OF-PROCESS proxy running alongside each app beats the library approach because (1) it works with ANY language — one Envoy mesh bridges Java, Go, Python, PHP services that couldn't share a library; (2) upgrades are painless — roll out a new Envoy across the fleet without rebuilding every app image; (3) policy is enforced in ONE place consistently. Trade-off: an extra process per pod (the sidecar) and localhost hops — worth it for uniform mTLS/LB/telemetry. Contrast: an in-app library couples proxy features to app releases.
+**Sources:** <a href="https://www.envoyproxy.io/docs/envoy/latest/intro/what_is_envoy" target="_blank">Envoy Docs - What is Envoy</a>
+**Tags:** k8s::kcna topic::envoy topic::service-mesh src::session
+
+---
+
+<!-- note:1794104172294 model:Many -->
+**Domain:** Envoy - sidecar traffic flow
+**Question:** In a service mesh using Envoy sidecars, how does traffic between two pods actually flow?
+**Options:** A. Pod A app → Pod B app directly over the pod network<br>B. Pod A app → local Envoy sidecar → network → Pod B's Envoy sidecar → Pod B app — every hop passes through Envoy<br>C. Traffic is routed through the Kubernetes API server<br>D. Traffic only passes through kube-proxy
+**Answer:** B (2) – Pod A app → local Envoy sidecar → network → Pod B's Envoy sidecar → Pod B app — every hop passes through Envoy
+**Explanation:** iptables/eBPF rules in each pod redirect traffic INTO the local Envoy. Pod A's app thinks it is calling Pod B directly, but packets actually go: app → localhost Envoy (policy applied: mTLS, retries, LB, telemetry) → wire → Pod B's Envoy → localhost → app. Both directions are intercepted, which is what makes east-west traffic observable and secure WITHOUT app changes. The apps stay unaware of the mesh — that transparency is the design goal.
+**Sources:** <a href="https://www.envoyproxy.io/docs/envoy/latest/intro/what_is_envoy" target="_blank">Envoy Docs - What is Envoy</a>
+**Tags:** k8s::kcna topic::envoy topic::service-mesh src::session
+
+---
+
+<!-- note:1794104172295 model:Many -->
+**Domain:** Envoy - request path
+**Question:** What path does an HTTP request take through Envoy?
+**Options:** A. cluster → listener → route → filter<br>B. listener (downstream addr:port) → filter chain → route match → cluster (upstream service) → endpoint (pod IP)<br>C. filter → cluster → listener → endpoint<br>D. route → cluster → listener → filter
+**Answer:** B (2) – listener (downstream addr:port) → filter chain → route match → cluster (upstream service) → endpoint (pod IP)
+**Explanation:** The Envoy data path: a downstream client connects to a LISTENER (bound address:port); traffic passes through that listener's FILTER CHAIN (TCP proxy, HTTP connection manager, TLS client-cert auth, rate limit — pluggable per protocol); HTTP requests are then ROUTED by path/host/headers to a CLUSTER = a named upstream service; Envoy load-balances across the cluster's ENDPOINTS (pod IPs) using health-check status. Memorize the chain: listener → filters → route → cluster → endpoint.
+**Sources:** <a href="https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/arch_overview" target="_blank">Envoy Docs - Architecture Overview</a>
+**Tags:** k8s::kcna topic::envoy topic::networking src::session
+
+---
+
+<!-- note:1794104172296 model:Many -->
+**Domain:** Envoy - capabilities select-all
+**Question:** Which capabilities does Envoy provide out of the box? (Select all that apply)
+**Options:** A. TLS termination and HTTP/1.1, HTTP/2 and HTTP/3 support<br>B. Automatic retries, circuit breaking, and outlier detection<br>C. L7 routing by path, host, and headers<br>D. Container scheduling and image pulling<br>E. Persistent volume provisioning
+**Answer:** A, B, C – TLS/HTTP support, retries+circuit breaking, and L7 routing
+**Explanation:** Envoy's feature set (all data-plane, all configurable per-route/cluster): TLS termination + HTTP/1.1, HTTP/2 and HTTP/3; L7 routing by path/host/headers; automatic retries, circuit breaking, outlier detection, global rate limiting; active AND passive health checking; many load-balancing algorithms; best-in-class stats + distributed tracing. What it does NOT do: schedule pods (kube-scheduler), pull images (kubelet/runtime), provision volumes (PV controllers), or resolve DNS (CoreDNS) — those are other components' jobs.
+**Sources:** <a href="https://www.envoyproxy.io/docs/envoy/latest/intro/what_is_envoy" target="_blank">Envoy Docs - What is Envoy</a>
+**Tags:** k8s::kcna topic::envoy topic::networking src::session
+
+---
+
+<!-- note:1794104172297 model:Many -->
+**Domain:** Envoy - xDS config
+**Question:** How does an Envoy sidecar in Kubernetes learn about Services, Pods, and routing rules?
+**Options:** A. It polls the Kubernetes API server directly on a timer<br>B. A control-plane component (e.g. Istio Pilot, Envoy Gateway) pushes configuration via xDS APIs — listener/route/cluster/endpoint discovery over gRPC<br>C. It only reads static YAML files mounted as ConfigMaps<br>D. CoreDNS pushes updates to it
+**Answer:** B (2) – A control-plane component (e.g. Istio Pilot, Envoy Gateway) pushes configuration via xDS APIs — listener/route/cluster/endpoint discovery over gRPC
+**Explanation:** xDS = the 'x Discovery Service' API family: LDS (listeners), CDS (clusters), RDS (routes), EDS (endpoints), SDS (secrets). The mesh/gateway control plane watches Kubernetes objects and STREAMS updates to every Envoy over gRPC — pod IP changes, new Services, route edits propagate in seconds with zero restarts. Simpler deployments can fall back to static config files or DNS-based service discovery, but real k8s meshes are all xDS-driven.
+**Sources:** <a href="https://www.envoyproxy.io/docs/envoy/latest/intro/what_is_envoy" target="_blank">Envoy Docs - What is Envoy</a>
+**Tags:** k8s::kcna topic::envoy topic::service-mesh src::session
+
+---
+
+<!-- note:1794104172298 model:Many -->
+**Domain:** Envoy - deployment modes
+**Question:** Beyond the service-mesh sidecar, where else is Envoy commonly deployed?
+**Options:** A. As an edge/ingress proxy terminating external TLS (e.g. Contour, Envoy Gateway — a Gateway API implementation)<br>B. As the kubelet's container launcher<br>C. Inside etcd for consensus<br>D. As a DaemonSet that replaces kube-proxy for all Service traffic
+**Answer:** A (1) – As an edge/ingress proxy terminating external TLS (e.g. Contour, Envoy Gateway — a Gateway API implementation)
+**Explanation:** Envoy is a general-purpose proxy with three main k8s roles: (1) MESH SIDECAR — per-pod east-west traffic (Istio, Linkerd); (2) EDGE/INGRESS — north-south entry point terminating external TLS and doing L7 routing (Contour; Envoy Gateway is a Gateway API implementation built on Envoy); (3) API GATEWAY — auth, rate limits, protocol translation at the edge. It does NOT replace kubelet (container launching), etcd (state store), or kube-proxy (Service VIP→pod DNAT) — those are separate node/control-plane components.
+**Sources:** <a href="https://gateway.envoyproxy.io/" target="_blank">Envoy Gateway Docs</a>
+**Tags:** k8s::kcna topic::envoy topic::ingress src::session
+
+---
+
+<!-- note:1794104176072 model:Basic -->
+**Front:** What is a proxy, and why does putting one in the traffic path matter?
+**Back:** A proxy is an intermediary that forwards traffic between clients and servers — the client talks to the proxy, the proxy talks to the backend. Because all traffic passes THROUGH it, the proxy can add capabilities the endpoints lack: terminate/re-encrypt TLS, enforce auth, retry failed requests, rate-limit, log, or load-balance across backends. A REVERSE proxy sits in front of servers (Envoy, nginx, an Ingress controller) — that is the Kubernetes pattern. A FORWARD proxy sits in front of clients. In a service mesh, each pod's Envoy sidecar is a reverse proxy for localhost traffic: the app sends to 'localhost' and Envoy forwards onward with policy applied.
+**Tags:** k8s::kcna topic::proxy topic::networking src::session
+
+---
+
+<!-- note:1794104176080 model:Cloze -->
+**Text:** Envoy request path: downstream client → {{c1::listener}} → {{c2::filter chain}} → {{c3::route}} → {{c4::cluster}} → endpoint (pod IP)
+**Back Extra:** The four-hop data path: LISTENER accepts the downstream connection (bound addr:port) → FILTER CHAIN processes bytes (TCP proxy, HTTP connection manager, TLS auth, rate limit — pluggable) → ROUTE matches path/host/headers to a named upstream → CLUSTER load-balances across its ENDPOINTS (pod IPs) with health checking. Downstream = client side facing Envoy; upstream = backend services Envoy forwards to.
+**Tags:** k8s::kcna topic::envoy topic::networking src::session
+
+---

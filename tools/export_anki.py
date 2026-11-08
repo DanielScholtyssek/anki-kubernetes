@@ -29,6 +29,7 @@ Usage:
 
 import argparse
 import fnmatch
+import os
 import re
 import sqlite3
 import sys
@@ -36,7 +37,25 @@ import tempfile
 from collections import Counter
 from pathlib import Path
 
-DEFAULT_DB = "/mnt/c/Users/crock/AppData/Roaming/Anki2/User 1/collection.anki2"
+
+def find_collection():
+    """Locate collection.anki2: $ANKI_COLLECTION, then well-known paths."""
+    env = os.environ.get("ANKI_COLLECTION")
+    if env:
+        return env
+    home = Path.home()
+    candidates = [
+        home / ".local/share/Anki2/User 1/collection.anki2",
+        home / "Library/Application Support/Anki2/User 1/collection.anki2",
+    ]
+    users_dir = Path("/mnt/c/Users")  # WSL-mounted Windows profile
+    if users_dir.is_dir():
+        candidates += sorted(users_dir.glob(
+            "*/AppData/Roaming/Anki2/*/collection.anki2"))
+    for c in candidates:
+        if c.is_file():
+            return str(c)
+    return str(candidates[0]) if candidates else ""
 
 # Field order per note type (the `fields` table is not reliably readable;
 # names verified via the anki MCP `model_field_names` tool).
@@ -47,7 +66,7 @@ MODEL_FIELDS = {
     "Basic+++": ["Front", "Back"],
     "Basic++++": ["Front", "Back"],
     "Basic (and reversed card)": ["Front", "Back"],
-    "Cloze": ["Text", "Extra"],
+    "Cloze": ["Text", "Back Extra"],
     "Many": ["Domain", "Question", "Options", "Answer", "Explanation", "Sources"],
 }
 
@@ -157,7 +176,9 @@ def render_file(deck_name, group_title, nids, notes):
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--db", default=DEFAULT_DB, help="path to collection.anki2")
+    ap.add_argument("--db", default=find_collection(),
+                    help="path to collection.anki2 (default: $ANKI_COLLECTION "
+                         "or auto-detected Anki profile path)")
     ap.add_argument("--out", default="cards", help="output directory")
     ap.add_argument("--deck", default="*", help="fnmatch filter on deck names")
     ap.add_argument("--chunk", type=int, default=100,

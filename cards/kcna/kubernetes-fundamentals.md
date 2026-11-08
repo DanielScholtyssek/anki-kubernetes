@@ -11,7 +11,7 @@
 
 <!-- note:1793752347334 model:Cloze -->
 **Text:** A Service named <code>backend</code> in namespace <code>prod</code> gets the in-cluster DNS name<br><br><code>{{c1::backend}}.{{c2::prod}}.{{c3::svc}}.{{c4::cluster.local}}</code><br><br>resolving to the Service's {{c5::clusterIP}}.
-**Extra:** CoreDNS publishes &lt;service&gt;.&lt;namespace&gt;.svc.cluster.local for every Service; it resolves to the clusterIP. Inside the same namespace the short name (backend) is enough; from another namespace you need backend.&lt;ns&gt;.
+**Back Extra:** CoreDNS publishes &lt;service&gt;.&lt;namespace&gt;.svc.cluster.local for every Service; it resolves to the clusterIP. Inside the same namespace the short name (backend) is enough; from another namespace you need backend.&lt;ns&gt;.
 **Tags:** k8s::kcna src::session topic::dns topic::services
 
 ---
@@ -91,7 +91,7 @@
 
 <!-- note:1793752918693 model:Cloze -->
 **Text:** Control plane nodes were previously called {{c1::master}} nodes.
-**Extra:** The old term 'master node' is still common in older courses, books and docs — e.g. 'master components'. Same thing; 'control plane' is the current name.
+**Back Extra:** The old term 'master node' is still common in older courses, books and docs — e.g. 'master components'. Same thing; 'control plane' is the current name.
 **Tags:** k8s::kcna src::session topic::architecture topic::control-plane
 
 ---
@@ -186,7 +186,7 @@
 
 <!-- note:1793754672890 model:Cloze -->
 **Text:** Minimal pod manifest:<br><br><code>apiVersion: {{c1::v1}}<br>kind: {{c2::Pod}}<br>metadata:<br>&nbsp;&nbsp;{{c3::name}}: nginx<br>spec:<br>&nbsp;&nbsp;{{c4::containers}}:<br>&nbsp;&nbsp;- name: nginx<br>&nbsp;&nbsp;&nbsp;&nbsp;{{c5::image}}: nginx</code>
-**Extra:** v1 = core API group (named groups use group/version, e.g. apps/v1 for Deployments). metadata.name is how you identify the pod; spec.containers is a LIST (note the dash) — even a single-container pod needs the list item.
+**Back Extra:** v1 = core API group (named groups use group/version, e.g. apps/v1 for Deployments). metadata.name is how you identify the pod; spec.containers is a LIST (note the dash) — even a single-container pod needs the list item.
 **Tags:** k8s::kcna src::session topic::pods topic::yaml
 
 ---
@@ -458,7 +458,7 @@
 
 <!-- note:1793808323513 model:Cloze -->
 **Text:** List only pods labelled <code>app=web</code>:<br><br><code>kubectl get pods {{c1::-l}} {{c2::app=web}}</code><br><br>(<code>-l</code> is short for <code>{{c3::--selector}}</code>)
-**Extra:** The flag works on most list commands (get pods, get svc, get all, delete). Multiple requirements AND together: -l 'app=web,env=prod'. Set-based form: -l 'env in (prod,qa)'. Combine with <code>--show-labels</code> to see each object's full label set.
+**Back Extra:** The flag works on most list commands (get pods, get svc, get all, delete). Multiple requirements AND together: -l 'app=web,env=prod'. Set-based form: -l 'env in (prod,qa)'. Combine with <code>--show-labels</code> to see each object's full label set.
 **Tags:** k8s::kcna src::session topic::kubectl topic::labels
 
 ---
@@ -494,7 +494,7 @@
 
 <!-- note:1793808422523 model:Cloze -->
 **Text:** Record a build version on a pod imperatively:<br><br><code>kubectl {{c1::annotate}} pod web {{c2::build-version}}={{c3::v1.4.2}}</code>
-**Extra:** Same shape as <code>kubectl label</code>: &lt;resource&gt; &lt;name&gt; &lt;key&gt;=&lt;value&gt;. Re-running with an existing key fails unless you add <code>--overwrite</code>. Remove with a trailing minus: <code>kubectl annotate pod web build-version-</code>. In YAML the same data sits under metadata.annotations.
+**Back Extra:** Same shape as <code>kubectl label</code>: &lt;resource&gt; &lt;name&gt; &lt;key&gt;=&lt;value&gt;. Re-running with an existing key fails unless you add <code>--overwrite</code>. Remove with a trailing minus: <code>kubectl annotate pod web build-version-</code>. In YAML the same data sits under metadata.annotations.
 **Tags:** k8s::kcna src::session topic::annotations topic::kubectl
 
 ---
@@ -541,14 +541,14 @@
 
 <!-- note:1793809412490 model:Cloze -->
 **Text:** Taint node1 so only pods tolerating <code>dedicated=gpu</code> may schedule:<br><br><code>kubectl taint nodes node1 {{c1::dedicated=gpu}}:{{c2::NoSchedule}}</code>
-**Extra:** Format: <code>kubectl taint nodes &lt;node&gt; &lt;key&gt;=&lt;value&gt;:&lt;effect&gt;</code>. Remove a taint by appending a minus: <code>kubectl taint nodes node1 dedicated=gpu:NoSchedule-</code>. Effects: NoSchedule / PreferNoSchedule / NoExecute.
+**Back Extra:** Format: <code>kubectl taint nodes &lt;node&gt; &lt;key&gt;=&lt;value&gt;:&lt;effect&gt;</code>. Remove a taint by appending a minus: <code>kubectl taint nodes node1 dedicated=gpu:NoSchedule-</code>. Effects: NoSchedule / PreferNoSchedule / NoExecute.
 **Tags:** k8s::kcna src::session topic::kubectl topic::taints
 
 ---
 
 <!-- note:1793809412491 model:Cloze -->
 **Text:** Pod spec tolerating a <code>dedicated=gpu:NoSchedule</code> taint — fields under <code>{{c1::spec.tolerations}}</code>:<br><br><code>tolerations:<br>- key: {{c2::"dedicated"}}<br>  operator: {{c3::"Equal"}}<br>  value: {{c4::"gpu"}}<br>  effect: {{c5::"NoSchedule"}}</code>
-**Extra:** operator defaults to Equal (needs a matching value); Exists matches the key regardless of value (omit 'value'). Effect must equal the taint's effect. Add tolerationSeconds: 3600 under a NoExecute toleration to survive the taint for one hour before eviction.
+**Back Extra:** operator defaults to Equal (needs a matching value); Exists matches the key regardless of value (omit 'value'). Effect must equal the taint's effect. Add tolerationSeconds: 3600 under a NoExecute toleration to survive the taint for one hour before eviction.
 **Tags:** k8s::kcna src::session topic::taints topic::yaml
 
 ---
@@ -642,7 +642,7 @@
 
 <!-- note:1793810943076 model:Cloze -->
 **Text:** Require the pod on large-or-medium nodes via affinity:<br><br><code>spec:<br>  affinity:<br>    {{c1::nodeAffinity}}:<br>      {{c2::requiredDuringSchedulingIgnoredDuringExecution}}:<br>        {{c3::nodeSelectorTerms}}:<br>        - {{c4::matchExpressions}}:<br>          - {key: size, operator: {{c5::In}}, values: [large, medium]}</code>
-**Extra:** Hierarchy: spec.affinity.nodeAffinity.&lt;type&gt;.nodeSelectorTerms[].matchExpressions[] — each expression is {key, operator, values[]}. values is a LIST (In = OR across values). Preferred type uses - weight: N / preference: matchExpressions instead of plain terms.
+**Back Extra:** Hierarchy: spec.affinity.nodeAffinity.&lt;type&gt;.nodeSelectorTerms[].matchExpressions[] — each expression is {key, operator, values[]}. values is a LIST (In = OR across values). Preferred type uses - weight: N / preference: matchExpressions instead of plain terms.
 **Tags:** k8s::kcna src::session topic::affinity topic::yaml
 
 ---
@@ -729,14 +729,14 @@
 
 <!-- note:1793821101864 model:Cloze -->
 **Text:** LimitRange manifest — sets defaults + bounds for containers in its namespace:<br><br><code>apiVersion: {{c1::v1}}<br>kind: {{c2::LimitRange}}<br>metadata: {name: limits}<br>spec:<br>  {{c3::limits}}:<br>  - {{c4::default}}: {cpu: 500m}        # default limit<br>    {{c5::defaultRequest}}: {cpu: 100m} # default request<br>    max: {cpu: "1"}<br>    min: {cpu: 100m}<br>    {{c6::type}}: Container</code>
-**Extra:** spec.limits[] is a list; each entry has default (default LIMIT), defaultRequest (default request), max, min, and type (Container or PersistentVolumeClaim). Only enforced at admission — existing pods keep their values. Two LimitRanges in one namespace → nondeterministic defaults.
+**Back Extra:** spec.limits[] is a list; each entry has default (default LIMIT), defaultRequest (default request), max, min, and type (Container or PersistentVolumeClaim). Only enforced at admission — existing pods keep their values. Two LimitRanges in one namespace → nondeterministic defaults.
 **Tags:** topic::resources topic::yaml
 
 ---
 
 <!-- note:1793821101865 model:Cloze -->
 **Text:** ResourceQuota manifest — aggregate caps for one namespace:<br><br><code>apiVersion: {{c1::v1}}<br>kind: {{c2::ResourceQuota}}<br>metadata:<br>  name: compute-quota<br>  namespace: {{c3::dev}}<br>spec:<br>  {{c4::hard}}:<br>    {{c5::requests.cpu}}: "4"<br>    requests.memory: 4Gi<br>    {{c6::limits.cpu}}: "8"<br>    pods: "10"</code>
-**Extra:** spec.hard maps resource names → totals for the namespace: requests.cpu/requests.memory, limits.cpu/limits.memory, plus object counts (pods, services, persistentvolumeclaims). Exceeding any entry → new object rejected with 403. A cpu/memory quota forces every pod to declare that resource — pair it with LimitRange for defaults.
+**Back Extra:** spec.hard maps resource names → totals for the namespace: requests.cpu/requests.memory, limits.cpu/limits.memory, plus object counts (pods, services, persistentvolumeclaims). Exceeding any entry → new object rejected with 403. A cpu/memory quota forces every pod to declare that resource — pair it with LimitRange for defaults.
 **Tags:** topic::namespaces topic::yaml
 
 ---
@@ -783,7 +783,7 @@
 
 <!-- note:1793822816917 model:Cloze -->
 **Text:** DaemonSet manifest skeleton (fluentd on every node):<br><br><code>apiVersion: {{c1::apps/v1}}<br>kind: {{c2::DaemonSet}}<br>metadata: {name: fluentd}<br>spec:<br>  {{c3::selector}}:<br>    {{c4::matchLabels}}: {name: fluentd}<br>  {{c5::template}}:<br>    metadata: {labels: {name: fluentd}}<br>    spec: {containers: [...], restartPolicy: {{c6::Always}}}</code>
-**Extra:** Same skeleton as a Deployment MINUS the replicas field — count is implied (one per node). selector.matchLabels must equal template.metadata.labels and is immutable after creation. Pod template's restartPolicy must be Always (default). Add spec.template.spec.nodeSelector/affinity to cover only a subset of nodes.
+**Back Extra:** Same skeleton as a Deployment MINUS the replicas field — count is implied (one per node). selector.matchLabels must equal template.metadata.labels and is immutable after creation. Pod template's restartPolicy must be Always (default). Add spec.template.spec.nodeSelector/affinity to cover only a subset of nodes.
 **Tags:** k8s::kcna src::session topic::daemonsets topic::yaml
 
 ---
@@ -830,7 +830,7 @@
 
 <!-- note:1793823868617 model:Cloze -->
 **Text:** Enable static pods via kubelet config file:<br><br><code>apiVersion: {{c1::kubelet.config.k8s.io/v1beta1}}<br>kind: {{c2::KubeletConfiguration}}<br>{{c3::staticPodPath}}: {{c4::/etc/kubernetes/manifests}}</code><br><br>then <code>systemctl {{c5::restart}} kubelet</code>
-**Extra:** staticPodPath points kubelet at a directory it scans periodically — pod YAMLs appearing there get created, files removed get their pods deleted. Deprecated alternative: <code>--pod-manifest-path</code> flag. Web-hosted variant: staticPodURL / <code>--manifest-url</code>. Check the live kubelet's config on the node (e.g. /var/lib/kubelet/config.yaml) or ps aux | grep kubelet for the flag.
+**Back Extra:** staticPodPath points kubelet at a directory it scans periodically — pod YAMLs appearing there get created, files removed get their pods deleted. Deprecated alternative: <code>--pod-manifest-path</code> flag. Web-hosted variant: staticPodURL / <code>--manifest-url</code>. Check the live kubelet's config on the node (e.g. /var/lib/kubelet/config.yaml) or ps aux | grep kubelet for the flag.
 **Tags:** k8s::kcna src::session topic::kubelet topic::staticpods
 
 ---
@@ -942,7 +942,7 @@
 
 <!-- note:1793836413464 model:Cloze -->
 **Text:** Second profile with customized plugins:<br><br><code>apiVersion: {{c1::kubescheduler.config.k8s.io/v1}}<br>kind: {{c2::KubeSchedulerConfiguration}}<br>{{c3::profiles}}:<br>- {{c4::schedulerName}}: default-scheduler<br>- schedulerName: no-scoring<br>  {{c5::plugins}}:<br>    {{c6::score}}:<br>      {{c7::disabled}}: [{name: NodeResourcesFit}]<br>      {{c8::enabled}}: [{name: MyScorer}]</code>
-**Extra:** Each profile = its own schedulerName (pods select via spec.schedulerName) + plugin config. plugins.&lt;extensionPoint&gt;.disabled removes stock plugins (name: '*' disables all at that point); enabled adds custom ones (compiled into the scheduler). Extension points: queueSort, preFilter, filter, postFilter, preScore, score, reserve, permit, preBind, bind, postBind.
+**Back Extra:** Each profile = its own schedulerName (pods select via spec.schedulerName) + plugin config. plugins.&lt;extensionPoint&gt;.disabled removes stock plugins (name: '*' disables all at that point); enabled adds custom ones (compiled into the scheduler). Extension points: queueSort, preFilter, filter, postFilter, preScore, score, reserve, permit, preBind, bind, postBind.
 **Tags:** topic::scheduling topic::yaml
 
 ---
@@ -1326,7 +1326,7 @@
 
 <!-- note:1793931248507 model:Cloze -->
 **Text:** By default kubectl reads its kubeconfig from {{c1::$HOME/.kube/config}}. The {{c2::KUBECONFIG}} environment variable holds a {{c3::list}} of files that kubectl {{c4::merges}} (first file to set a value wins per key), while the {{c5::--kubeconfig}} flag points at exactly {{c6::one}} file with {{c7::no}} merging.
-**Extra:** Precedence: --kubeconfig flag > KUBECONFIG env var > default file. When KUBECONFIG lists multiple files, kubectl merges them — the first file to set a value or map key wins and later duplicates are discarded. Relative file paths inside a kubeconfig resolve relative to that kubeconfig's location.
+**Back Extra:** Precedence: --kubeconfig flag > KUBECONFIG env var > default file. When KUBECONFIG lists multiple files, kubectl merges them — the first file to set a value or map key wins and later duplicates are discarded. Relative file paths inside a kubeconfig resolve relative to that kubeconfig's location.
 **Tags:** k8s::kcna src::session topic::kubeconfig topic::kubectl
 
 ---
@@ -1406,7 +1406,7 @@
 
 <!-- note:1793931644496 model:Cloze -->
 **Text:** REST paths — core group: {{c1::/api/v1}} (apiVersion: {{c2::v1}}, no group name); named groups: {{c3::/apis/$GROUP_NAME/$VERSION}} (e.g. apiVersion: {{c4::apps/v1}} → /apis/apps/v1).
-**Extra:** The apiVersion field mirrors the REST path: bare 'v1' = core group; 'group/version' = named group. So apiVersion: apps/v1 means REST path /apis/apps/v1. kubectl api-resources prints this mapping for every resource your cluster serves.
+**Back Extra:** The apiVersion field mirrors the REST path: bare 'v1' = core group; 'group/version' = named group. So apiVersion: apps/v1 means REST path /apis/apps/v1. kubectl api-resources prints this mapping for every resource your cluster serves.
 **Tags:** k8s::kcna src::session topic::api topic::yaml
 
 ---
@@ -1662,7 +1662,7 @@
 
 <!-- note:1793994897843 model:Cloze -->
 **Text:** ABAC authorization: permission policies live in a {{c1::JSON policy file}} passed to the API server via {{c2::--authorization-policy-file}}; changing them requires {{c3::editing the file and restarting the API server}} — the operational pain that made {{c4::RBAC}} the standard instead.
-**Extra:** ABAC = Attribute-Based Access Control: policies combine user attributes + resource attributes + environment attributes into allow rules. It predates RBAC and lost because every policy change meant editing the file AND restarting the API server — no dynamic updates, no kubectl management. RBAC replaced it by making permissions Kubernetes API objects editable live. Avoid ABAC in new clusters.
+**Back Extra:** ABAC = Attribute-Based Access Control: policies combine user attributes + resource attributes + environment attributes into allow rules. It predates RBAC and lost because every policy change meant editing the file AND restarting the API server — no dynamic updates, no kubectl management. RBAC replaced it by making permissions Kubernetes API objects editable live. Avoid ABAC in new clusters.
 **Tags:** k8s::kcna src::session topic::abac topic::rbac topic::security
 
 ---
@@ -1757,14 +1757,14 @@
 
 <!-- note:1793995451571 model:Cloze -->
 **Text:** Minimal Role manifest (pod-reader in 'default'):<br><br><code>apiVersion: {{c1::rbac.authorization.k8s.io/v1}}<br>kind: {{c2::Role}}<br>metadata:<br>  namespace: {{c3::default}}<br>  name: pod-reader<br>rules:<br>- apiGroups: [{{c4::""}}]  # "" = core API group<br>  resources: [{{c5::pods}}]<br>  verbs: [{{c6::get, watch, list}}]</code>
-**Extra:** rules is a LIST — each entry is one permission set where apiGroups + resources + verbs must all match a request. apiGroups: [""] = core/v1 resources. Multiple rules union (RBAC is additive — no deny). Verbs come from the API verb set; special verbs impersonate/bind/escalate gate RBAC-escalation itself. Same skeleton with kind: ClusterRole + no namespace grants cluster-wide.
+**Back Extra:** rules is a LIST — each entry is one permission set where apiGroups + resources + verbs must all match a request. apiGroups: [""] = core/v1 resources. Multiple rules union (RBAC is additive — no deny). Verbs come from the API verb set; special verbs impersonate/bind/escalate gate RBAC-escalation itself. Same skeleton with kind: ClusterRole + no namespace grants cluster-wide.
 **Tags:** k8s::kcna src::session topic::rbac topic::yaml
 
 ---
 
 <!-- note:1793995451572 model:Cloze -->
 **Text:** RoleBinding manifest linking user 'jane' to Role 'pod-reader':<br><br><code>apiVersion: {{c1::rbac.authorization.k8s.io/v1}}<br>kind: {{c2::RoleBinding}}<br>metadata:<br>  name: read-pods<br>  namespace: {{c3::default}}<br>subjects:<br>- kind: {{c4::User}}<br>  name: {{c5::jane}}<br>  apiGroup: rbac.authorization.k8s.io<br>roleRef:<br>  kind: {{c6::Role}}<br>  name: pod-reader<br>  apiGroup: rbac.authorization.k8s.io</code>
-**Extra:** subjects = WHO gets it (kind User/Group/ServiceAccount + case-sensitive name + apiGroup); roleRef = WHAT (kind Role|ClusterRole + name + apiGroup — immutable, recreate to change). The binding's namespace sets scope: RoleBinding in 'dev' + ClusterRole ref = perms only in 'dev'. ClusterRoleBinding = cluster-wide. Create imperatively: kubectl create rolebinding read-pods --role=pod-reader --user=jane -n default.
+**Back Extra:** subjects = WHO gets it (kind User/Group/ServiceAccount + case-sensitive name + apiGroup); roleRef = WHAT (kind Role|ClusterRole + name + apiGroup — immutable, recreate to change). The binding's namespace sets scope: RoleBinding in 'dev' + ClusterRole ref = perms only in 'dev'. ClusterRoleBinding = cluster-wide. Create imperatively: kubectl create rolebinding read-pods --role=pod-reader --user=jane -n default.
 **Tags:** k8s::kcna src::session topic::rbac topic::yaml
 
 ---
@@ -1859,14 +1859,14 @@
 
 <!-- note:1794001609859 model:Cloze -->
 **Text:** ClusterRole manifest granting full node management cluster-wide:<br><br><code>apiVersion: {{c1::rbac.authorization.k8s.io/v1}}<br>kind: {{c2::ClusterRole}}<br>metadata:<br>  name: node-admin<br>rules:<br>- apiGroups: [{{c3::""}}]<br>  resources: [{{c4::nodes}}]<br>  verbs: [{{c5::get, list, watch, create, update, patch, delete}}]</code>
-**Extra:** No namespace field — ClusterRoles are cluster-scoped (Role requires metadata.namespace). nodes is a core-group resource so apiGroups: [""]. A ClusterRole alone grants nothing — it needs a ClusterRoleBinding to attach subjects. Same skeleton works for namespaces, persistentvolumes, clusterroles, storageclasses (all cluster-scoped).
+**Back Extra:** No namespace field — ClusterRoles are cluster-scoped (Role requires metadata.namespace). nodes is a core-group resource so apiGroups: [""]. A ClusterRole alone grants nothing — it needs a ClusterRoleBinding to attach subjects. Same skeleton works for namespaces, persistentvolumes, clusterroles, storageclasses (all cluster-scoped).
 **Tags:** k8s::kcna src::session topic::rbac topic::yaml
 
 ---
 
 <!-- note:1794001609860 model:Cloze -->
 **Text:** ClusterRoleBinding manifest granting group 'manager' secret read access in EVERY namespace:<br><br><code>apiVersion: {{c1::rbac.authorization.k8s.io/v1}}<br>kind: {{c2::ClusterRoleBinding}}<br>metadata:<br>  name: read-secrets-global<br>subjects:<br>- kind: {{c3::Group}}<br>  name: {{c4::manager}}<br>  apiGroup: rbac.authorization.k8s.io<br>roleRef:<br>  kind: {{c5::ClusterRole}}<br>  name: secret-reader<br>  apiGroup: rbac.authorization.k8s.io</code>
-**Extra:** No namespace — the binding grants across ALL namespaces cluster-wide. roleRef.kind must be ClusterRole (can't point at a namespaced Role). roleRef is immutable — delete/recreate to change. subjects support User/Group/ServiceAccount kinds, names case-sensitive. Imperative equivalent: kubectl create clusterrolebinding read-secrets-global --clusterrole=secret-reader --group=manager.
+**Back Extra:** No namespace — the binding grants across ALL namespaces cluster-wide. roleRef.kind must be ClusterRole (can't point at a namespaced Role). roleRef is immutable — delete/recreate to change. subjects support User/Group/ServiceAccount kinds, names case-sensitive. Imperative equivalent: kubectl create clusterrolebinding read-secrets-global --clusterrole=secret-reader --group=manager.
 **Tags:** k8s::kcna src::session topic::rbac topic::yaml
 
 ---
@@ -1961,14 +1961,14 @@
 
 <!-- note:1794003812840 model:Cloze -->
 **Text:** Pod spec binding to ServiceAccount 'build-robot' with token mounting disabled:<br><br><code>apiVersion: v1<br>kind: Pod<br>metadata:<br>  name: my-pod<br>spec:<br>  serviceAccountName: {{c1::build-robot}}<br>  automountServiceAccountToken: {{c2::false}}<br>  containers:<br>  - name: app<br>    image: nginx</code>
-**Extra:** Set ONLY at pod creation (or in a workload's pod template) — serviceAccountName is immutable on existing pods, like nodeName. Deprecated alias: spec.serviceAccount (set both to empty to remove). The SA must exist in the pod's namespace. Omit the field → 'default' SA auto-assigned. Pod-level automountServiceAccountToken overrides the SA's own setting.
+**Back Extra:** Set ONLY at pod creation (or in a workload's pod template) — serviceAccountName is immutable on existing pods, like nodeName. Deprecated alias: spec.serviceAccount (set both to empty to remove). The SA must exist in the pod's namespace. Omit the field → 'default' SA auto-assigned. Pod-level automountServiceAccountToken overrides the SA's own setting.
 **Tags:** k8s::kcna src::session topic::rbac topic::yaml
 
 ---
 
 <!-- note:1794003812841 model:Cloze -->
 **Text:** Long-lived SA token via manually created Secret:<br><br><code>apiVersion: v1<br>kind: Secret<br>metadata:<br>  name: build-robot-secret<br>  annotations:<br>    kubernetes.io/service-account.name: {{c1::build-robot}}<br>type: {{c2::kubernetes.io/service-account-token}}</code>
-**Extra:** The annotation is what triggers token generation — control plane writes the JWT into .data.token; valid until the SA is deleted, then auto-cleaned. This is the manual form of the pre-1.24 automatic behavior. kubectl get secret <name> -o yaml reveals it; kubectl describe shows the annotation. Prefer kubectl create token / TokenRequest for anything new.
+**Back Extra:** The annotation is what triggers token generation — control plane writes the JWT into .data.token; valid until the SA is deleted, then auto-cleaned. This is the manual form of the pre-1.24 automatic behavior. kubectl get secret <name> -o yaml reveals it; kubectl describe shows the annotation. Prefer kubectl create token / TokenRequest for anything new.
 **Tags:** k8s::kcna src::session topic::rbac topic::secrets topic::yaml
 
 ---
@@ -2052,14 +2052,14 @@
 
 <!-- note:1794004823845 model:Cloze -->
 **Text:** CertificateSigningRequest manifest for user 'dev1':<br><br><code>apiVersion: {{c1::certificates.k8s.io/v1}}<br>kind: {{c2::CertificateSigningRequest}}<br>metadata:<br>  name: dev1<br>spec:<br>  request: &lt;base64 CSR&gt;<br>  signerName: {{c3::kubernetes.io/kube-apiserver-client}}<br>  usages: [{{c4::"client auth"}}]</code>
-**Extra:** spec.request holds the base64-encoded CSR (openssl req -new -key user.key -out user.csr, then base64 -w0). After kubectl certificate approve dev1, the signed cert lands in .status.certificate — decode with base64 -d. Requires RBAC rights to create+approve CSRs. usages must include 'client auth' for kubeconfig use.
+**Back Extra:** spec.request holds the base64-encoded CSR (openssl req -new -key user.key -out user.csr, then base64 -w0). After kubectl certificate approve dev1, the signed cert lands in .status.certificate — decode with base64 -d. Requires RBAC rights to create+approve CSRs. usages must include 'client auth' for kubeconfig use.
 **Tags:** k8s::kcna src::session topic::authentication topic::certificates topic::yaml
 
 ---
 
 <!-- note:1794004823846 model:Cloze -->
 **Text:** Assemble a kubeconfig for user 'dev1' — the four kubectl config commands:<br><br>{{c1::<code>kubectl config set-cluster prod --server=https://API:6443 --certificate-authority=ca.crt --embed-certs=true</code>}}<br>{{c2::<code>kubectl config set-credentials dev1 --client-certificate=dev1.crt --client-key=dev1.key --embed-certs=true</code>}}<br>{{c3::<code>kubectl config set-context dev1@prod --cluster=prod --user=dev1</code>}}<br>{{c4::<code>kubectl config use-context dev1@prod</code>}}
-**Extra:** --embed-certs=true base64-inlines the CA into certificate-authority-data and cert+key into the user stanza — the file becomes fully self-contained/portable (that's what you email someone). Without it, kubectl looks for the referenced files on disk. Order: set-cluster → set-credentials → set-context → use-context. current-context in the file decides what plain 'kubectl get pods' uses.
+**Back Extra:** --embed-certs=true base64-inlines the CA into certificate-authority-data and cert+key into the user stanza — the file becomes fully self-contained/portable (that's what you email someone). Without it, kubectl looks for the referenced files on disk. Order: set-cluster → set-credentials → set-context → use-context. current-context in the file decides what plain 'kubectl get pods' uses.
 **Tags:** k8s::kcna src::session topic::authentication topic::kubectl
 
 ---
@@ -2099,7 +2099,7 @@
 
 <!-- note:1794006447949 model:Cloze -->
 **Text:** Pod manifest pulling from a private registry via Secret 'regcred':<br><br><code>apiVersion: v1<br>kind: Pod<br>metadata:<br>  name: private-reg<br>spec:<br>  containers:<br>  - name: app<br>    image: your.private.registry.example.com/janedoe/app:v1<br>  {{c1::imagePullSecrets}}:<br>  - name: {{c2::regcred}}</code>
-**Extra:** imagePullSecrets is a LIST under spec — each entry references a Secret of type kubernetes.io/dockerconfigjson that must exist in the pod's namespace. The kubelet uses these credentials when pulling <private.registry>/app before the container starts. Same field exists on a ServiceAccount to cover all its pods.
+**Back Extra:** imagePullSecrets is a LIST under spec — each entry references a Secret of type kubernetes.io/dockerconfigjson that must exist in the pod's namespace. The kubelet uses these credentials when pulling <private.registry>/app before the container starts. Same field exists on a ServiceAccount to cover all its pods.
 **Tags:** k8s::kcna src::session topic::images topic::secrets topic::yaml
 
 ---
@@ -2161,14 +2161,14 @@
 
 <!-- note:1794006612610 model:Cloze -->
 **Text:** Pod-level securityContext manifest (from the docs):<br><br><code>apiVersion: v1<br>kind: Pod<br>metadata:<br>  name: security-context-demo<br>spec:<br>  securityContext:<br>    runAsUser: {{c1::1000}}<br>    runAsGroup: {{c2::3000}}<br>    fsGroup: {{c3::2000}}<br>    supplementalGroups: [{{c4::4000}}]<br>  containers:<br>  - name: sec-ctx-demo<br>    image: busybox<br>    securityContext:<br>      allowPrivilegeEscalation: {{c5::false}}</code>
-**Extra:** Pod-level fields seen here: runAsUser/runAsGroup (UID/GID for all containers), fsGroup (volume group ownership), supplementalGroups (extra groups). Container-level adds per-container overrides like allowPrivilegeEscalation: false and capabilities. The id output would be uid=1000 gid=3000 groups=2000,3000,4000 — pod settings apply to every container unless overridden.
+**Back Extra:** Pod-level fields seen here: runAsUser/runAsGroup (UID/GID for all containers), fsGroup (volume group ownership), supplementalGroups (extra groups). Container-level adds per-container overrides like allowPrivilegeEscalation: false and capabilities. The id output would be uid=1000 gid=3000 groups=2000,3000,4000 — pod settings apply to every container unless overridden.
 **Tags:** k8s::kcna src::session topic::podsecurity topic::security topic::yaml
 
 ---
 
 <!-- note:1794006612611 model:Cloze -->
 **Text:** Container-level override example — pod says 1000, container says 2000:<br><br><code>spec:<br>  securityContext:<br>    runAsUser: {{c1::1000}}        # pod default for all containers<br>  containers:<br>  - name: sec-ctx-demo-2<br>    securityContext:<br>      runAsUser: {{c2::2000}}      # overrides pod → runs as 2000<br>      allowPrivilegeEscalation: {{c3::false}}</code>
-**Extra:** securityContext-2.yaml verbatim: pod-level runAsUser: 1000, container-level runAsUser: 2000 → process runs as 2000 (container wins on overlap). Container settings apply ONLY to that container and never affect pod volumes. kubectl exec -it <pod> -- id confirms the effective UID/GID/groups.
+**Back Extra:** securityContext-2.yaml verbatim: pod-level runAsUser: 1000, container-level runAsUser: 2000 → process runs as 2000 (container wins on overlap). Container settings apply ONLY to that container and never affect pod volumes. kubectl exec -it <pod> -- id confirms the effective UID/GID/groups.
 **Tags:** k8s::kcna src::session topic::podsecurity topic::security topic::yaml
 
 ---
@@ -2241,7 +2241,7 @@
 
 <!-- note:1794006990752 model:Cloze -->
 **Text:** NetworkPolicy manifest — isolate role=db pods, allow redis traffic:<br><br><code>apiVersion: {{c1::networking.k8s.io/v1}}<br>kind: {{c2::NetworkPolicy}}<br>metadata:<br>  name: test-network-policy<br>  namespace: default<br>spec:<br>  podSelector:<br>    matchLabels:<br>      role: {{c3::db}}<br>  policyTypes: [{{c4::Ingress, Egress}}]<br>  ingress:<br>  - from:<br>    - podSelector:<br>        matchLabels:<br>          role: frontend<br>    ports:<br>    - port: {{c5::6379}}<br>  egress:<br>  - to:<br>    - ipBlock:<br>        cidr: 10.0.0.0/24</code>
-**Extra:** The doc's example isolates role=db pods for BOTH directions: ingress allows TCP 6379 from role=frontend pods (same ns), any pod in project=myproject namespaces, and 172.17.0.0/16 minus 172.17.1.0/24; egress allows TCP 5978 to 10.0.0.0/24. Apply with kubectl apply -f — but only works if your CNI enforces NetworkPolicy.
+**Back Extra:** The doc's example isolates role=db pods for BOTH directions: ingress allows TCP 6379 from role=frontend pods (same ns), any pod in project=myproject namespaces, and 172.17.0.0/16 minus 172.17.1.0/24; egress allows TCP 5978 to 10.0.0.0/24. Apply with kubectl apply -f — but only works if your CNI enforces NetworkPolicy.
 **Tags:** k8s::kcna src::session topic::networking topic::networkpolicy topic::yaml
 
 ---
@@ -2336,7 +2336,7 @@
 
 <!-- note:1794007966278 model:Cloze -->
 **Text:** Default Kubernetes ports — control plane then workers:<br><br>Control plane (all TCP inbound):<br>{{c1::kube-apiserver}} → {{c2::6443}} (all components)<br>{{c3::etcd}} → {{c4::2379-2380}} (client API)<br>{{c5::kube-controller-manager}} → {{c6::10257}} (self)<br>{{c7::kube-scheduler}} → {{c8::10259}} (self)<br><br>Worker nodes:<br>{{c9::kubelet}} → {{c10::10250}}<br>kube-proxy → {{c11::10256}} (healthz)<br>NodePort Services → {{c12::30000-32767}} TCP+UDP
-**Extra:** Direction is always INBOUND to the listed component. kubelet 10250 appears on BOTH control plane and workers (control plane reaches in for logs/exec/metrics). etcd can live externally or on custom ports. NodePort range is a default — change it and open the new range instead. kube-proxy 10256 is health/metrics only, NOT service traffic.
+**Back Extra:** Direction is always INBOUND to the listed component. kubelet 10250 appears on BOTH control plane and workers (control plane reaches in for logs/exec/metrics). etcd can live externally or on custom ports. NodePort range is a default — change it and open the new range instead. kube-proxy 10256 is health/metrics only, NOT service traffic.
 **Tags:** k8s::kcna src::session topic::control-plane topic::networking
 
 ---
@@ -2431,7 +2431,7 @@
 
 <!-- note:1794016331753 model:Cloze -->
 **Text:** Kubernetes pod networking model — the requirements and who implements them:<br><br>K8s requires: every Pod gets {{c1::its own IP address}}; Pods on the same node can {{c2::communicate}}; Pods on different nodes can communicate {{c3::without NAT}}.<br><br>K8s does NOT implement this — the {{c4::container runtime}} invokes {{c5::CNI plugins}} on each node.<br><br>IP allocation: {{c6::network plugin}} → Pod IPs; {{c7::kube-apiserver}} → Service IPs; {{c8::kubelet/cloud-controller-manager}} → Node IPs.
-**Extra:** K8s defines the WHAT, CNIs provide the HOW — the container runtime invokes CNI plugins per node. IP owners: network plugin→Pods, kube-apiserver→Services, kubelet/CCM→Nodes (all non-overlapping). Pod-to-pod = CNI; pod/service/external-to-service = Services. Runtime reads .conflist from --cni-conf-dir, executes plugin from --cni-bin-dir with ADD/DEL commands.
+**Back Extra:** K8s defines the WHAT, CNIs provide the HOW — the container runtime invokes CNI plugins per node. IP owners: network plugin→Pods, kube-apiserver→Services, kubelet/CCM→Nodes (all non-overlapping). Pod-to-pod = CNI; pod/service/external-to-service = Services. Runtime reads .conflist from --cni-conf-dir, executes plugin from --cni-bin-dir with ADD/DEL commands.
 **Tags:** k8s::kcna src::session topic::cni topic::networking topic::podnetwork
 
 ---
@@ -2460,7 +2460,7 @@
 
 <!-- note:1794078127998 model:Cloze -->
 **Text:** Resiliency pattern family — purpose of each:<br><br>{{c1::Retry}} — re-attempt a failed call (transient errors)<br>{{c2::Timeout}} — cap how long a caller waits<br>{{c3::Circuit breaker}} — stop calling a failing dependency, probe for recovery<br>{{c4::Bulkhead}} — isolate resources so one component's failure can't cascade
-**Extra:** Full mapping: Retry = re-attempt transient failures (watch for retry storms amplifying load); Timeout = cap caller wait (frees threads but doesn't isolate); Circuit breaker = fail-fast + probe recovery on a failing dependency; Bulkhead = partition resources so one failure can't cascade. In Kubernetes these are app-level patterns — the platform gives you probes/replicas, but the code implements the patterns.
+**Back Extra:** Full mapping: Retry = re-attempt transient failures (watch for retry storms amplifying load); Timeout = cap caller wait (frees threads but doesn't isolate); Circuit breaker = fail-fast + probe recovery on a failing dependency; Bulkhead = partition resources so one failure can't cascade. In Kubernetes these are app-level patterns — the platform gives you probes/replicas, but the code implements the patterns.
 **Tags:** k8s::kcna src::session topic::architecture topic::resiliency
 
 ---

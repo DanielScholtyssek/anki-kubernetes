@@ -1,169 +1,119 @@
 # anki-kubernetes
 
-A personal knowledge base for managing [Anki](https://apps.ankiweb.net/)
-flashcards for the Golden Kubestronaut certification track — one deck
-per CNCF certification plus LFCS (see `CERTS.md`).
+Flashcard decks for the CNCF **Golden Kubestronaut** certification track,
+stored as plain markdown — plus tooling to mirror a live
+[Anki](https://apps.ankiweb.net/) collection into this repo and restore it
+into a fresh one.
 
-The repo serves two purposes:
+Every note is a markdown file under `cards/`, so the decks are greppable,
+diffable, and survive a lost or corrupted Anki collection. Cards target
+the exam formats in `CERTS.md` (pure-MCQ certs get interactive
+multiple-choice cards; hands-on certs get command/YAML recall cards).
 
-1. **A restorable, greppable mirror of Anki decks.** Every note in the
-   collection is exported to markdown under `cards/`, so decks survive a
-   lost/corrupted collection and can be searched and diffed with normal
-   text tools.
-2. **A working directory for an AI agent that edits Anki.** Decks are
-   created and updated through the `anki` MCP server connected to the
-   local Anki app. `AGENTS.md` holds the conventions the agent follows
-   (deck names, note types, tagging, card style, safety rules).
-
-## Layout
+## What's inside
 
 ```
-AGENTS.md            conventions for the AI agent (read this first)
+AGENTS.md            conventions for AI agents that edit Anki via MCP
+CERTS.md             Golden Kubestronaut exam formats (verified vs official pages)
 README.md            this file
-tools/export_anki.py dumps the live Anki collection into cards/
-tools/parse_cards.py turns cards/*.md into add_notes payloads (JSONL)
-tools/resplit.py     re-splits tagless decks into exam-domain topic files
-models/models.json   note type definitions for rebuilding into empty Anki
-cards/               markdown mirror of every deck, one file per topic
-  ckad/<topic>.md    one file per ckad::* tag
-  cks/<domain>.md    one file per CKS exam domain (via resplit.py)
-  kcna/<domain>.md   one file per KCNA exam domain (via resplit.py)
-  kcsa/<domain>.md   one file per MCQ 'Domain' field value
-downloads/           (gitignored) original .apkg files / import notes
+models/models.json   custom note type definitions (incl. the interactive "Many" MCQ type)
+tools/export_anki.py snapshot collection.anki2 -> regenerate cards/
+tools/parse_cards.py cards/*.md -> add_notes JSONL payloads (repo -> Anki)
+tools/resplit.py     re-group tagless decks into topic/domain files
+cards/<deck>/<topic>.md   one markdown file per topic, per deck
 ```
 
-Inside each `cards/**/*.md` file, a card looks like:
+Inside each file, one card looks like:
 
 ```markdown
-<!-- note:1781279834155 model:Basic++++ -->
-**Front:** Command: list Pods in all namespaces.
-**Back:** kubectl get pods -A
-**Tags:** ckad::pods command namespaces
+<!-- note:1781279834155 model:Many -->
+**Domain:** Kubernetes Fundamentals
+**Question:** Which command lists all pods in all namespaces?
+**Options:** A. kubectl get pods<br>B. kubectl get pods -A<br>C. kubectl pods -A
+**Answer:** B (2) – kubectl get pods -A
+**Explanation:** -A/--all-namespaces is required; kubectl only shows the current namespace by default.
+**Tags:** k8s::kcna topic::kubectl src::session
 
 ---
 ```
 
-The `note:` comment carries the Anki note ID so edits can be pushed back
-to the exact note. Field names are the real Anki field names and HTML is
-kept verbatim for lossless round-tripping.
+The `note:` anchor carries the Anki note ID; field names are the real
+Anki field names and HTML is kept verbatim, so the format round-trips
+losslessly back into Anki.
 
-## Decks currently tracked
+## Deck status
 
-The target is **one deck per Golden Kubestronaut certification** —
-see `AGENTS.md` for the full deck-name → `cards/` folder mapping and
-`CERTS.md` for exam formats (which exams are hands-on vs multiple
-choice). Four decks are downloaded course decks (CKAD, CKS, KCNA,
-KCSA); the rest are authored decks, plus `Kubernetes for Beginners`
-for general/foundations material.
+One folder per certification (target layout in `AGENTS.md`). Populated
+decks:
+
+| Folder | Anki deck | Notes | Provenance |
+|---|---|---|---|
+| `cards/ckad/` | CKAD - Certified Kubernetes Application Developer | 530 | imported course deck |
+| `cards/cks/` | CKS - Certified Kubernetes Security Specialist | 993 | imported course deck |
+| `cards/kcna/` | KCNA - Kubernetes and Cloud Native Associate | ~490 | mixed: ~318 authored here + imported/converted |
+| `cards/kcsa/` | KCSA - Kubernetes and Cloud Native Security Associate | 310 | imported course deck |
+| `cards/kubernetes-for-beginners/` | Kubernetes for Beginners | 135 | authored |
+
+Planned-but-empty folders (with `.gitkeep`): `cka`, `ica`, `cnpe`,
+`lfcs`, `pca`, `cca`, `capa`, `cgoa`, `cba`, `otca`, `kca`, `cnpa`.
+
+## Using the cards
+
+**Read them as markdown.** `cards/<deck>/<topic>.md` is plain text —
+browse, grep, or feed to whatever you like. `**Question:**`/`**Front:**`
+fields are the prompt; everything after is the answer and explanation.
+
+**Import into your own Anki.** The restore path is designed around the
+[ankimcp](https://ankiweb.net/shared/info/124672614) add-on and an MCP
+client (e.g. an AI agent — see "Working with the agent" below):
+
+1. `python3 tools/parse_cards.py cards/<dir>` emits one `add_notes`
+   argument set per JSONL line (batches of 50, `--batch N` to change).
+2. Create missing decks and custom models first (`models/models.json`
+   has the definitions — `Many` is the interactive MCQ type).
+3. Feed each JSONL line to the MCP `add_notes` tool.
+4. Re-run `tools/export_anki.py` afterwards to re-anchor note IDs.
+
+Anki assigns its own note IDs and scheduling — a restore gives you all
+cards as *new*; review history lives in Anki, not in this repo.
 
 ## Refreshing the mirror
 
-`tools/export_anki.py` takes a consistent snapshot of `collection.anki2`
-(using SQLite's backup API — safe while Anki is running) and regenerates
-`cards/`:
+`tools/export_anki.py` snapshots `collection.anki2` via SQLite's backup
+API (safe while Anki runs) and regenerates `cards/`:
 
 ```bash
-python3 tools/export_anki.py               # export all non-empty decks
-python3 tools/export_anki.py --deck "CKS*" # export matching decks only
+python3 tools/export_anki.py                 # all non-empty decks
+python3 tools/export_anki.py --deck "CKS*"   # matching decks only
 python3 tools/export_anki.py --db /path/to/collection.anki2
 ```
 
-Run it after importing a new `.apkg` or after a batch of MCP edits to
-re-sync the repo. Default DB path is the Windows-side collection
-(`/mnt/c/Users/crock/AppData/Roaming/Anki2/User 1/collection.anki2`).
+The collection path resolves via `--db`, the `$ANKI_COLLECTION` env var,
+or auto-detection (`~/.local/share/Anki2`, `~/Library/Application
+Support/Anki2`, WSL `/mnt/c/Users/*/AppData/Roaming/Anki2/`).
 
-## Restoring into Anki
+For decks without topic tags, `tools/resplit.py` re-groups notes into
+thematic files (KCNA/CKS exam domains); run it after a full export of
+those decks.
 
-The markdown round-trips losslessly (fields, tags and note types all
-verified against the collection), so `cards/` can rebuild an empty
-Anki collection. Writes always go through the `anki` MCP server — the
-repo scripts never touch `collection.anki2` directly.
+## Working with an AI agent
 
-### Prerequisites
+`AGENTS.md` documents the conventions an agent follows when creating or
+editing cards through the `anki` MCP server: deck naming, note types
+(stock types + the custom `Many` MCQ model), the `k8s::<cert>` /
+`topic::<area>` / `src::<origin>` tagging scheme, required duplicate
+checks, and operations that always need confirmation. If you point an
+agent at this repo, that file is the contract.
 
-- Anki installed with a fresh/empty profile (or any collection you want
-  to fill).
-- The [ankimcp](https://ankiweb.net/shared/info/124672614) add-on
-  installed and the `anki` MCP server configured in the client where the
-  agent runs — same setup as the current machine.
-- This repo checked out locally.
+## Content provenance
 
-### How it works
+Cards under `ckad/`, `cks/`, `kcsa/`, and the `src::deck-import` portion
+of `kcna/` mirror **imported third-party course decks** (`.apkg`
+files). The remaining cards were authored for this repo. If you
+redistribute this repo, review the provenance of each folder — imported
+deck content may be subject to the original course provider's terms.
 
-The restore is agent-driven: the agent reads `cards/`, prepares the
-collection, and feeds parser output to the MCP `add_notes` tool. Tell
-the agent e.g. "restore the repo decks into this Anki" and it does the
-steps below — they are listed explicitly so you can follow or reproduce
-them:
+## License
 
-1. **Generate the payloads** (local, no Anki contact):
-
-   ```bash
-   python3 tools/parse_cards.py cards/ > /tmp/payloads.jsonl
-   ```
-
-   Each line is one complete `add_notes` argument set
-   (`{deck_name, model_name, notes: [...], tags}`), grouped by deck+model
-   and capped at 50 notes (`--batch N` to change, `--keep-ids` to carry
-   old note IDs for grepping).
-
-   Restore a subset instead of everything:
-
-   ```bash
-   python3 tools/parse_cards.py cards/ckad/           # one deck
-   python3 tools/parse_cards.py cards/kcsa/compliance.md   # one file
-   ```
-
-2. **Create the note types.** In an empty collection only stock types
-   (`Basic`, `Cloze`, …) exist. The agent calls `create_model` for each
-   definition in `models/models.json` — that rebuilds the bundled types
-   the downloaded decks use (`Basic++++`, `Basic+`, `Basic++`,
-   `Basic+++`) and the interactive MCQ type `Many`, including card
-   templates and CSS.
-
-3. **Create the decks.** `create_deck` for every deck appearing in the
-   payloads (`deck_name` field of each JSONL line).
-
-4. **Load the cards.** For each line of the JSONL the agent calls
-   `add_notes`, then reports per-batch `created` / `skipped` / `failed`.
-   Duplicates are skipped by Anki automatically, so re-running is
-   idempotent.
-
-5. **Re-anchor the mirror.** The new collection assigns fresh note IDs,
-   so afterwards:
-
-   ```bash
-   python3 tools/export_anki.py --db /path/to/new/collection.anki2
-   ```
-
-   regenerates `cards/` with the new `<!-- note:... -->` anchors.
-   `models/models.json` stays valid — note type names don't change.
-
-### Things to know
-
-- **Old note IDs are metadata only.** They are never sent to the new
-  collection; Anki assigns its own.
-- **Scheduling state is not in the markdown.** Review history, intervals
-  and due dates live in Anki only — a restore gives you all cards as
-  *new* cards. Keep AnkiWeb sync/backups for preserving progress.
-- **`kubernetes-for-beginners/` cards are authored content** — they use
-  stock models (`Basic`, `Cloze`, `Basic (and reversed card)`) plus
-  `Many`, so they restore fine once `Many` exists (step 2).
-- **Order matters but is simple:** models before notes, decks before
-  notes. The agent handles it; `add_notes` fails with a clear error if a
-  model or deck is missing.
-
-## Working with the agent
-
-Typical asks:
-
-- "Add 10 cards about NetworkPolicies to the CKAD deck" — agent checks
-  the deck/model, looks for duplicates via `find_notes`, batches
-  `add_notes`, and appends the new cards to `cards/ckad/networkpolicy.md`.
-- "Create a new deck for <course>" — agent creates `Kubernetes::<Name>`
-  and seeds it with properly tagged notes.
-- "Export/sync the repo with Anki" — run the export script.
-
-See `AGENTS.md` for the full rule set (required add-workflow, tagging
-scheme `k8s::<cert>` / `topic::<area>` / `src::<origin>`, and which
-operations always require confirmation first).
+See `LICENSE`. Code in `tools/` is MIT; card content provenance is
+described above.

@@ -81,7 +81,7 @@
 
 <!-- note:1794079087783 model:Cloze -->
 **Text:** Observability practices that exams test:<br><br>{{c1::Correlation IDs}} in structured logs → trace one request across services<br>{{c2::Prometheus pull model}} → server scrapes /metrics; standard for K8s<br>{{c3::Pushgateway}} → the exception: short-lived jobs that can't be scraped<br>{{c4::Leader election}} → HA monitoring needs it to avoid duplicate scrapes/alerts
-**Extra:** The observability three pillars (logs/metrics/traces) each get a practice: correlation IDs make logs traceable, pull-model Prometheus scrapes metrics, and tracing systems (Jaeger/Tempo/OpenTelemetry) follow requests across services. Anti-patterns to avoid: single log sink SPOF, storing debug logs long-term, disabling leader election in HA setups.
+**Back Extra:** The observability three pillars (logs/metrics/traces) each get a practice: correlation IDs make logs traceable, pull-model Prometheus scrapes metrics, and tracing systems (Jaeger/Tempo/OpenTelemetry) follow requests across services. Anti-patterns to avoid: single log sink SPOF, storing debug logs long-term, disabling leader election in HA setups.
 **Tags:** k8s::kcna src::session topic::logging topic::metrics topic::observability
 
 ---

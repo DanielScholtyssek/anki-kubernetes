@@ -253,9 +253,9 @@ python3 tools/export_anki.py                 # all non-empty decks
 python3 tools/export_anki.py --deck "CKS*"   # one deck
 ```
 
-The default DB path is the Windows-side collection at
-`/mnt/c/Users/crock/AppData/Roaming/Anki2/User 1/collection.anki2`;
-override with `--db` if it moves.
+The DB path resolves via `--db`, `$ANKI_COLLECTION`, or auto-detection
+(Linux `~/.local/share/Anki2`, macOS `~/Library/Application Support/Anki2`,
+WSL `/mnt/c/Users/*/AppData/Roaming/Anki2/*/collection.anki2`).
 
 - **Grouping preference:** the user prefers thematic files —
   `cards/<deck>/<topic>.md`, one file per topic, filename = lowercase

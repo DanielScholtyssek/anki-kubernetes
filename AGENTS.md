@@ -16,9 +16,9 @@ for conventions; treat Anki itself as the source of truth for what exists.
 
 Decks come from two sources:
 
-- **Downloaded decks** — imported from course providers as `.apkg`
-  (e.g. the CKAD / CKS / KCSA / KCNA cert decks). Their bundled note
-  types are opaque clones (`Basic++++`, `Basic+`, …); treat the
+- **Downloaded decks** — imported from publicly shared AnkiWeb decks as
+  `.apkg` (e.g. the CKAD / CKS / KCSA / KCNA cert decks). Their bundled
+  note types are opaque clones (`Basic++++`, `Basic+`, …); treat the
   imported notes as third-party content.
 - **Authored decks** — ones we create ourselves.
 

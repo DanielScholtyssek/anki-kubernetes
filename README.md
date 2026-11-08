@@ -48,10 +48,10 @@ decks:
 
 | Folder | Anki deck | Notes | Provenance |
 |---|---|---|---|
-| `cards/ckad/` | CKAD - Certified Kubernetes Application Developer | 530 | imported course deck |
-| `cards/cks/` | CKS - Certified Kubernetes Security Specialist | 993 | imported course deck |
-| `cards/kcna/` | KCNA - Kubernetes and Cloud Native Associate | ~490 | mixed: ~318 authored here + imported/converted |
-| `cards/kcsa/` | KCSA - Kubernetes and Cloud Native Security Associate | 310 | imported course deck |
+| `cards/ckad/` | CKAD - Certified Kubernetes Application Developer | 530 | shared AnkiWeb deck |
+| `cards/cks/` | CKS - Certified Kubernetes Security Specialist | 993 | shared AnkiWeb deck |
+| `cards/kcna/` | KCNA - Kubernetes and Cloud Native Associate | ~490 | mixed: ~318 authored here + shared-deck cards |
+| `cards/kcsa/` | KCSA - Kubernetes and Cloud Native Security Associate | 310 | shared AnkiWeb deck |
 | `cards/kubernetes-for-beginners/` | Kubernetes for Beginners | 135 | authored |
 
 Planned-but-empty folders (with `.gitkeep`): `cka`, `ica`, `cnpe`,
@@ -108,10 +108,10 @@ agent at this repo, that file is the contract.
 ## Content provenance
 
 Cards under `ckad/`, `cks/`, `kcsa/`, and the `src::deck-import` portion
-of `kcna/` mirror **imported third-party course decks** (`.apkg`
-files). The remaining cards were authored for this repo. If you
-redistribute this repo, review the provenance of each folder — imported
-deck content may be subject to the original course provider's terms.
+of `kcna/` mirror decks **shared publicly on AnkiWeb** and imported as
+`.apkg` files — they're other authors' work, distributed freely via
+AnkiWeb's sharing mechanism. The remaining cards were authored for this
+repo. If you republish, consider crediting the original deck authors.
 
 ## License
 

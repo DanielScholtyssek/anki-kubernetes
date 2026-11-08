@@ -3537,3 +3537,89 @@
 **Tags:** k8s::kcna topic::storage topic::volumes src::session
 
 ---
+<!-- note:1794103862156 model:Many -->
+**Domain:** Sidecars - purpose
+**Question:** Why was the sidecar container pattern introduced in Kubernetes?
+**Options:** A. To run multiple replicas of the same application inside one Pod for higher availability<br>B. To attach supporting functionality — logging, monitoring, proxying — to an application without modifying its code or image<br>C. To give each container in a Pod its own IP address and network namespace<br>D. To replace Kubernetes Services for east-west traffic<br>E. To enforce security isolation between the app and the host kernel
+**Answer:** B (2) – To attach supporting functionality — logging, monitoring, proxying — to an application without modifying its code or image
+**Explanation:** Sidecars decouple cross-cutting concerns from business logic: the app image stays focused on its function while helper containers (log shipper, metrics agent, service-mesh proxy like Envoy, config/secret syncer) run alongside in the same Pod. Because helpers are separate containers they can be updated, swapped, or written in different languages without rebuilding or redeploying the app — e.g. Istio injects an Envoy sidecar to add mTLS without touching application code. Note what sidecars do NOT provide: each container still shares the Pod's single network namespace (no per-container IP), and the Pod — not the sidecar — is the isolation/security boundary.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/" target="_blank">Kubernetes Docs - Sidecar Containers</a>
+**Tags:** k8s::kcna topic::sidecars topic::pods src::session
+
+---
+
+<!-- note:1794103862157 model:Many -->
+**Domain:** Sidecars - shared resources
+**Question:** Which resources does a sidecar container share with the app container in the same Pod? (Select all that apply)
+**Options:** A. Network namespace — same IP address, localhost, and port space<br>B. Process (PID) namespace — the same visible process list<br>C. Pod volumes — can mount the same filesystems to exchange files<br>D. The node's root filesystem<br>E. The app container's writable filesystem layer
+**Answer:** A, C – Network namespace and Pod volumes
+**Explanation:** Sidecars share the Pod's NETWORK namespace — that is why app and sidecar talk to each other over localhost with no Service or DNS needed. They can also share VOLUMES (e.g. emptyDir) so a log shipper can tail files the app writes. They do NOT share the process namespace (each container has its own PID namespace and cannot see the other's processes), the node's filesystem, or the app container's writable layer — file sharing requires an explicitly mounted Pod volume.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/" target="_blank">Kubernetes Docs - Sidecar Containers</a>
+**Tags:** k8s::kcna topic::sidecars topic::pods src::session
+
+---
+
+<!-- note:1794103862158 model:Many -->
+**Domain:** Sidecars - vs init containers
+**Question:** How does a sidecar container differ from a regular init container?
+**Options:** A. Init containers run concurrently with app containers; sidecars run only during Pod startup<br>B. Init containers run to completion before app containers start and cannot send data back; sidecars run for the Pod's whole lifetime, support probes, and communicate bidirectionally over localhost<br>C. Init containers can share Pod volumes; sidecars cannot access volumes at all<br>D. Sidecars are controlled by a separate controller; init containers are controlled by the kubelet
+**Answer:** B (2) – Init containers run to completion before app containers start and cannot send data back; sidecars run for the Pod's whole lifetime, support probes, and communicate bidirectionally over localhost
+**Explanation:** Regular init containers execute SEQUENTIALLY TO COMPLETION before any app container starts — data flow is one-way (init writes to a volume, app reads it later). A native sidecar is declared as an initContainer with restartPolicy: Always: it starts in init order but KEEPS RUNNING for the Pod's lifetime, supports liveness/readiness probes, and shares the network namespace so it can talk to the app bidirectionally via localhost (e.g. a log shipper tailing a shared file while the app runs).
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/" target="_blank">Kubernetes Docs - Sidecar Containers</a>
+**Tags:** k8s::kcna topic::sidecars topic::pods src::session
+
+---
+
+<!-- note:1794103862159 model:Many -->
+**Domain:** Sidecars - native declaration
+**Question:** How is a native sidecar container declared in a Pod spec?
+**Options:** A. Add `sidecar: true` to a regular entry under spec.containers<br>B. List it under spec.initContainers with restartPolicy: Always — it starts before later init and app containers but keeps running for the Pod's lifetime<br>C. Deploy it as a custom resource of kind: Sidecar<br>D. Set restartPolicy: OnFailure on an init container
+**Answer:** B (2) – List it under spec.initContainers with restartPolicy: Always — it starts before later init and app containers but keeps running for the Pod's lifetime
+**Explanation:** Native sidecars (Kubernetes 1.28+, feature gate enabled by default since 1.29 and locked/always-on since 1.33) are a special case of init containers: restartPolicy: Always under initContainers. The kubelet marks the sidecar 'started' once its process runs, then proceeds through remaining init containers to the app containers — giving startup ORDERING — but unlike regular init containers the sidecar never exits. There is no `sidecar: true` field and no Sidecar CRD in core Kubernetes; before 1.28 the pattern relied on a plain second container in spec.containers with no startup ordering.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/" target="_blank">Kubernetes Docs - Sidecar Containers</a>
+**Tags:** k8s::kcna topic::sidecars topic::pods src::session
+
+---
+
+<!-- note:1794103862160 model:Many -->
+**Domain:** Sidecars - termination order
+**Question:** When a Pod is terminated, how does the kubelet order container shutdown?
+**Options:** A. All containers receive SIGTERM simultaneously<br>B. Sidecars are terminated first so the app can drain quickly<br>C. App containers are terminated first; sidecars stop LAST in reverse order of their spec position, so they keep supporting (e.g. flushing logs) until the end<br>D. Init containers are terminated last
+**Answer:** C (3) – App containers are terminated first; sidecars stop LAST in reverse order of their spec position, so they keep supporting (e.g. flushing logs) until the end
+**Explanation:** On Pod termination the kubelet postpones stopping sidecar containers until the main app containers have fully stopped, then shuts the sidecars down in REVERSE order of their appearance in the Pod spec. This keeps helpers operational while the app winds down — a log shipper can flush remaining entries, a mesh proxy can drain connections — instead of vanishing at the first SIGTERM. Related gotcha: sidecar containers often exit non-zero during termination because they may not get graceful-shutdown time; that is normal and should be ignored by tooling.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/" target="_blank">Kubernetes Docs - Sidecar Containers</a>
+**Tags:** k8s::kcna topic::sidecars topic::pods src::session
+
+---
+
+<!-- note:1794103862161 model:Many -->
+**Domain:** Sidecars - use cases
+**Question:** Which are typical responsibilities of a sidecar container? (Select all that apply)
+**Options:** A. Shipping the app's logs to a centralized logging backend (e.g. Fluent Bit)<br>B. Proxying and encrypting service-to-service traffic (e.g. an Istio/Envoy mesh sidecar)<br>C. Syncing secrets or configuration into a shared volume<br>D. Implementing the application's core business logic<br>E. Load-balancing traffic across Pods in the cluster
+**Answer:** A, B, C – Log shipping, mesh proxying, and config/secret syncing
+**Explanation:** Sidecars provide SUPPORTING services around the app: log collection/forwarding (Fluent Bit), metrics/observability agents, service-mesh proxies (Istio's Envoy sidecar adds mTLS, retries, traffic splitting without app changes), config/secret syncers, and file generators writing into shared volumes. They explicitly do NOT run the app's business logic (that is the app container's job) and do NOT do cluster-level traffic management — that is the Service/Ingress/Gateway layer.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/" target="_blank">Kubernetes Docs - Sidecar Containers</a>
+**Tags:** k8s::kcna topic::sidecars topic::pods src::session
+
+---
+
+<!-- note:1794103864955 model:Basic -->
+**Front:** When should a helper container be declared as a native sidecar (spec.initContainers + restartPolicy: Always) rather than just added to spec.containers?
+**Back:** When you need startup ORDERING plus sidecar lifecycle semantics: a native sidecar is guaranteed to be running before the next init container and before the app containers start — the kubelet proceeds once its 'started' status is true — and it then keeps running for the Pod's whole lifetime with its own restart/probe behavior. A plain second container under spec.containers gets no ordering guarantee: all regular containers start together and none is treated as a prerequisite for the others.
+**Tags:** k8s::kcna topic::sidecars topic::pods src::session
+
+---
+
+<!-- note:1794103864961 model:Cloze -->
+**Text:** spec:
+  initContainers:
+    - name: logshipper
+      image: fluent/fluent-bit:latest
+      restartPolicy: {{c1::Always}}
+  containers:
+    - name: app
+      image: nginx
+**Back Extra:** restartPolicy: Always inside initContainers makes this a NATIVE SIDECAR (Kubernetes 1.28+, always-on since 1.33): it launches in init order before the app container but keeps running for the Pod's entire lifetime, and is terminated only after the app containers stop.
+**Tags:** k8s::kcna topic::sidecars topic::yaml src::session
+
+---

@@ -107,11 +107,19 @@ agent at this repo, that file is the contract.
 
 ## Content provenance
 
-Cards under `ckad/`, `cks/`, `kcsa/`, and the `src::deck-import` portion
-of `kcna/` mirror decks **shared publicly on AnkiWeb** and imported as
-`.apkg` files — they're other authors' work, distributed freely via
-AnkiWeb's sharing mechanism. The remaining cards were authored for this
-repo. If you republish, consider crediting the original deck authors.
+Several folders mirror decks **shared publicly on AnkiWeb** and imported
+as `.apkg` files — they're other authors' work, distributed freely via
+AnkiWeb's sharing mechanism:
+
+| Folder | Source deck | AnkiWeb |
+|---|---|---|
+| `cards/cks/` | KodeKloud - Certified Kubernetes Security Specialist | [shared deck](https://ankiweb.net/shared/info/20691376) |
+| `cards/kcna/` (`src::deck-import` cards) | KCNA - Kubernetes and Cloud Native Associate | [shared deck](https://ankiweb.net/shared/info/1507217991) |
+| `cards/kcsa/` | KCSA - Kubernetes and Cloud Native Security Associate | [shared deck](https://ankiweb.net/shared/info/1889916994) |
+| `cards/ckad/` | *(AnkiWeb link TBD)* | — |
+
+The remaining cards were authored for this repo. Credit where credit's
+due — the shared-deck authors did the heavy lifting on those folders.
 
 ## License
 

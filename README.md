@@ -116,7 +116,7 @@ AnkiWeb's sharing mechanism:
 | `cards/cks/` | KodeKloud - Certified Kubernetes Security Specialist | [shared deck](https://ankiweb.net/shared/info/20691376) |
 | `cards/kcna/` (`src::deck-import` cards) | KCNA - Kubernetes and Cloud Native Associate | [shared deck](https://ankiweb.net/shared/info/1507217991) |
 | `cards/kcsa/` | KCSA - Kubernetes and Cloud Native Security Associate | [shared deck](https://ankiweb.net/shared/info/1889916994) |
-| `cards/ckad/` | *(AnkiWeb link TBD)* | — |
+| `cards/ckad/` | Kubernetes CKAD - Complete Exam Deck | [shared deck](https://ankiweb.net/shared/info/317264836) |
 
 The remaining cards were authored for this repo. Credit where credit's
 due — the shared-deck authors did the heavy lifting on those folders.

@@ -95,9 +95,13 @@ a remembered list.
     Skip it when the reverse question is meaningless (commands, long
     explanations, anything where the back can't function as a question).
   - `Cloze` — for `kubectl` commands, YAML keys, and flag values.
-  - `Many` (the interactive MCQ model from the KCSA deck) — for
-    multiple-choice cards with real distractors: "which of these…",
-    "select all that apply", pick-the-right-command. Fields: `Domain`
+  - `Many` (the interactive MCQ model) — **MANDATORY for every
+    multiple-choice card.** Any card whose content is a question with
+    lettered options ("which of these…", "select all that apply",
+    pick-the-right-command, quiz questions) MUST use `Many` — never a
+    `Basic` card with options listed as plain text. The user reviews
+    with the interactive Check-button flow; plain-list MCQs defeat it.
+    Fields: `Domain`
     (exam domain/section), `Question`, `Options` (`A. …<br>B. …`),
     `Answer` (`C (3) – text`; multi-select: `A, C – text` — the template
     parses the leading letter run and requires the exact set),

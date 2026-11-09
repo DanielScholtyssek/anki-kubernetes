@@ -469,3 +469,87 @@
 **Tags:** k8s::kcna topic::microservices topic::observability src::session
 
 ---
+
+<!-- note:1794259442606 model:Many -->
+**Domain:** Service Mesh - definition
+**Question:** What is a service mesh?
+**Options:** A. A CI/CD system for deploying microservices<br>B. A dedicated, configurable infrastructure layer that manages service-to-service communication — traffic, security, observability — without application code changes<br>C. A container orchestrator like Kubernetes<br>D. A monitoring dashboard for pod metrics
+**Answer:** B (2) – A dedicated, configurable infrastructure layer that manages service-to-service communication — traffic, security, observability — without application code changes
+**Explanation:** A service mesh is a dedicated infrastructure layer that handles ALL service-to-service communication: traffic management, mTLS security, telemetry/observability, retries, discovery — configured centrally, applied uniformly, with ZERO application code changes. It's the architectural answer to the 'fat microservice' problem: instead of every service re-implementing auth/logging/tracing, the mesh does it for all of them. Most meshes (Istio, Linkerd) implement this via sidecar proxies + a control plane; Envoy is the most common proxy.
+**Sources:** <a href="https://glossary.cncf.io/service-mesh/" target="_blank">CNCF Glossary - Service Mesh</a><br><a href="https://istio.io/latest/docs/concepts/what-is-istio/" target="_blank">Istio Docs - What is Istio</a>
+**Tags:** k8s::kcna topic::service-mesh topic::architecture src::session
+
+---
+
+<!-- note:1794259442607 model:Many -->
+**Domain:** Service Mesh - capabilities
+**Question:** Which capabilities does a service mesh provide? (Select all that apply)
+**Options:** A. Traffic management — routing, canary deploys, retries, timeouts<br>B. Security — automatic mTLS between all services<br>C. Observability — metrics, traces, and logs generated per hop<br>D. Replacing Prometheus/Grafana as the observability backend<br>E. Service discovery, health checking, and load balancing
+**Answer:** A, B, C, E – traffic management, mTLS security, observability, and discovery/health/load-balancing
+**Explanation:** The mesh provides four capability families uniformly across ALL services: (A) TRAFFIC MANAGEMENT — routing rules, canary/blue-green splits, retries, timeouts, fault injection; (B) SECURITY — automatic mTLS between every service, zero-trust identity; (C) OBSERVABILITY — golden metrics (request rate, error rate, latency), distributed traces, access logs generated at every hop automatically; (E) RESILIENCE/DISCOVERY — service discovery, health checking, load balancing, outlier detection. D is wrong — a mesh doesn't replace observability BACKENDS (Prometheus/Grafana/Jaeger still store and display the data the mesh produces).
+**Sources:** <a href="https://istio.io/latest/docs/concepts/what-is-istio/" target="_blank">Istio Docs - What is Istio</a>
+**Tags:** k8s::kcna topic::service-mesh topic::architecture src::session
+
+---
+
+<!-- note:1794259442608 model:Many -->
+**Domain:** Service Mesh - architecture
+**Question:** How is a service mesh architecturally divided?
+**Options:** A. Data plane configures policies; control plane proxies traffic<br>B. Data plane = sidecar proxies intercepting all pod traffic; control plane = central component (e.g. Istio Pilot) that configures policies and pushes them to proxies<br>C. Control plane runs inside each pod; data plane is centralized<br>D. Both planes run only on master nodes
+**Answer:** B (2) – Data plane = sidecar proxies intercepting all pod traffic; control plane = central component (e.g. Istio Pilot) that configures policies and pushes them to proxies
+**Explanation:** Every mesh has TWO planes: the DATA PLANE does the actual work — a proxy (usually Envoy) runs as a sidecar in EVERY pod, intercepting all inbound/outward traffic and applying mTLS/retries/telemetry per request. The CONTROL PLANE is the brain — it watches Kubernetes services and pushes configuration (via xDS APIs) telling every proxy how to route, secure, and observe traffic. You configure the CONTROL plane; the DATA plane enforces it on every hop. This separation is why mesh changes roll out instantly without restarting apps.
+**Sources:** <a href="https://istio.io/latest/docs/concepts/what-is-istio/" target="_blank">Istio Docs - What is Istio</a>
+**Tags:** k8s::kcna topic::service-mesh topic::architecture src::session
+
+---
+
+<!-- note:1794259442609 model:Many -->
+**Domain:** Service Mesh - traffic management
+**Question:** What traffic-management capabilities does a service mesh enable?
+**Options:** A. Only basic round-robin load balancing<br>B. Canary/blue-green deploys, percentage-based traffic splits, A/B testing, plus retries/timeouts/fault injection — all configured without code changes<br>C. Automatic scaling of pod replicas<br>D. DNS-based service discovery only
+**Answer:** B (2) – Canary/blue-green deploys, percentage-based traffic splits, A/B testing, plus retries/timeouts/fault injection — all configured without code changes
+**Explanation:** Traffic management is the mesh's killer feature for releases: split traffic by percentage (5% to canary, 95% to stable), route by headers/URI for A/B tests, mirror requests for shadow testing, inject artificial latency/failures to test resilience, and set retries/timeouts per route — ALL via configuration on the control plane, no app redeploys. This turns risky 'big bang' releases into gradual, observable rollouts. These are the same L7 routing powers Envoy provides — the mesh just makes them cluster-wide and declarative.
+**Sources:** <a href="https://istio.io/latest/docs/concepts/what-is-istio/" target="_blank">Istio Docs - What is Istio</a>
+**Tags:** k8s::kcna topic::service-mesh topic::architecture src::session
+
+---
+
+<!-- note:1794259442610 model:Many -->
+**Domain:** Service Mesh - security
+**Question:** How does a service mesh handle security between services?
+**Options:** A. Optional encryption only at the cluster edge<br>B. Automatic mutual TLS (mTLS) between all services — every hop authenticated and encrypted, zero-trust by default<br>C. A web application firewall for HTTP traffic<br>D. Encryption only for external traffic
+**Answer:** B (2) – Automatic mutual TLS (mTLS) between all services — every hop authenticated and encrypted, zero-trust by default
+**Explanation:** The mesh's security story: STRICT mTLS by default — every service-to-service call is mutually authenticated (both sides present certificates proving identity) and encrypted, automatically, with no app code. Authorization policies ('service A may call service B on port 8080') are enforced at the proxy level. This delivers zero-trust INSIDE the cluster: 'it's another pod' no longer means 'trusted'. Certificates are issued/rotated by the control plane — apps never handle keys. Without a mesh, every service would need its own TLS/auth implementation (the fat-microservice problem).
+**Sources:** <a href="https://istio.io/latest/docs/concepts/what-is-istio/" target="_blank">Istio Docs - What is Istio</a>
+**Tags:** k8s::kcna topic::service-mesh topic::security src::session
+
+---
+
+<!-- note:1794259442611 model:Many -->
+**Domain:** Service Mesh - observability
+**Question:** How does a service mesh provide observability?
+**Options:** A. Only if developers add instrumentation code<br>B. Automatically — the mesh generates golden metrics (request rate, errors, latency), distributed traces, and access logs at every hop without app instrumentation<br>C. Only for external-facing traffic<br>D. Through periodic health-check pings
+**Answer:** B (2) – Automatically — the mesh generates golden metrics (request rate, errors, latency), distributed traces, and access logs at every hop without app instrumentation
+**Explanation:** Because ALL traffic passes through the sidecar proxies, the mesh sees every request/response automatically — it generates the 'golden signals' (request rate, error rate, duration) per service pair, produces distributed traces showing exactly which hop was slow, and emits access logs — WITHOUT requiring apps to add instrumentation code. This telemetry feeds existing backends (Prometheus for metrics, Jaeger/Zipkin for traces, ELK/Loki for logs). The mesh PRODUCES the data; Prometheus/Grafana/Jaeger still STORE and visualize it — mesh ≠ observability backend.
+**Sources:** <a href="https://istio.io/latest/docs/concepts/what-is-istio/" target="_blank">Istio Docs - What is Istio</a>
+**Tags:** k8s::kcna topic::service-mesh topic::observability src::session
+
+---
+
+<!-- note:1794259442612 model:Many -->
+**Domain:** Service Mesh - sidecar vs ambient
+**Question:** What is the difference between sidecar and ambient (sidecarless) mesh modes?
+**Options:** A. Ambient mode requires a proxy in every pod; sidecar mode uses none<br>B. Sidecarless/ambient mode moves mesh functions to the OS level via eBPF — no per-pod proxy container, less overhead and latency; sidecar mode offers finer per-pod control<br>C. Ambient mode only works without Kubernetes<br>D. Sidecar mode is always faster because proxies are local
+**Answer:** B (2) – Sidecarless/ambient mode moves mesh functions to the OS level via eBPF — no per-pod proxy container, less overhead and latency; sidecar mode offers finer per-pod control
+**Explanation:** Two data-plane modes exist: SIDECAR mode runs an Envoy proxy container in every pod — maximum control and per-service policy, but costs CPU/memory per pod and adds a localhost hop. AMBIENT (sidecarless) mode uses kernel eBPF to redirect traffic at the node level — no proxy containers, dramatically lower resource usage and latency, simpler at scale — but coarser-grained control (L4-focused, per-namespace rather than per-pod policies). Istio supports both; Linkerd is primarily sidecar. Trade-off: control granularity vs efficiency.
+**Sources:** <a href="https://glossary.cncf.io/service-mesh/" target="_blank">CNCF Glossary - Service Mesh</a><br><a href="https://istio.io/latest/docs/overview/dataplane-modes/" target="_blank">Istio Docs - Data Plane Modes</a>
+**Tags:** k8s::kcna topic::service-mesh topic::architecture src::session
+
+---
+
+<!-- note:1794259446783 model:Basic -->
+**Front:** What is the difference between a service mesh and an Ingress controller — which traffic does each handle?
+**Back:** Service mesh handles EAST-WEST traffic — pod-to-pod, service-to-service INSIDE the cluster (mTLS between services, retries, telemetry per hop). Ingress/Gateway API handles NORTH-SOUTH traffic — external client → cluster entry point (TLS termination, host/path routing to Services). They are complementary layers, not competitors: external request hits Ingress → routed to a Service → pod-to-pod hops inside are handled by the mesh. Rule of thumb: Ingress = the front door; mesh = the building's interior hallways.
+**Tags:** k8s::kcna topic::service-mesh topic::ingress src::session
+
+---

@@ -706,3 +706,14 @@
 **Tags:** k8s::kcna topic::istio topic::service-mesh topic::cli src::session
 
 ---
+
+<!-- note:1794261506156 model:Many -->
+**Domain:** Service Mesh - control plane role
+**Question:** In a service mesh architecture, what is the role of the control plane?
+**Options:** A. It manages all the traffic into and out of services via proxies.<br>B. It encrypts data between microservices for security.<br>C. It is responsible for load balancing and scaling services.<br>D. It handles the communication between services without code changes.
+**Answer:** A (1) – It manages all the traffic into and out of services via proxies
+**Explanation:** The control plane's job is to MANAGE AND CONFIGURE the data-plane proxies — it pushes routing rules, security policies, and certificates (via xDS/SDS in Istio) so the proxies know how to handle traffic. 'Via proxies' is the key: the control plane never moves packets itself. B is wrong — encryption is performed BY the proxies (mTLS termination/origination in Envoy); the control plane only manages the certificates and policies. C is wrong — load balancing happens inside the Envoy data plane, and scaling is Kubernetes' job (HPA/deployments), not the mesh's. D describes the service mesh as a whole, not the control plane specifically.
+**Sources:** <a href="https://istio.io/latest/docs/ops/deployment/architecture/" target="_blank">Istio Docs - Architecture</a>
+**Tags:** k8s::kcna topic::service-mesh topic::architecture src::session
+
+---

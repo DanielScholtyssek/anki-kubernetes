@@ -3732,3 +3732,76 @@
 **Tags:** k8s::kcna topic::docker topic::storage topic::volumes src::session
 
 ---
+
+<!-- note:1794263701180 model:Many -->
+**Domain:** Docker Storage - drivers vs plugins
+**Question:** What is the difference between a Docker storage driver and a volume driver?
+**Options:** A. They are two names for the same plugin system<br>B. Storage drivers manage the layered image filesystem (CoW); volume drivers manage named-volume lifecycle and where volume data actually lives<br>C. Volume drivers are just faster versions of storage drivers<br>D. Storage drivers were replaced by volume drivers in modern Docker
+**Answer:** B (2) – Storage drivers manage the layered image filesystem (CoW); volume drivers manage named-volume lifecycle and where volume data actually lives
+**Explanation:** Two different plugin systems, easy to confuse: STORAGE DRIVERS (overlay2, aufs, zfs…) implement the layered read-only-image + writable-container-layer filesystem — they know nothing about volumes. VOLUME DRIVERS/plugins handle the lifecycle of NAMED volumes (create/mount/unmount/remove) and decide WHERE the bytes live — local disk by default, or remote/cloud storage via plugins. Rule: storage driver = image/container filesystem machinery; volume driver = the -v volume backend.
+**Sources:** <a href="https://docs.docker.com/engine/extend/plugins_volume/" target="_blank">Docker Docs - Volume plugins</a>
+**Tags:** k8s::kcna topic::docker topic::storage src::session
+
+---
+
+<!-- note:1794263701181 model:Many -->
+**Domain:** Docker Storage - local driver
+**Question:** What does the 'local' volume driver do?
+**Options:** A. local is a plugin you must install separately<br>B. The 'local' driver is the default — stores volume data under /var/lib/docker/volumes on the host<br>C. local stores volumes inside the container image layers<br>D. local only works for bind mounts, not named volumes
+**Answer:** B (2) – The 'local' driver is the default — stores volume data under /var/lib/docker/volumes on the host
+**Explanation:** The 'local' volume driver is built in and is the DEFAULT for every docker volume create — it stores data on the host filesystem under /var/lib/docker/volumes/<name>/_data. If you never pass --driver, you get 'local'. It's the volume-side equivalent of overlay2 for layers: zero-config, host-disk-backed, dies with the host. Other drivers must be installed as plugins first (docker plugin install) before --driver can use them.
+**Sources:** <a href="https://docs.docker.com/engine/storage/volumes/" target="_blank">Docker Docs - Volumes</a>
+**Tags:** k8s::kcna topic::docker topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794263701182 model:Many -->
+**Domain:** Docker Storage - volume plugins
+**Question:** Which of these are Docker VOLUME driver plugins? (Select all that apply)
+**Options:** A. amazon-ebs — creates AWS EBS volumes for containers<br>B. azurefile — mounts Azure Files SMB shares<br>C. overlay2 — provides copy-on-write image layers<br>D. flocker — manages volumes across a cluster of hosts
+**Answer:** A, B, D – amazon-ebs (AWS block storage), azurefile (Azure Files SMB), and flocker (cluster volume management); overlay2 and aufs are STORAGE drivers, not volume drivers
+**Explanation:** Volume plugins put named volumes on EXTERNAL storage: amazon-ebs → AWS EBS volumes, azurefile → Azure Files (SMB), google-persistent-disk → GCP PD, flocker → cluster-aware volume placement, rexray → multi-cloud, longhorn/portworx → Kubernetes-native distributed storage. The distractors are the trap: overlay2 and aufs are STORAGE drivers — they manage image layers, not volumes. Telling the two plugin families apart is exactly what this lesson is about.
+**Sources:** <a href="https://docs.docker.com/engine/extend/plugins_volume/" target="_blank">Docker Docs - Volume plugins</a>
+**Tags:** k8s::kcna topic::docker topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794263701183 model:Many -->
+**Domain:** Docker Storage - plugin usage
+**Question:** How do you create and use a volume backed by a third-party plugin like amazon-ebs?
+**Options:** A. docker run --driver=amazon-ebs -v /data<br>B. docker volume create --driver=<plugin> <name>, then mount normally with -v <name>:<path> — the driver is chosen at volume-creation time<br>C. Volume plugins replace docker run entirely<br>D. You edit /etc/docker/daemon.json to switch drivers per container
+**Answer:** B (2) – docker volume create --driver=<plugin> <name>, then mount normally with -v <name>:<path> — the driver is chosen at volume-creation time
+**Explanation:** Using a volume plugin is two steps: (1) install the plugin (docker plugin install <name> or it ships configured), (2) create the volume WITH the driver: <code>docker volume create --driver=amazon-ebs --opt size=10 gb_vol</code> — driver-specific options go in --opt. Then use it like any volume: <code>docker run -v gb_vol:/data app</code>. The --volume-driver flag on docker run sets a default driver for anonymous volumes; --mount type=volume,volume-driver=X selects per-volume. The driver choice sticks to the volume — it was decided at create time.
+**Sources:** <a href="https://docs.docker.com/engine/extend/plugins_volume/" target="_blank">Docker Docs - Volume plugins</a>
+**Tags:** k8s::kcna topic::docker topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794263701184 model:Many -->
+**Domain:** Docker Storage - plugin lifecycle
+**Question:** How does a Docker volume plugin actually deliver storage to a container?
+**Options:** A. The plugin copies volume data into the container's writable layer<br>B. The plugin API (Create/Mount/Unmount/Remove/Get/List/Path) lets external systems manage volume lifecycle; daemon bind-mounts the returned path into the container<br>C. Plugins run inside the container and manage its filesystem directly<br>D. The daemon proxies all volume I/O through the plugin on every read/write
+**Answer:** B (2) – The plugin API (Create/Mount/Unmount/Remove/Get/List/Path) lets external systems manage volume lifecycle; daemon bind-mounts the returned path into the container
+**Explanation:** A volume plugin implements the VolumeDriver API over HTTP-ish endpoints: Create (register name), Mount (called per container start — returns a host path where data lives), Unmount (per stop), Remove (on docker rm -v / volume rm), plus Get/List/Path/Capabilities. KEY: the plugin doesn't stream data to the container — it returns a MOUNTPOINT path, and the Docker daemon bind-mounts that path into the container. Capabilities.Scope matters for clusters: 'global' = create once for the whole cluster; 'local' = per-host. This plugin indirection is the ancestor of Kubernetes CSI drivers.
+**Sources:** <a href="https://docs.docker.com/engine/extend/plugins_volume/" target="_blank">Docker Docs - Volume plugins</a>
+**Tags:** k8s::kcna topic::docker topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794263701185 model:Many -->
+**Domain:** Docker Storage - CSI bridge
+**Question:** How do Docker volume plugins relate to Kubernetes CSI drivers?
+**Options:** A. CSI replaced Docker volumes entirely — they are unrelated systems<br>B. Volume plugins are Docker's version of the same idea — decouple the volume API from where bytes physically live (local disk vs EBS/Azure Files/PD)<br>C. CSI is a Docker storage driver for image layers<br>D. Kubernetes cannot use cloud storage — only local disk
+**Answer:** B (2) – Volume plugins are Docker's version of the same idea — decouple the volume API from where bytes physically live (local disk vs EBS/Azure Files/PD)
+**Explanation:** Docker volume plugins and Kubernetes CSI (Container Storage Interface) solve the same architectural problem: the orchestrator asks for 'a volume', a pluggable driver decides WHERE it lives. Docker: volume drivers (local, amazon-ebs, azurefile, flocker…) behind docker volume create/-v. Kubernetes: CSI drivers (ebs.csi.aws.com, efs.csi.aws.com, pd.csi.storage.gke.io…) behind PersistentVolumes/StorageClasses. Same mental model — when you meet PV/PVC/StorageClass in the K8s storage lesson, read them as 'Kubernetes' version of docker volume + volume driver.
+**Sources:** <a href="https://kubernetes-csi.github.io/docs/" target="_blank">Kubernetes CSI Docs</a>
+**Tags:** k8s::kcna topic::docker topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794263704051 model:Cloze -->
+**Text:** Create a volume on third-party storage via a volume plugin, then mount it:<br><br>{{c1::<code>docker volume create --driver=amazon-ebs --opt size=10 gb_vol</code>}}<br>{{c2::<code>docker run -v gb_vol:/data myapp</code>}}<br><br>Default local volume (no plugin):<br>{{c3::<code>docker volume create data_volume</code>}} → stored under {{c4::<code>/var/lib/docker/volumes</code>}}
+**Back Extra:** Driver is chosen at CREATE time and sticks to the volume. --driver=<name> picks the plugin; --opt passes driver-specific settings (size, iops, type). Default (no --driver) = local → /var/lib/docker/volumes. Check installed drivers: docker info | grep -i volume or docker plugin ls.
+**Tags:** k8s::kcna topic::docker topic::storage topic::volumes src::session
+
+---

@@ -309,3 +309,83 @@
 **Tags:** k8s::kcna topic::networking topic::dns src::session
 
 ---
+
+<!-- note:1794258268157 model:Many -->
+**Domain:** Monoliths vs Microservices - monolith definition
+**Question:** What characterizes a monolithic application architecture?
+**Options:** A. Functionality split into small independently deployable services<br>B. All application functionality in a single deployable unit with a shared codebase, typically no clear module boundaries and often one shared database<br>C. Each team owns a separate service with its own datastore<br>D. Event-driven functions executed on demand without servers
+**Answer:** B (2) – All application functionality in a single deployable unit with a shared codebase, typically no clear module boundaries and often one shared database
+**Explanation:** Monolith = ALL functionality in ONE deployable program — one codebase, one deployment artifact, typically one shared database. Modules may exist in the code but cannot run or scale independently, and boundaries blur over time ('big ball of mud'). NOT the same as 'bad code' — a monolith can be well-structured; what defines it is that components can't deploy/scale independently. It's the simplest place to start; it becomes a problem at scale.
+**Sources:** <a href="https://glossary.cncf.io/monolithic-apps/" target="_blank">CNCF Glossary - Monolithic Apps</a>
+**Tags:** k8s::kcna topic::microservices topic::architecture src::session
+
+---
+
+<!-- note:1794258268158 model:Many -->
+**Domain:** Monoliths vs Microservices - monolith problems
+**Question:** Which are characteristic problems of monolithic architectures? (Select all that apply)
+**Options:** A. Every change requires redeploying the entire application — no partial releases<br>B. A bug in one module can break unrelated functionality (large blast radius)<br>C. Scaling one busy feature means scaling the whole app<br>D. Modules develop tight version dependencies on each other<br>E. Independent per-service scaling and polyglot languages
+**Answer:** A, B, C, D – all-or-nothing deploys; blast radius; whole-app scaling; module version coupling
+**Explanation:** The monolith trap: (A) all-or-nothing deploys — any change ships the whole app, slowing releases and raising risk; (B) shared runtime + shared DB means one bug/schema change hits everything; (C) a signup spike forces scaling the ENTIRE app including idle components — wasted resources (the CNCF Netflix example); (D) modules accrete version couplings ('works only with lib v2.3') — calcifying into 'big ball of mud'. E is a MICROservices benefit, not a monolith problem.
+**Sources:** <a href="https://glossary.cncf.io/monolithic-apps/" target="_blank">CNCF Glossary - Monolithic Apps</a>
+**Tags:** k8s::kcna topic::microservices topic::architecture src::session
+
+---
+
+<!-- note:1794258268159 model:Many -->
+**Domain:** Monoliths vs Microservices - microservices definition
+**Question:** What is a microservices architecture?
+**Options:** A. An app split into small independent services, each focused on one functionality, independently deployable and scalable, appearing as one system to the user<br>B. A single binary containing all app functionality<br>C. A networking pattern for container pods<br>D. A CI/CD pipeline stage
+**Answer:** A (1) – An app split into small independent services, each focused on one functionality, independently deployable and scalable, appearing as one system to the user
+**Explanation:** Microservices = app decomposed into a collection of loosely coupled services — each owns its concern, runs in its own process, deploys and scales independently, and communicates over the network (APIs/events). To the end user it's still ONE application (Netflix: auth, search, and preview streaming are separate services behind one UI). 'Micro' refers to bounded scope, not literal size — a service can be large if its domain is.
+**Sources:** <a href="https://glossary.cncf.io/microservices-architecture/" target="_blank">CNCF Glossary - Microservices Architecture</a>
+**Tags:** k8s::kcna topic::microservices topic::architecture src::session
+
+---
+
+<!-- note:1794258268160 model:Many -->
+**Domain:** Monoliths vs Microservices - benefits
+**Question:** Which benefits does a microservices architecture provide over a monolith? (Select all that apply)
+**Options:** A. Independent deployments — small frequent releases per service<br>B. Independent scaling — scale only the busy service<br>C. Fault isolation — one service failing doesn't take down the whole app<br>D. Team autonomy — squads own services end-to-end, parallel work<br>E. Polyglot freedom — each service can use the best language/runtime<br>F. Simpler operations — fewer moving parts to run
+**Answer:** A, B, C, D, E – independent releases, independent scaling, fault isolation, team autonomy, polyglot freedom
+**Explanation:** The wins: (A) ship changes to one service without redeploying others — faster, safer releases; (B) scale only what's hot; (C) blast radius shrinks to one service; (D) Conway-aligned teams own their service fully and work in parallel; (E) right language/runtime per service. F is FALSE — the trade-off is the opposite: operational overhead grows by orders of magnitude (more services to deploy, monitor, debug, secure). That overhead is exactly what orchestrators like Kubernetes exist to absorb.
+**Sources:** <a href="https://glossary.cncf.io/microservices-architecture/" target="_blank">CNCF Glossary - Microservices Architecture</a>
+**Tags:** k8s::kcna topic::microservices topic::architecture src::session
+
+---
+
+<!-- note:1794258268161 model:Many -->
+**Domain:** Monoliths vs Microservices - caveats
+**Question:** What does adopting microservices require BEYOND rewriting code?
+**Options:** A. Only a new deployment pipeline<br>B. Organizational/cultural change — teams restructured to own services end-to-end, plus orchestration to manage the operational overhead<br>C. A bigger monolith database<br>D. Nothing — it's purely a technical refactor
+**Answer:** B (2) – Organizational/cultural change — teams restructured to own services end-to-end, plus orchestration to manage the operational overhead
+**Explanation:** Microservices is as much an ORG design as an architecture: Conway's law — you get the system your org structure produces. Teams must own services end-to-end (build/run/scale/monitor). And the CNCF glossary's warning: microservices multiply the things you must deploy, test, and keep running 'by order of magnitude' — that's WHY Kubernetes/container orchestration exists: it makes the distributed system manageable. Premature microservices on an unproven product = wasted engineering effort.
+**Sources:** <a href="https://glossary.cncf.io/microservices-architecture/" target="_blank">CNCF Glossary - Microservices Architecture</a>
+**Tags:** k8s::kcna topic::microservices topic::architecture src::session
+
+---
+
+<!-- note:1794258268162 model:Many -->
+**Domain:** Monoliths vs Microservices - when monolith fits
+**Question:** When is a monolithic architecture a reasonable — even preferred — choice?
+**Options:** A. Never — microservices are always better<br>B. Early in a product's lifecycle or for small teams, when the product's value isn't proven — simplest path to market, decompose later<br>C. When you need independent scaling of every feature<br>D. When services must communicate over the network
+**Answer:** B (2) – Early in a product's lifecycle or for small teams, when the product's value isn't proven — simplest path to market, decompose later
+**Explanation:** CNCF's nuance: a well-designed monolith is the SIMPLEST way to get an app running — early on, the operational overhead of microservices (more deployables, distributed debugging, network calls) may not pay off. If the product fails, microservice effort was wasted; if it succeeds, decompose then. Monolith does NOT mean bad code — it becomes a problem only when growth makes independent deployment/scaling necessary. 'Microservices always win' is the trap answer.
+**Sources:** <a href="https://glossary.cncf.io/monolithic-apps/" target="_blank">CNCF Glossary - Monolithic Apps</a>
+**Tags:** k8s::kcna topic::microservices topic::architecture src::session
+
+---
+
+<!-- note:1794258271292 model:Basic -->
+**Front:** What does the term 'big ball of mud' describe?
+**Back:** A software system — typically a monolith — that has decayed into an unstructured mass: modules without clear boundaries, pervasive tight coupling, and changes that unpredictably break unrelated parts. Coined by Foote & Yoder (1997). Monoliths drift toward this as shared code + shared DB + accreted dependencies erase module boundaries — the architectural reason microservices enforce hard service boundaries instead.
+**Tags:** k8s::kcna topic::microservices topic::architecture src::session
+
+---
+
+<!-- note:1794258271293 model:Basic -->
+**Front:** How should data stores be handled in a microservices architecture, and why does it matter?
+**Back:** Each service should OWN its data — its own database/schema that no other service touches directly (database-per-service). Sharing one database between services recreates the monolith's coupling: schema changes ripple across teams, services can't evolve independently, and you can't scale or replace a service's storage alone. Services exchange data through APIs/events, not shared tables. The cost: data consistency moves from ACID transactions to eventual consistency + sagas — a real trade-off, not free.
+**Tags:** k8s::kcna topic::microservices topic::architecture src::session
+
+---

@@ -685,3 +685,14 @@
 **Tags:** k8s::kcna topic::envoy topic::networking src::session
 
 ---
+
+<!-- note:1794261693457 model:Many -->
+**Domain:** Proxy - service architecture
+**Question:** Which of the following is true about a proxy service in an application architecture?
+**Options:** A. It is an additional functionality that is not necessary for an application.<br>B. It manages user authentication and retries failed requests.<br>C. It ensures secure connections through TLS encryption.<br>D. It is responsible for executing the core business logic of the application.
+**Answer:** B, C – It manages user authentication and retries failed requests; it ensures secure connections through TLS encryption
+**Explanation:** A proxy sits in the request path and provides cross-cutting functions the endpoints don't have to implement — BOTH listed options are real proxy jobs: B (authentication/authorization enforcement, retrying failed upstream requests) and C (TLS termination/origination so connections are encrypted). A is wrong framing — proxy functions ARE necessary infrastructure; in a service mesh removing the proxy breaks mTLS and traffic policy. D is flat wrong — core business logic belongs to the application; keeping it out of the proxy is the entire point of the pattern. Envoy in a mesh does all of: TLS, auth, retries, load balancing, circuit breaking.
+**Sources:** <a href="https://www.envoyproxy.io/docs/envoy/latest/intro/what_is_envoy" target="_blank">Envoy Docs - What is Envoy</a>
+**Tags:** k8s::kcna topic::proxy topic::networking src::session
+
+---

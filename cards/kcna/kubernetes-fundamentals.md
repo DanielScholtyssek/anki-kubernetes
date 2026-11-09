@@ -3805,3 +3805,87 @@
 **Tags:** k8s::kcna topic::docker topic::storage topic::volumes src::session
 
 ---
+
+<!-- note:1794266469476 model:Many -->
+**Domain:** CSI - overview
+**Question:** Why was the Container Storage Interface (CSI) created?
+**Options:** A. CSI makes container images smaller and faster to pull<br>B. Same pluggable-interface pattern as CRI (runtimes) and CNI (networks): decouple the orchestrator from vendor-specific implementations<br>C. CSI is Kubernetes' built-in local disk manager<br>D. CSI replaced PersistentVolumes and StorageClasses
+**Answer:** B (2) – Same pluggable-interface pattern as CRI (runtimes) and CNI (networks): decouple the orchestrator from vendor-specific implementations
+**Explanation:** Cloud-native converged on pluggable interfaces: CRI lets any container runtime plug into the kubelet; CNI lets any network plugin plug into pod networking; CSI does the same for STORAGE — any storage vendor writes one CSI plugin and every orchestrator can use it, no core-code changes. Before CSI, storage integrations were bespoke per-vendor code inside each orchestrator — adding EBS vs Azure Disk vs Ceph meant orchestrator-specific work every time. CSI standardizes the API so storage became a plugin like runtimes and networks already were.
+**Sources:** <a href="https://kubernetes-csi.github.io/docs/" target="_blank">Kubernetes CSI Docs</a>
+**Tags:** k8s::kcna topic::storage topic::csi src::session
+
+---
+
+<!-- note:1794266469477 model:Many -->
+**Domain:** CSI - universality
+**Question:** Is CSI specific to Kubernetes?
+**Options:** A. CSI is a Kubernetes-only API like PersistentVolume<br>B. CSI is a vendor-neutral industry spec (CNCF) — any container orchestration system can consume any vendor's CSI plugin<br>C. CSI only works with AWS EBS storage<br>D. CSI is a Docker volume driver renamed
+**Answer:** B (2) – CSI is a vendor-neutral industry spec (CNCF) — any container orchestration system can consume any vendor's CSI plugin
+**Explanation:** CSI is NOT a Kubernetes API or K8s-specific standard — it's an open spec maintained by the container-storage-interface project (CNCF ecosystem). The same plugin works with Kubernetes, Mesos, Cloud Foundry, or any CO that implements the CSI client side. Vendor neutrality cuts both ways: storage vendors implement the spec once and reach every orchestrator; orchestrators implement the client once and reach every storage backend. Kubernetes merely adopted CSI as its standard storage plugin mechanism (GA since v1.13, in-tree plugins removed in 1.20+).
+**Sources:** <a href="https://github.com/container-storage-interface/spec" target="_blank">CSI Spec</a>
+**Tags:** k8s::kcna topic::storage topic::csi src::session
+
+---
+
+<!-- note:1794266469478 model:Many -->
+**Domain:** CSI - services
+**Question:** What are the three CSI services a storage plugin can implement? (Select all that apply)
+**Options:** A. Identity — plugin info and capabilities<br>B. Controller — cluster-level ops: create/delete volumes, attach/detach, expand<br>C. Scheduler — decides which node a volume lands on<br>D. Node — per-node ops: stage, publish into pod, unpublish, stats
+**Answer:** A, B, D – Identity (plugin info/capabilities), Controller (cluster-level create/delete/attach/expand), and Node (per-node stage/publish/unpublish/stats); E is wrong — CSI has no 'Scheduler' service
+**Explanation:** The CSI spec defines three gRPC services a plugin may implement: IDENTITY — GetPluginInfo/GetPluginCapabilities/Probe: 'who are you, what can you do'; CONTROLLER — cluster-scoped ops usually run once: CreateVolume, DeleteVolume, ControllerPublishVolume (attach to node), ControllerUnpublishVolume, ControllerExpandVolume; NODE — per-node ops run on every node that mounts the volume: NodeStageVolume (format + global mount), NodePublishVolume (bind into pod path), NodeUnpublish/Unstage, NodeGetVolumeStats. A driver can implement all three or only node (for pre-provisioned local volumes).
+**Sources:** <a href="https://github.com/container-storage-interface/spec/blob/master/spec.md" target="_blank">CSI Spec</a>
+**Tags:** k8s::kcna topic::storage topic::csi src::session
+
+---
+
+<!-- note:1794266469479 model:Many -->
+**Domain:** CSI - RPCs
+**Question:** Which of these are actual CSI RPCs called by the orchestrator? (Select all that apply)
+**Options:** A. CreateVolume — provision a new volume<br>B. RunPodSandbox — start a pod's isolation environment<br>C. ControllerPublishVolume — attach a volume to a node<br>D. NodeStageVolume — format and globally mount the volume on a node
+**Answer:** A, C, D – CreateVolume, ControllerPublishVolume, and NodeStageVolume are all CSI RPCs; RunPodSandbox is a CRI call, not CSI
+**Explanation:** CSI RPCs the orchestrator calls: CONTROLLER side — CreateVolume, DeleteVolume, ControllerPublishVolume (attach volume to node), ControllerUnpublishVolume, ControllerExpandVolume, ValidateVolumeCapabilities; NODE side — NodeStageVolume, NodeUnstageVolume, NodePublishVolume, NodeUnpublishVolume, NodeGetVolumeStats, NodeExpandVolume; IDENTITY — GetPluginInfo, GetPluginCapabilities, Probe. Distractors test interface confusion: RunPodSandbox/CreateContainer are CRI (runtime) calls; ADD/DEL are CNI (network) calls. Each interface has its own RPC vocabulary — mixing them is the classic exam trap.
+**Sources:** <a href="https://github.com/container-storage-interface/spec/blob/master/spec.md" target="_blank">CSI Spec</a>
+**Tags:** k8s::kcna topic::storage topic::csi src::session
+
+---
+
+<!-- note:1794266469480 model:Many -->
+**Domain:** CSI - callers
+**Question:** Who calls the CSI RPCs like CreateVolume or NodePublishVolume?
+**Options:** A. The application container calls CSI RPCs to get storage<br>B. The orchestrator/CO side calls them — kubelet invokes node RPCs via Unix socket; master-side sidecars watch the K8s API and trigger controller RPCs<br>C. etcd calls CSI RPCs to persist volume metadata<br>D. CSI drivers call kubelet RPCs to request mounts
+**Answer:** B (2) – The orchestrator/CO side calls them — kubelet invokes node RPCs via Unix socket; master-side sidecars watch the K8s API and trigger controller RPCs
+**Explanation:** CSI RPCs are called BY the container orchestrator, never by the application (apps just see a mounted filesystem). In Kubernetes specifically: KUBELET calls NODE-service RPCs (NodeStageVolume/NodePublishVolume) directly over a Unix Domain Socket — it discovers drivers via kubelet plugin registration. Master components NEVER talk to the driver directly — they only see the K8s API; instead sidecar containers in the driver pod (external-provisioner watches PVCs→CreateVolume, external-attacher→ControllerPublishVolume, external-resizer→expand, node-driver-registrar) translate API events into CSI calls. This keeps drivers CO-agnostic.
+**Sources:** <a href="https://kubernetes-csi.github.io/docs/" target="_blank">Kubernetes CSI Docs</a>
+**Tags:** k8s::kcna topic::storage topic::csi src::session
+
+---
+
+<!-- note:1794266469481 model:Many -->
+**Domain:** CSI - Kubernetes wiring
+**Question:** How does a CSI driver plug into Kubernetes?
+**Options:** A. CSI drivers are compiled into the kubelet binary<br>B. A CSI plugin pod (controller + node DaemonSet) registered via CSIDriver/CSINode objects; StorageClass.provisioner names the driver; PVC binding triggers provisioning<br>C. CSI volumes bypass PVs and PVCs entirely<br>D. You install CSI drivers by patching kubelet flags on each node
+**Answer:** B (2) – A CSI plugin pod (controller + node DaemonSet) registered via CSIDriver/CSINode objects; StorageClass.provisioner names the driver; PVC binding triggers provisioning
+**Explanation:** How K8s consumes CSI: the driver deploys as pods — a controller plugin (Deployment, for cluster ops) + node plugin (DaemonSet, one per node) + sidecars (external-provisioner/-attacher/-resizer, node-driver-registrar). It registers via CSIDriver and CSINode API objects. The StorageClass's provisioner field holds the driver name (e.g. ebs.csi.aws.com); a PVC referencing that StorageClass triggers external-provisioner → CreateVolume → PV/PVC binding. GA since Kubernetes v1.13; in-tree volume plugins were fully removed by v1.20 — CSI is THE storage mechanism now.
+**Sources:** <a href="https://kubernetes-csi.github.io/docs/" target="_blank">Kubernetes CSI Docs</a>
+**Tags:** k8s::kcna topic::storage topic::csi src::session
+
+---
+
+<!-- note:1794266469482 model:Many -->
+**Domain:** CSI - stage vs publish
+**Question:** What is the difference between NodeStageVolume and NodePublishVolume?
+**Options:** A. Stage mounts into the pod; Publish prepares the node globally<br>B. NodeStageVolume does the node-wide prep (format, mount to a staging path — once per node); NodePublishVolume bind-mounts the staged volume into each pod's specific path<br>C. Stage and Publish are aliases for the same RPC<br>D. Publish happens on the controller, Stage on the node
+**Answer:** B (2) – NodeStageVolume does the node-wide prep (format, mount to a staging path — once per node); NodePublishVolume bind-mounts the staged volume into each pod's specific path
+**Explanation:** The node-side mount is deliberately two-phase: STAGE = global per-node operation — NodeStageVolume formats the device if needed and mounts it at a staging/global path (e.g. /var/lib/kubelet/plugins/kubernetes.io/csi/pv-xxx/globalmount); happens ONCE per node per volume regardless of pod count. PUBLISH = per-pod operation — NodePublishVolume bind-mounts (or mounts) the staged volume at the pod's target path (e.g. /var/lib/kubelet/pods/<uid>/volumes/kubernetes.io~csi/pv-xxx/mount). Unpublish/Unstage reverse it on teardown. This split lets one staged volume serve multiple pods and keeps pod-specific paths clean.
+**Sources:** <a href="https://github.com/container-storage-interface/spec/blob/master/spec.md" target="_blank">CSI Spec</a>
+**Tags:** k8s::kcna topic::storage topic::csi src::session
+
+---
+
+<!-- note:1794266473278 model:Cloze -->
+**Text:** Key CSI RPCs the orchestrator calls:<br><br>CONTROLLER service (cluster-scoped):<br>{{c1::<code>CreateVolume</code>}} → {{c2::<code>DeleteVolume</code>}} → {{c3::<code>ControllerPublishVolume</code>}} (attach to node) → {{c4::<code>ControllerUnpublishVolume</code>}} → {{c5::<code>ControllerExpandVolume</code>}}<br><br>NODE service (per-node, kubelet → Unix socket):<br>{{c6::<code>NodeStageVolume</code>}} (format + global mount) → {{c7::<code>NodePublishVolume</code>}} (bind into pod path)
+**Back Extra:** CONTROLLER (cluster ops, once): CreateVolume, DeleteVolume, ControllerPublishVolume (attach), ControllerUnpublishVolume (detach), ControllerExpandVolume. NODE (per-node, via kubelet/UDS): NodeStageVolume (format+global mount), NodePublishVolume (bind into pod path), NodeUnpublishVolume, NodeUnstageVolume, NodeGetVolumeStats. IDENTITY: GetPluginInfo, GetPluginCapabilities, Probe. Mnemonic: Controller* = once per volume cluster-wide; Node* = on every node that mounts it.
+**Tags:** k8s::kcna topic::storage topic::csi src::session
+
+---

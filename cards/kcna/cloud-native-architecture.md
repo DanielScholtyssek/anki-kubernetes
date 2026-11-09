@@ -389,3 +389,83 @@
 **Tags:** k8s::kcna topic::microservices topic::architecture src::session
 
 ---
+
+<!-- note:1794258702718 model:Many -->
+**Domain:** Microservices - cross-cutting concerns
+**Question:** What are 'cross-cutting concerns' in a microservices architecture?
+**Options:** A. Features unique to each service's business logic<br>B. Concerns that span ALL services regardless of function — authentication, networking, logging, monitoring, tracing, TLS, retries — that every service must handle<br>C. Database schema shared across services<br>D. CI/CD pipeline stages
+**Answer:** B (2) – Concerns that span ALL services regardless of function — authentication, networking, logging, monitoring, tracing, TLS, retries — that every service must handle
+**Explanation:** Cross-cutting = orthogonal to business logic: authN/authZ, mTLS, logging, metrics, tracing, rate limiting, retries, service discovery. In a MONOLITH these live ONCE in shared libraries/middleware — write once, every module gets them. In MICROservices each service must implement them separately → duplication, drift, inconsistent behavior → the 'fat microservice' trap. This is THE structural cost of distribution.
+**Sources:** <a href="https://glossary.cncf.io/microservices-architecture/" target="_blank">CNCF Glossary - Microservices Architecture</a>
+**Tags:** k8s::kcna topic::microservices topic::architecture src::session
+
+---
+
+<!-- note:1794258702719 model:Many -->
+**Domain:** Microservices - cross-cutting examples
+**Question:** Which are typical cross-cutting concerns every microservice must handle? (Select all that apply)
+**Options:** A. Authentication and authorization of callers<br>B. Encryption/TLS (mTLS) on every hop<br>C. Logging, metrics, and distributed tracing<br>D. The service's core business logic<br>E. Retry and circuit-breaking policies
+**Answer:** A, B, C, E – auth, transport encryption, observability, and resilience policies
+**Explanation:** Cross-cutting = infrastructure concerns EVERY service needs regardless of its job: auth (who may call me), transport security (mTLS per hop), observability (logs/metrics/traces — a request crosses N services so tracing is mandatory), resilience (retries/timeouts/breakers). D is the OPPOSITE — business logic is what makes each service unique; it's the only thing that should differ. Rule of thumb: if EVERY service needs it → cross-cutting; if only ONE service does it → business logic.
+**Sources:** <a href="https://glossary.cncf.io/microservices-architecture/" target="_blank">CNCF Glossary - Microservices Architecture</a>
+**Tags:** k8s::kcna topic::microservices topic::architecture src::session
+
+---
+
+<!-- note:1794258702720 model:Many -->
+**Domain:** Microservices - fat microservice
+**Question:** What is a 'fat microservice'?
+**Options:** A. A service that is too large to fit on one node<br>B. A microservice bloated with duplicated cross-cutting code — auth, logging, retries, TLS — so infrastructure boilerplate outweighs its business logic<br>C. A service consuming too many CPU resources<br>D. A monolith that was split in half
+**Answer:** B (2) – A microservice bloated with duplicated cross-cutting code — auth, logging, retries, TLS — so infrastructure boilerplate outweighs its business logic
+**Explanation:** 'Fat microservice' = the microservice failure mode: every service re-implements the same cross-cutting concerns (auth checks, log shipping, retry logic, mTLS setup) → each carries hundreds of lines of infrastructure boilerplate around a thin slice of business logic. Result: 'micro' in name only — still hard to understand, change, and test; implementations drift apart (one service retries, another doesn't). This is precisely what sidecars/service meshes were invented to fix — move the cross-cutting code OUT of the app into a shared proxy.
+**Sources:** <a href="https://glossary.cncf.io/microservices-architecture/" target="_blank">CNCF Glossary - Microservices Architecture</a>
+**Tags:** k8s::kcna topic::microservices topic::architecture src::session
+
+---
+
+<!-- note:1794258702721 model:Many -->
+**Domain:** Microservices - network reality
+**Question:** Why are calls between microservices fundamentally harder than calls between modules in a monolith?
+**Options:** A. Microservice calls use a different programming language<br>B. In-process function calls become network calls — adding latency, serialization, service discovery, timeouts, retries, and partial-failure modes that don't exist inside one process<br>C. Monolith modules can't communicate at all<br>D. Network calls are always faster
+**Answer:** B (2) – In-process function calls become network calls — adding latency, serialization, service discovery, timeouts, retries, and partial-failure modes that don't exist inside one process
+**Explanation:** Inside a monolith, module A calls module B via a FUNCTION CALL — same process, same memory, fast, and if it fails the whole app fails together (simple!). Across microservices the same call crosses a NETWORK: serialize/deserialize, DNS/service-discovery lookup, TCP+TLS handshake, latency, and NEW failure modes — timeout, connection reset, peer crashed mid-request (partial failure), version skew. Every monolith 'free' behavior becomes an explicit engineering concern: retries, circuit breakers, deadlines, idempotency.
+**Sources:** <a href="https://glossary.cncf.io/microservices-architecture/" target="_blank">CNCF Glossary - Microservices Architecture</a>
+**Tags:** k8s::kcna topic::microservices topic::architecture src::session
+
+---
+
+<!-- note:1794258702722 model:Many -->
+**Domain:** Microservices - security boundaries
+**Question:** How does security differ between monolith-internal calls and microservice-to-microservice calls?
+**Options:** A. No difference — both are trusted equally<br>B. Monolith modules implicitly trust each other (same process); microservice calls cross trust boundaries — every hop needs authentication AND encryption (mTLS), ideally zero-trust<br>C. Microservices are more secure because they're smaller<br>D. Only the entry-point service needs security
+**Answer:** B (2) – Monolith modules implicitly trust each other (same process); microservice calls cross trust boundaries — every hop needs authentication AND encryption (mTLS), ideally zero-trust
+**Explanation:** Monolith: modules share a process — internal calls are implicitly trusted, no auth needed between them, security enforced once at the edge. Microservices: every service-to-service call crosses a NETWORK and a trust boundary — 'inside the cluster' is NOT 'trusted'. Defense in depth means authenticate+encrypt EVERY hop (mTLS — both sides prove identity), authorize per-call, never assume the caller is friendly just because it's another pod. This is why service meshes exist: they automate per-hop mTLS uniformly.
+**Sources:** <a href="https://glossary.cncf.io/microservices-architecture/" target="_blank">CNCF Glossary - Microservices Architecture</a>
+**Tags:** k8s::kcna topic::microservices topic::security src::session
+
+---
+
+<!-- note:1794258702723 model:Many -->
+**Domain:** Microservices - mesh solution
+**Question:** How do sidecar proxies / service meshes address the fat-microservice problem?
+**Options:** A. They make each microservice larger<br>B. They move cross-cutting concerns (mTLS, retries, rate limits, telemetry) OUT of application code into a shared proxy (e.g. Envoy) injected alongside every service — app stays thin, behavior stays uniform<br>C. They merge microservices back into a monolith<br>D. They replace Kubernetes entirely
+**Answer:** B (2) – They move cross-cutting concerns (mTLS, retries, rate limits, telemetry) OUT of application code into a shared proxy (e.g. Envoy) injected alongside every service — app stays thin, behavior stays uniform
+**Explanation:** The sidecar pattern (Envoy/Istio/Linkerd): inject a proxy container next to each app — it intercepts all traffic and applies mTLS, retries, circuit breaking, rate limiting, metrics, and tracing UNIFORMLY, configured centrally via xDS. Apps write ZERO infrastructure code — no more fat microservices, no implementation drift, upgrades roll out proxy-wide without touching app images. This is the architectural answer to the cross-cutting-concern problem — and the entire reason 'service mesh' exists.
+**Sources:** <a href="https://www.envoyproxy.io/docs/envoy/latest/intro/what_is_envoy" target="_blank">Envoy Docs - What is Envoy</a>
+**Tags:** k8s::kcna topic::microservices topic::service-mesh src::session
+
+---
+
+<!-- note:1794258706134 model:Basic -->
+**Front:** What is 'partial failure' and why is it unique to distributed systems like microservices?
+**Back:** Partial failure = some parts of the system fail while others keep running — impossible inside a monolith (one process: it either works or crashes entirely). In microservices a network call can fail in dozens of ways while the caller stays alive: timeout, connection reset, peer crashed mid-request, slow-but-alive dependency. You can't just 'try again' naively — retries can double-load a struggling service, and a caller can't tell 'service down' from 'service slow'. Hence the entire resilience toolkit: timeouts, retries with backoff+jitter, circuit breakers, bulkheads, health checks, fallbacks.
+**Tags:** k8s::kcna topic::microservices topic::resiliency src::session
+
+---
+
+<!-- note:1794258706135 model:Basic -->
+**Front:** Why does observability become dramatically harder in microservices, and what solves it?
+**Back:** A single user request in a monolith produces ONE log stream in one process. In microservices it fans out across N services on N pods on N nodes — logs scatter, and 'which service caused the 3s delay?' is unanswerable without correlation. The fix is DISTRIBUTED TRACING: a trace ID injected at the edge propagates through every hop, each service records SPANS (its slice of the request) — Jaeger/Tempo assemble the full request timeline. Plus centralized log aggregation (Fluent Bit → Loki/ES) carrying the same trace ID in every line, and RED/USE metrics per service. In microservices observability isn't optional — it's the only way to see the system.
+**Tags:** k8s::kcna topic::microservices topic::observability src::session
+
+---

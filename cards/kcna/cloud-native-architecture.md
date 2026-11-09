@@ -553,3 +553,83 @@
 **Tags:** k8s::kcna topic::service-mesh topic::ingress src::session
 
 ---
+
+<!-- note:1794260586107 model:Many -->
+**Domain:** Istio - overview
+**Question:** What is Istio?
+**Options:** A. A Kubernetes add-on for pod autoscaling<br>B. A free, open-source service mesh (CNCF graduated, founded 2016 by Google/IBM/Lyft) that secures, connects, and monitors services using Envoy-based sidecar proxies<br>C. A container runtime for running pods<br>D. A CI/CD pipeline for microservice deployments
+**Answer:** B (2) – A free, open-source service mesh (CNCF graduated, founded 2016 by Google/IBM/Lyft) that secures, connects, and monitors services using Envoy-based sidecar proxies
+**Explanation:** Istio = the most widely used open-source service mesh (Apache 2.0, CNCF graduated project, founded 2016 by Google, IBM and Lyft). It provides zero-trust security (automatic mTLS), traffic management (canary deploys, traffic splits), and observability (metrics/traces/logs) for microservices — WITHOUT application code changes. Architecture: Envoy-based sidecar proxies form the DATA plane in every pod; the istiod control plane configures them. Two modes: sidecar (per-pod proxy) and ambient (eBPF/ztunnel, sidecarless).
+**Sources:** <a href="https://istio.io/latest/docs/concepts/what-is-istio/" target="_blank">Istio Docs - What is Istio</a>
+**Tags:** k8s::kcna topic::istio topic::service-mesh src::session
+
+---
+
+<!-- note:1794260586108 model:Many -->
+**Domain:** Istio - pod components
+**Question:** Which components are injected into a pod when Istio sidecar mode is enabled? (Select all that apply)
+**Options:** A. The application container(s)<br>B. istio-proxy — an Envoy sidecar intercepting all traffic<br>C. istiod — the control plane<br>D. istio-init or CNI rules redirecting traffic into the proxy
+**Answer:** A, B, D – app container(s), istio-proxy (Envoy), and istio-init/CNI traffic redirection
+**Explanation:** Sidecar injection adds to EVERY meshed pod: (A) the app container(s) themselves — untouched; (B) istio-proxy — the Envoy sidecar that intercepts all traffic; (D) an init mechanism — traditionally an istio-init container running iptables rules to redirect pod traffic into Envoy (newer installs use the Istio CNI node agent instead). C is wrong — istiod is NOT in the pod; it runs centralized in istio-system. The pod-level components are app + proxy + init/redirect.
+**Sources:** <a href="https://istio.io/latest/docs/ops/deployment/architecture/" target="_blank">Istio Docs - Architecture</a>
+**Tags:** k8s::kcna topic::istio topic::service-mesh src::session
+
+---
+
+<!-- note:1794260586109 model:Many -->
+**Domain:** Istio - istio-proxy role
+**Question:** What is the role of istio-proxy in an Istio mesh?
+**Options:** A. It configures routing rules for the whole mesh<br>B. istio-proxy (Envoy) mediates ALL inbound/outbound pod traffic — the only Istio component that touches data-plane traffic<br>C. It generates the mTLS certificates for services<br>D. It validates Istio configuration files
+**Answer:** B (2) – istio-proxy (Envoy) mediates ALL inbound/outbound pod traffic — the only Istio component that touches data-plane traffic
+**Explanation:** istio-proxy is Istio's EXTENDED Envoy — a high-performance C++ proxy deployed as a sidecar in every pod. It is the ONLY Istio component that interacts with actual data-plane traffic: it intercepts all inbound and outbound requests and applies L7 features — dynamic service discovery, load balancing, TLS termination/origination, circuit breakers, health checks, %-based traffic splits, fault injection, rich metrics. Because it sits in the traffic path, it can enforce policies and emit telemetry WITHOUT the app knowing.
+**Sources:** <a href="https://istio.io/latest/docs/ops/deployment/architecture/" target="_blank">Istio Docs - Architecture</a>
+**Tags:** k8s::kcna topic::istio topic::service-mesh src::session
+
+---
+
+<!-- note:1794260586110 model:Many -->
+**Domain:** Istio - istio-agent role
+**Question:** What does the istio-agent (pilot-agent) do in a meshed pod?
+**Options:** A. It intercepts and forwards all pod network traffic<br>B. The per-pod agent (pilot-agent) that bootstraps Envoy, proxies xDS configuration from istiod to Envoy, and serves SDS certificates/secrets<br>C. It is the centralized control plane for the mesh<br>D. It validates Kubernetes pod specifications
+**Answer:** B (2) – The per-pod agent (pilot-agent) that bootstraps Envoy, proxies xDS configuration from istiod to Envoy, and serves SDS certificates/secrets
+**Explanation:** The istio-agent (pilot-agent process, PID 1 inside the istio-proxy container) is the pod's control-plane CLIENT: it connects to istiod over mTLS, receives xDS configuration (routes, clusters, listeners) and SDS secrets (workload certs), and serves them to the local Envoy over localhost. It also supervises/restarts Envoy if it crashes, handles DNS capture for mesh services, and translates k8s readiness probes. Separation of concerns: the AGENT talks to the control plane; ENVOY talks to the traffic.
+**Sources:** <a href="https://istio.io/latest/docs/ops/deployment/architecture/" target="_blank">Istio Docs - Architecture</a>
+**Tags:** k8s::kcna topic::istio topic::service-mesh src::session
+
+---
+
+<!-- note:1794260586111 model:Many -->
+**Domain:** Istio - control plane history
+**Question:** What were Istio's original control-plane components before istiod?
+**Options:** A. Pilot, Proxy, and Gateway<br>B. Pilot (service discovery + Envoy config generation), Citadel (certificate authority for mTLS), and Galley (config validation) — merged into the single istiod daemon in Istio 1.5<br>C. Envoy, Linkerd, and Consul<br>D. Citadel, Pilot, and Kubernetes
+**Answer:** B (2) – Pilot (service discovery + Envoy config generation), Citadel (certificate authority for mTLS), and Galley (config validation) — merged into the single istiod daemon in Istio 1.5
+**Explanation:** Early Istio (pre-1.5, 2020) ran THREE control-plane components: PILOT = service discovery + translated routing rules into Envoy config; CITADEL = the Certificate Authority generating mTLS workload certs; GALLEY = validated and distributed configuration. They were merged into ONE daemon, ISTIOD, to simplify deployment and ops — same three jobs, one process. Exam trap: 'istiod' is not a new component, it's the consolidation of Pilot+Citadel+Galley. istiod runs centralized (istio-system namespace), NEVER inside app pods.
+**Sources:** <a href="https://istio.io/latest/docs/ops/deployment/architecture/" target="_blank">Istio Docs - Architecture</a>
+**Tags:** k8s::kcna topic::istio topic::service-mesh src::session
+
+---
+
+<!-- note:1794260586112 model:Many -->
+**Domain:** Istio - component roles
+**Question:** Which Istio component generates the certificates used for mutual TLS between services?
+**Options:** A. istio-proxy<br>B. istiod — it acts as the mesh Certificate Authority, generating the workload certificates used for mTLS<br>C. istio-agent<br>D. Galley
+**Answer:** B (2) – istiod — it acts as the mesh Certificate Authority, generating the workload certificates used for mTLS
+**Explanation:** Component-function map: mTLS workload CERTIFICATES → istiod (the old Citadel function — istiod IS the CA); Envoy-specific routing config → istiod (old Pilot — translates high-level rules into xDS config for proxies); actual traffic forwarding → istio-proxy/Envoy (data plane); config+secret DELIVERY to the local proxy → istio-agent/pilot-agent; config VALIDATION → istiod (old Galley). The classic exam trap: istiod never touches traffic — it only configures the proxies that do.
+**Sources:** <a href="https://istio.io/latest/docs/ops/deployment/architecture/" target="_blank">Istio Docs - Architecture</a>
+**Tags:** k8s::kcna topic::istio topic::service-mesh src::session
+
+---
+
+<!-- note:1794260591453 model:Basic -->
+**Front:** What are istiod's responsibilities in the Istio control plane?
+**Back:** istiod is the single control-plane daemon (merger of Pilot+Citadel+Galley) providing four jobs: (1) SERVICE DISCOVERY — watches Kubernetes services/endpoints and abstracts platform differences into a standard format; (2) CONFIG DISTRIBUTION — converts high-level routing rules into Envoy-specific xDS config and pushes it to every sidecar at runtime; (3) CERTIFICATE MANAGEMENT — acts as the mesh Certificate Authority, generating/rotating workload certs for mTLS; (4) CONFIG VALIDATION — accepts/rejects config before it reaches proxies. It NEVER touches data-plane traffic — it only configures the proxies that do.
+**Tags:** k8s::kcna topic::istio topic::service-mesh src::session
+
+---
+
+<!-- note:1794260591454 model:Basic -->
+**Front:** Why does an Istio pod have both an istio-agent AND an istio-proxy (Envoy) — what does each do?
+**Back:** They split control-plane vs data-plane duties inside the pod: istio-agent (pilot-agent) is the pod's CLIENT to istiod — it fetches xDS config and SDS certificates over mTLS and serves them to the local Envoy on localhost, plus supervises Envoy's lifecycle. istio-proxy IS the Envoy data-plane proxy — it intercepts all pod traffic and enforces the policies/telemetry it receives. Think: agent = the messenger between istiod and the proxy; proxy = the worker actually handling traffic. Envoy could not do the agent's job (it has no control-plane credentials) and the agent cannot proxy traffic.
+**Tags:** k8s::kcna topic::istio topic::service-mesh src::session
+
+---

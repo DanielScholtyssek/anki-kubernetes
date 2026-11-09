@@ -633,3 +633,76 @@
 **Tags:** k8s::kcna topic::istio topic::service-mesh src::session
 
 ---
+
+<!-- note:1794261244253 model:Many -->
+**Domain:** Istio - installation
+**Question:** What is istioctl?
+**Options:** A. A Kubernetes scheduler plugin for Istio pods<br>B. Istio's CLI for installing, managing, and debugging the mesh — wraps Helm charts via the IstioOperator API<br>C. A service mesh data-plane proxy<br>D. A Kubernetes ingress controller
+**Answer:** B (2) – Istio's CLI for installing, managing, and debugging the mesh — wraps Helm charts via the IstioOperator API
+**Explanation:** istioctl is Istio's official command-line tool: it INSTALLS the control plane (istiod + addons), CUSTOMIZES via the IstioOperator API (--set flags or -f IstioOperator CR file), and DIAGNOSES via analyze/describe/proxy-status/check-inject/dashboard. Internally it generates manifests from Helm charts — istioctl install is essentially Helm with validation and sane defaults built in. It is only needed at install/manage time; the running mesh doesn't depend on it.
+**Sources:** <a href="https://istio.io/latest/docs/setup/install/istioctl/" target="_blank">Istio Docs - Install with Istioctl</a>
+**Tags:** k8s::kcna topic::istio topic::service-mesh topic::cli src::session
+
+---
+
+<!-- note:1794261244254 model:Many -->
+**Domain:** Istio - install profiles
+**Question:** How do you install Istio's control plane with istioctl?
+**Options:** A. istioctl install --set profile=prod<br>B. istioctl install --set profile=demo for evaluation features, or plain istioctl install for the production-oriented default profile<br>C. helm install istio/istio --set profile=default<br>D. kubectl apply -f istio-demo.yaml
+**Answer:** B (2) – istioctl install --set profile=demo for evaluation features, or plain istioctl install for the production-oriented default profile
+**Explanation:** istioctl install installs the 'default' configuration profile — a sensible production starting point (istiod, ingress gateway, no debug extras). For evaluation you pick richer profiles: --set profile=demo enables extra features like access logs and the Kiali dashboard. Customization: --set key=value for quick overrides, or -f my-config.yaml with an IstioOperator CR (recommended for production — auditable, versionable). istioctl manifest generate produces the raw YAML for kubectl apply but loses install-time conveniences (no auto-prune, no env detection).
+**Sources:** <a href="https://istio.io/latest/docs/setup/install/istioctl/" target="_blank">Istio Docs - Install with Istioctl</a>
+**Tags:** k8s::kcna topic::istio topic::service-mesh topic::cli src::session
+
+---
+
+<!-- note:1794261244255 model:Many -->
+**Domain:** Istio - sidecar injection
+**Question:** How do you enable Istio sidecar injection for a namespace?
+**Options:** A. kubectl annotate namespace default istio-injection=enabled<br>B. kubectl label namespace <ns> istio-injection=enabled — opt-in per namespace via mutating webhook<br>C. kubectl patch deployment app -p sidecar.istio.io/inject=true<br>D. helm upgrade istio sidecar --inject
+**Answer:** B (2) – kubectl label namespace <ns> istio-injection=enabled — opt-in per namespace via mutating webhook
+**Explanation:** Sidecar injection is OPT-IN per namespace: labeling enables the mutating admission webhook that adds istio-proxy (+istio-init/CNI) to pods AT CREATION TIME. The default-revision label is istio-injection=enabled; revision-based installs use istio.io/rev=<tag> instead (canary upgrades). Per-pod override: annotation sidecar.istio.io/inject: "true"|"false". Diagnose with istioctl analyze (reports unlabeled namespaces), istioctl check-inject (would this pod get a proxy?), and istioctl proxy-status (is the proxy connected to istiod?).
+**Sources:** <a href="https://istio.io/latest/docs/setup/install/istioctl/" target="_blank">Istio Docs - Install with Istioctl</a>
+**Tags:** k8s::kcna topic::istio topic::service-mesh topic::cli src::session
+
+---
+
+<!-- note:1794261244256 model:Many -->
+**Domain:** Istio - injection gotchas
+**Question:** You labeled a namespace istio-injection=enabled but existing pods still have no istio-proxy. Why?
+**Options:** A. The label applies to the namespace but running pods keep their old spec<br>B. Injection only happens at pod CREATION — pods already running in the namespace keep running without a proxy until they are recreated<br>C. Injection requires a cluster reboot to take effect<br>D. Only Deployments get injected, not bare Pods
+**Answer:** B (2) – Injection only happens at pod CREATION — pods already running in the namespace keep running without a proxy until they are recreated
+**Explanation:** The mutating webhook fires when a pod object is CREATED — it cannot retroactively modify running pods. Classic demo trap (exactly what the lecture shows): label the namespace, redeploy/restart the app (kubectl rollout restart or delete pods), THEN the istio-proxy appears. Also: istiod must be healthy and the webhook reachable, or injection silently doesn't happen; pods in kube-system or with inject:"false" annotations stay clean. Verify with kubectl get pod -o yaml | grep istio-proxy or istioctl proxy-status.
+**Sources:** <a href="https://istio.io/latest/docs/setup/install/istioctl/" target="_blank">Istio Docs - Install with Istioctl</a>
+**Tags:** k8s::kcna topic::istio topic::service-mesh topic::troubleshooting src::session
+
+---
+
+<!-- note:1794261244257 model:Many -->
+**Domain:** Istio - revision labels
+**Question:** What does the namespace label istio.io/rev=<tag> do differently from istio-injection=enabled?
+**Options:** A. istio-injection=<version-number><br>B. istio.io/rev=<tag> targets a specific control-plane revision — enables canary upgrades and multiple Istio versions side by side<br>C. istio-revision=enabled on each pod<br>D. revision: stable label on the Deployment
+**Answer:** B (2) – istio.io/rev=<tag> targets a specific control-plane revision — enables canary upgrades and multiple Istio versions side by side
+**Explanation:** Two injection label styles: istio-injection=enabled → default revision only; istio.io/rev=<tag> → injects proxies pointing at that tagged control plane. Revisions let you run CANARY upgrades: install a new istiod revision, label one namespace istio.io/rev=canary to test, then migrate. istioctl tag/untag manage the alias tags; istioctl install --set revision=X creates a named revision. Never mix: a pod gets injected for exactly ONE control plane — the revision its namespace/pod annotation selects.
+**Sources:** <a href="https://istio.io/latest/docs/setup/install/istioctl/" target="_blank">Istio Docs - Install with Istioctl</a>
+**Tags:** k8s::kcna topic::istio topic::service-mesh topic::cli src::session
+
+---
+
+<!-- note:1794261244258 model:Many -->
+**Domain:** Istio - istioctl diagnostics
+**Question:** Which istioctl commands help diagnose mesh/injection problems? (Select all that apply)
+**Options:** A. istioctl analyze — validates configuration, flags namespaces missing injection<br>B. istioctl uninstall — removes the control plane<br>C. istioctl describe — shows a pod's effective proxy configuration<br>D. istioctl check-inject — dry-runs whether a pod would get a sidecar
+**Answer:** A, C, D – istioctl analyze, istioctl describe, and istioctl check-inject; not istioctl uninstall
+**Explanation:** istioctl's diagnostic toolkit: ANALYZE = static config validation — flags namespaces without injection enabled, bad virtual services, mesh config issues; DESCRIBE = shows effective proxy config for a pod (listeners/clusters/routes actually applied); CHECK-INJECT = dry-runs whether a pod spec WOULD get a sidecar injected; PROXY-STATUS = shows each proxy's xDS connection state to istiod (SYNCED/NOT SYNCED); DASHBOARD/KUBE-INJECT = generate config web views. Uninstall removes Istio — not a diagnostic.
+**Sources:** <a href="https://istio.io/latest/docs/setup/install/istioctl/" target="_blank">Istio Docs - Install with Istioctl</a>
+**Tags:** k8s::kcna topic::istio topic::service-mesh topic::cli src::session
+
+---
+
+<!-- note:1794261254665 model:Cloze -->
+**Text:** Enable Istio sidecar injection for a namespace — the label the mutating webhook watches:<br><br><code>kubectl label namespace {{c1::default}} {{c2::istio-injection=enabled}}</code><br><br>Per-pod override annotation: <code>sidecar.istio.io/inject: "{{c3::true}}"</code>
+**Back Extra:** Label (not annotate!) — the mutating webhook keys on labels, annotations are ignored for injection. Only affects pods created AFTER labeling; running pods need recreation. To disable: kubectl label namespace <ns> istio-injection- (trailing dash removes) or istio-injection=disabled. Revision installs use istio.io/rev=<tag> instead of this label.
+**Tags:** k8s::kcna topic::istio topic::service-mesh topic::cli src::session
+
+---

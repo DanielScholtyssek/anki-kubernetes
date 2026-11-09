@@ -3623,3 +3623,112 @@
 **Tags:** k8s::kcna topic::sidecars topic::yaml src::session
 
 ---
+
+<!-- note:1794263352986 model:Many -->
+**Domain:** Docker Storage - data root
+**Question:** On a Linux host, where does the Docker daemon store images, container filesystems, and volumes?
+**Options:** A. /var/lib/containers<br>B. /var/lib/docker — Docker's data root holding images, containers, volumes, and storage-driver layers<br>C. ~/.docker/config.json<br>D. /etc/docker/daemon.json
+**Answer:** B (2) – /var/lib/docker — Docker's data root holding images, containers, volumes, and storage-driver layers
+**Explanation:** /var/lib/docker is Docker's data root on Linux: it contains subdirectories for containers/, image/, volumes/, overlay2/ (the storage driver layers), build cache, swarm state, and more — EVERYTHING Docker persists lives under it. Distractors: /var/lib/containers is Podman's root (different runtime!), ~/.docker only holds client config (config.json auth, CLI settings), /etc/docker holds daemon.json configuration — not image/container data.
+**Sources:** <a href="https://docs.docker.com/engine/storage/drivers/" target="_blank">Docker Docs - Storage drivers</a>
+**Tags:** k8s::kcna topic::docker topic::storage src::session
+
+---
+
+<!-- note:1794263352987 model:Many -->
+**Domain:** Docker Storage - image layers
+**Question:** What is a 'layer' in a Docker image?
+**Options:** A. Each Dockerfile instruction copies the entire filesystem into a new layer<br>B. Each Dockerfile instruction creates a layer containing ONLY the changes/diff relative to the previous layer<br>C. Layers are writable so containers can modify them directly<br>D. Only RUN instructions create layers — COPY reuses the base layer
+**Answer:** B (2) – Each Dockerfile instruction creates a layer containing ONLY the changes/diff relative to the previous layer
+**Explanation:** A Docker image is a stack of read-only layers: FROM provides the base, then each instruction (RUN, COPY, ADD…) produces ONE new layer holding just what that instruction changed — e.g. 'apt-get install nginx' adds nginx's files as a layer, not a whole new filesystem. Layers are content-addressed and shareable. Nuance: metadata instructions (ENV, LABEL, EXPOSE) also create thin layers; ENTRYPOINT/CMD only set config — they don't add file layers.
+**Sources:** <a href="https://docs.docker.com/engine/storage/drivers/" target="_blank">Docker Docs - Storage drivers</a>
+**Tags:** k8s::kcna topic::docker topic::storage topic::images src::session
+
+---
+
+<!-- note:1794263352988 model:Many -->
+**Domain:** Docker Storage - layer caching
+**Question:** What are the benefits of Docker's layered image architecture? (Select all that apply)
+**Options:** A. Identical base layers are stored once and shared across images — saves disk<br>B. On rebuild, cached layers are reused until a changed instruction — faster builds, no unnecessary rebuilds<br>C. Only the layers whose instructions changed get rebuilt on top of the cache<br>D. Layers can be edited in place after the image is built
+**Answer:** A, B, C – shared base layers save disk, the layer cache speeds rebuilds, and unchanged layers aren't rebuilt; D is wrong — layers are read-only
+**Explanation:** Layer caching is the layered architecture's superpower: (A) identical base layers (e.g. the ubuntu base) are stored ONCE and shared by every image built FROM it — massive disk savings; (B) on rebuild, Docker reuses cached layers until it hits an instruction whose inputs changed, then rebuilds only from there down — updating app code doesn't re-run apt-get; (C) the registry also stores/pushes layers once and dedupes across images. D is the trap: image layers are READ-ONLY — you cannot edit them after build; runtime writes go to the container's separate writable layer (copy-on-write).
+**Sources:** <a href="https://docs.docker.com/build/cache/" target="_blank">Docker Docs - Build cache</a>
+**Tags:** k8s::kcna topic::docker topic::storage topic::images src::session
+
+---
+
+<!-- note:1794263352989 model:Many -->
+**Domain:** Docker Storage - container layer
+**Question:** What filesystem layers make up a running Docker container?
+**Options:** A. A full copy of the image filesystem made writable for each container<br>B. Read-only image layers (the built image) plus ONE writable 'container layer' on top for runtime changes<br>C. The image layers become writable once a container starts<br>D. A shared writable layer common to all containers from the same image
+**Answer:** B (2) – Read-only image layers (the built image) plus ONE writable 'container layer' on top for runtime changes
+**Explanation:** Every running container's filesystem = the image's read-only layers (shared, immutable) + a single writable layer unique to that container. Everything the app writes — new files, logs, overwrites of image files — lands in the container layer. The image layers are never modified, which is exactly why one image can safely back many containers. The writable layer is per-container and dies with the container — nothing in it persists.
+**Sources:** <a href="https://docs.docker.com/engine/storage/" target="_blank">Docker Docs - Storage</a>
+**Tags:** k8s::kcna topic::docker topic::storage src::session
+
+---
+
+<!-- note:1794263352990 model:Many -->
+**Domain:** Docker Storage - copy-on-write
+**Question:** A container process modifies /etc/nginx/nginx.conf, which exists in the read-only image layers. What does Docker do?
+**Options:** A. Docker edits the file directly in the shared image layer<br>B. Docker copies the file up into the writable container layer; all edits hit the copy — the read-only image layer stays untouched<br>C. The container gets a full copy of every file it might modify<br>D. The write fails because image layers are read-only
+**Answer:** B (2) – Docker copies the file up into the writable container layer; all edits hit the copy — the read-only image layer stays untouched
+**Explanation:** Copy-on-write (CoW): image layers are shared read-only, so when a container modifies a file that lives in a lower layer, Docker doesn't edit it in place — it COPIES the file up to the container's writable layer and applies changes there. Result: the image layer remains pristine and shareable across all containers; each container sees its own modified version. This is why 'docker commit' snapshots are possible and why images stay immutable. Storage drivers (overlay2 etc.) implement this efficiently — only changed files consume new disk.
+**Sources:** <a href="https://docs.docker.com/engine/storage/drivers/" target="_blank">Docker Docs - Storage drivers</a>
+**Tags:** k8s::kcna topic::docker topic::storage src::session
+
+---
+
+<!-- note:1794263352991 model:Many -->
+**Domain:** Docker Storage - volumes
+**Question:** How do you persist data written by a Docker container using a named volume?
+**Options:** A. docker volume create makes a directory on the host you mount with -v /host/path:/data<br>B. docker volume create data_volume — stored under /var/lib/docker/volumes on the host, mounted into the container at a path like /data; survives container deletion<br>C. Volumes are stored inside the image's read-only layers<br>D. Volumes must be created inside the container before use
+**Answer:** B (2) – docker volume create data_volume — stored under /var/lib/docker/volumes on the host, mounted into the container at a path like /data; survives container deletion
+**Explanation:** Named volumes are Docker-managed persistent storage: <code>docker volume create data_volume</code> creates it under /var/lib/docker/volumes/data_volume/_data on the host (location managed by the daemon — don't touch it directly). Mount at runtime: <code>docker run -v data_volume:/data myimage</code> — inside the container it appears as a normal directory. When the container is removed, the VOLUME survives (unlike the writable layer). Volumes live outside the image layer stack entirely, so they're immune to image changes and CoW.
+**Sources:** <a href="https://docs.docker.com/engine/storage/volumes/" target="_blank">Docker Docs - Volumes</a>
+**Tags:** k8s::kcna topic::docker topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794263352992 model:Many -->
+**Domain:** Docker Storage - storage drivers
+**Question:** How does Docker handle storage drivers for its layered filesystem?
+**Options:** A. You must pick the storage driver manually at install time<br>B. overlay2 is the default on modern Linux; aufs/zfs/btrfs/devicemapper are alternatives chosen automatically based on the host OS and backing filesystem<br>C. overlay2 is the only supported storage driver<br>D. The storage driver is selected per-container, not per-host
+**Answer:** B (2) – overlay2 is the default on modern Linux; aufs/zfs/btrfs/devicemapper are alternatives chosen automatically based on the host OS and backing filesystem
+**Explanation:** Storage drivers implement the layered + copy-on-write machinery on disk. overlay2 is the default on all modern Linux distros (uses the kernel's overlay filesystem — fast, low overhead). Legacy/alternative drivers: aufs (older Ubuntu default), zfs and btrfs (used when the host filesystem IS zfs/btrfs — CoW-native, snapshots for free), devicemapper (old RHEL/CentOS, largely deprecated), vfs (no layering, testing only). Docker AUTO-SELECTS the best driver at install based on OS + filesystem — you rarely choose manually; check with <code>docker info | grep 'Storage Driver'</code>.
+**Sources:** <a href="https://docs.docker.com/engine/storage/drivers/" target="_blank">Docker Docs - Storage drivers</a>
+**Tags:** k8s::kcna topic::docker topic::storage src::session
+
+---
+
+<!-- note:1794263352993 model:Many -->
+**Domain:** Docker Storage - volumes vs binds
+**Question:** What is the difference between a Docker volume and a bind mount? (Select all that apply)
+**Options:** A. Named volumes live under /var/lib/docker/volumes while bind mounts link a host path — both survive container deletion equally<br>B. Named volumes are daemon-managed under /var/lib/docker/volumes and persist independently; bind mounts link any host path directly with no Docker management<br>C. Bind mounts require docker volume create first; named volumes mount arbitrary host paths<br>D. Volumes are per-container only; bind mounts are shared across all containers
+**Answer:** B, C – docker volume create data_volume stored under /var/lib/docker/volumes, and bind mounts link any host path directly; A describes neither correctly and D is wrong
+**Explanation:** Two mount types differ in WHO manages the host side: NAMED VOLUME — created by <code>docker volume create</code>, lives under /var/lib/docker/volumes (daemon-managed location), survives container deletion, portable across hosts via volume drivers; ideal for persistent app data (databases). BIND MOUNT — <code>-v /host/path:/container/path</code> links ANY host path directly into the container; the host path is YOUR choice, both host processes and the container can modify it simultaneously; great for dev (mount source code) or accessing host files. tmpfs (bonus third type) = memory-only, dies with the container.
+**Sources:** <a href="https://docs.docker.com/engine/storage/" target="_blank">Docker Docs - Storage</a>
+**Tags:** k8s::kcna topic::docker topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794263356975 model:Basic -->
+**Front:** What does ENTRYPOINT do in a Dockerfile, and how does it differ from CMD?
+**Back:** ENTRYPOINT defines the executable the container RUNS when it starts — the fixed 'main' process. Difference from CMD: CMD sets default ARGUMENTS and is fully overridable (<code>docker run image other-cmd</code>); ENTRYPOINT is not replaced — extra args from docker run get APPENDED to it. The idiomatic combo: <code>ENTRYPOINT ["python"] + CMD ["app.py"]</code> lets you swap the script without changing the interpreter. ENTRYPOINT affects only container startup — it creates no filesystem layer (it's config, like ENV/LABEL).
+**Tags:** k8s::kcna topic::docker topic::images src::session
+
+---
+
+<!-- note:1794263356976 model:Basic -->
+**Front:** Why does data written inside a running container disappear when the container is removed — and what's the fix?
+**Back:** The writable container layer is unique per container and exists ONLY while the container runs — docker rm destroys it and everything written there is gone (logs, generated files, database files written without a mount). That's why the layer can't be your persistence story: the image layers are shared read-only, the container layer is disposable. The fixes are the mount types — named volumes (daemon-managed, /var/lib/docker/volumes), bind mounts (direct host path), tmpfs (memory-only, also dies with the container). For databases and anything you can't regenerate, mount a volume.
+**Tags:** k8s::kcna topic::docker topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794263359749 model:Cloze -->
+**Text:** Persist container data with a named volume:<br><br>{{c1::<code>docker volume create data_volume</code>}}  # creates /var/lib/docker/volumes/data_volume<br>{{c2::<code>docker run -v data_volume:/data myimage</code>}}  # mount volume at /data<br><br>Bind mount — direct host path into the container:<br>{{c3::<code>docker run -v /home/me/code:/app myimage</code>}}
+**Back Extra:** -v <host>:<container> covers BOTH: named volume (left side is a volume NAME → /var/lib/docker/volumes) and bind mount (left side is a host PATH like /home/me/code → /app). --mount is the explicit alternative: --mount type=volume,source=data_volume,target=/data or type=bind,source=/host/path,target=/app — clearer, validates options better.
+**Tags:** k8s::kcna topic::docker topic::storage topic::volumes src::session
+
+---

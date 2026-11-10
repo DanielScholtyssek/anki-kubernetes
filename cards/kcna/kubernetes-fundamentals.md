@@ -4393,3 +4393,14 @@
 **Tags:** k8s::kcna topic::kep topic::community src::session
 
 ---
+
+<!-- note:1794286811595 model:Many -->
+**Domain:** KEPs - GitHub issues limitations quiz
+**Question:** What are the limitations of using GitHub issues for proposing changes in Kubernetes?
+**Options:** A. All of the options are correct<br>B. Lack of transparency and collaboration<br>C. Challenges in managing proposed changes across multiple releases<br>D. Difficulty in navigating and categorizing issues
+**Answer:** A (1) – All are real limitations: issues lack structured design space, can't track multi-release graduation, and become unnavigable/uncategorizable at Kubernetes scale
+**Explanation:** Before KEPs, enhancements were tracked as umbrella GitHub issues — and they strained: (1) NAVIGATION/CATEGORIZATION — thousands of open issues across repos are unsearchable; you can't tell proposal from bug from question at a glance (hence kind/feature + sig/* labels and the tracking board). (2) MULTI-RELEASE MANAGEMENT — an enhancement spans ~a year across Alpha→Beta→GA milestones; an issue can't hold graduation criteria, stage checklists, or structured status. (3) TRANSPARENCY/COLLABORATION — design discussion scattered across issue comments is unreviewable; a KEP PR gives a single structured doc reviewers can iterate on. That's WHY KEP-0000 exists — it explicitly 'reserves GitHub issues for tracking work in flight, instead of creating umbrella issues'.
+**Sources:** <a href="https://github.com/kubernetes/enhancements/blob/master/keps/sig-architecture/0000-kep-process/README.md" target="_blank">KEP-0000: The KEP process</a>
+**Tags:** k8s::kcna topic::kep topic::community src::session
+
+---

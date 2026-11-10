@@ -4349,3 +4349,14 @@
 **Tags:** k8s::kcna topic::kep topic::community src::session
 
 ---
+
+<!-- note:1794286460060 model:Many -->
+**Domain:** KEPs - SIGs quiz
+**Question:** Which SIG in Kubernetes is in charge of the overall design and structure of the platform?
+**Options:** A. SIG Storage<br>B. SIG Cluster Lifecycle<br>C. SIG Network<br>D. SIG Architecture
+**Answer:** D (4) – SIG Architecture owns overall design, API conventions, and cross-cutting concerns — it's also the SIG that owns the kubernetes/enhancements KEP repo
+**Explanation:** Kubernetes work is organized into Special Interest Groups (SIGs) — each owns a domain: SIG Storage (volumes/PV/PVC/CSI), SIG Cluster Lifecycle (kubeadm, cluster upgrades, node lifecycle), SIG Network (kube-proxy, services, network policies). SIG ARCHITECTURE is the meta-SIG: overall platform design, API conventions, component interactions, and it owns the kubernetes/enhancements repo that runs the KEP process. Think of it as the 'chief architect' SIG — other SIGs handle their domains, Architecture keeps the whole coherent.
+**Sources:** <a href="https://github.com/kubernetes/enhancements" target="_blank">kubernetes/enhancements repo (owned by SIG Architecture)</a>
+**Tags:** k8s::kcna topic::kep topic::community src::session
+
+---

@@ -999,3 +999,14 @@
 **Tags:** k8s::kcna topic::cri-oci topic::containers src::session
 
 ---
+
+<!-- note:1794287113920 model:Many -->
+**Domain:** Autoscaling - H vs V quiz
+**Question:** Which of the following is a benefit of horizontal scaling over vertical scaling?
+**Options:** A. Vertical scaling is more flexible than horizontal scaling.<br>B. Horizontal scaling can efficiently handle varying workloads.<br>C. Horizontal scaling provides better fault tolerance.<br>D. Vertical scaling is often limited by the maximum capacity of the server.
+**Answer:** B, C – Horizontal scaling efficiently handles varying workloads (add/remove units to match demand) AND provides better fault tolerance (units distributed across nodes — one failure ≠ capacity loss)
+**Explanation:** Both B and C are true horizontal benefits: elasticity (replicas scale with load — the whole HPA story) and fault tolerance (pods spread across nodes; losing one node loses a fraction of capacity, not all of it). D is ALSO a true fact — vertical hits the physical ceiling of one machine — but it's phrased as a vertical LIMITATION, not a horizontal benefit; it's the reason horizontal exists rather than a benefit itself. A is backwards: horizontal is MORE flexible (granular, cheap units) and vertical is the constrained one. If your course marks a single answer, C (fault tolerance) is the most distinctive — but B and C are both defensible.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/autoscaling/" target="_blank">Kubernetes Docs - Autoscaling Workloads</a>
+**Tags:** k8s::kcna topic::autoscaling topic::workloads src::session
+
+---

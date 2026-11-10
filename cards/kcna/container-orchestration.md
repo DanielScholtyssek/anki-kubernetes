@@ -696,3 +696,98 @@
 **Tags:** k8s::kcna topic::proxy topic::networking src::session
 
 ---
+
+<!-- note:1794282718071 model:Many -->
+**Domain:** Autoscaling - basics
+**Question:** What does autoscaling mean in Kubernetes/cloud-native terms?
+**Options:** A. Manually resizing VMs before expected traffic spikes<br>B. Automatically adjusting the number of resources (pods, nodes) based on load — scaling UP for spikes and DOWN for drops without human intervention<br>C. Pre-allocating maximum capacity so scaling is never needed<br>D. Migrating workloads between clusters during maintenance
+**Answer:** B (2) – Automatically adjusting the number of resources (pods, nodes) based on load — scaling UP for spikes and DOWN for drops without human intervention
+**Explanation:** Autoscaling = the system watches its own load metrics (CPU, memory, queue depth, custom metrics) and adjusts resource COUNT automatically. Two directions: scale OUT/UP (add pods/nodes) when demand spikes, scale IN/DOWN (remove them) when demand drops — the down direction is what saves money. In Kubernetes this happens at three levels: pods (HPA), pod size (VPA), and nodes (Cluster Autoscaler). Manual kubectl scale works but can't react fast enough to traffic spikes — that's why automation exists.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/autoscaling/" target="_blank">Kubernetes Docs - Autoscaling Workloads</a>
+**Tags:** k8s::kcna topic::autoscaling topic::workloads src::session
+
+---
+
+<!-- note:1794282718072 model:Many -->
+**Domain:** Autoscaling - 3 factors
+**Question:** Which are the three factors of effective autoscaling? (Select all that apply)
+**Options:** A. Both the application and infrastructure must be designed to scale effectively<br>B. Autoscaling must be automatic — the system monitors its own resource usage<br>C. Autoscaling must be bidirectional — scale up AND down<br>D. Autoscaling requires a dedicated team to approve every scale event
+**Answer:** A, B, C – all three are required: designed-to-scale systems, automatic self-monitoring, and bidirectional (up AND down) adjustment
+**Explanation:** Effective autoscaling needs all three: (1) DESIGN FOR SCALE — apps must be stateless/replicable and infra must support adding/removing units cheaply, otherwise 'scaling' breaks things; (2) AUTOMATIC — humans can't react to spikes in seconds; the system must monitor metrics and decide itself; (3) BIDIRECTIONAL — scaling only UP wastes money after the spike passes; scaling DOWN reclaims resources. A system that only grows is a cost leak; one that only shrinks can't handle demand.
+**Sources:** https://kubernetes.io/docs/concepts/workloads/autoscaling/
+**Tags:** k8s::kcna topic::autoscaling topic::workloads src::session
+
+---
+
+<!-- note:1794282718073 model:Many -->
+**Domain:** Autoscaling - H vs V
+**Question:** Which statements correctly describe horizontal vs vertical scaling? (Select all that apply)
+**Options:** A. Horizontal scaling adds more units (pods/nodes); vertical scaling adds more resources to each unit (CPU/memory)<br>B. Horizontal scaling makes machines bigger; vertical scaling adds more machines<br>C. Kubernetes only supports horizontal scaling<br>D. Vertical scaling is preferred because it has no hardware limits
+**Answer:** A, C – Horizontal = adding more units (pods/nodes); Vertical = adding more resources to each unit (bigger CPU/memory per pod)
+**Explanation:** HORIZONTAL scaling = more UNITS doing the same work — more pod replicas behind a Service, more nodes. It's the cloud-native default: cheap, granular, no downtime, limited only by cluster size. VERTICAL scaling = bigger units — raise a pod's CPU/memory requests, resize a VM. Faster per-unit but requires pod restart (or in-place resize), hits hardware ceilings, and creates a bigger blast radius per failure. Kubernetes automates BOTH: HPA/VPA for pods, Cluster Autoscaler for nodes.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/autoscaling/" target="_blank">Kubernetes Docs - Autoscaling Workloads</a>
+**Tags:** k8s::kcna topic::autoscaling topic::workloads src::session
+
+---
+
+<!-- note:1794282718074 model:Many -->
+**Domain:** Autoscaling - 3 mechanisms
+**Question:** Which Kubernetes mechanism scales what?
+**Options:** A. HPA adjusts pod CPU requests; VPA adds pod replicas; Cluster Autoscaler resizes pods<br>B. HPA scales pod COUNT (replicas), VPA adjusts pod resource REQUESTS (CPU/memory size), Cluster Autoscaler adds/removes NODES<br>C. All three scale nodes only<br>D. HPA and VPA are the same controller with different names
+**Answer:** B (2) – HPA scales pod COUNT (replicas), VPA adjusts pod resource REQUESTS (CPU/memory size), Cluster Autoscaler adds/removes NODES
+**Explanation:** Kubernetes' three autoscaling layers: HPA (HorizontalPodAutoscaler, core API autoscaling/v2) — watches metrics and changes replica count of a workload. VPA (VerticalPodAutoscaler, autoscaling.k8s.io/v1 — a separate ADD-ON, not built-in) — watches utilization and adjusts pods' CPU/memory requests/limits. Cluster Autoscaler (separate component, not a K8s API object) — adds cloud nodes when pods can't schedule, removes underutilized ones. Together they scale the whole stack: pods → pod size → nodes. (KEDA is a CNCF-graduated add-on for event-driven scaling on top.)
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/autoscaling/" target="_blank">Kubernetes Docs - Autoscaling Workloads</a>
+**Tags:** k8s::kcna topic::autoscaling topic::hpa topic::vpa src::session
+
+---
+
+<!-- note:1794282718075 model:Many -->
+**Domain:** Autoscaling - HPA mechanics
+**Question:** How does the HorizontalPodAutoscaler (HPA) work?
+**Options:** A. HPA edits pod resource limits directly<br>B. HPA watches metrics (CPU/memory utilization, custom/external metrics) and adjusts replica count of its scaleTargetRef within minReplicas/maxReplicas<br>C. HPA provisions new cluster nodes automatically<br>D. HPA requires a custom API server to function
+**Answer:** B (2) – HPA watches metrics (CPU/memory utilization, custom/external metrics) and adjusts replica count of its scaleTargetRef within minReplicas/maxReplicas
+**Explanation:** HPA (apiVersion autoscaling/v2, kind HorizontalPodAutoscaler) is a core built-in controller. It finds pods via scaleTargetRef (Deployment, StatefulSet, etc.), queries metrics — resource metrics via metrics-server (cpu/memory % of REQUESTS), custom metrics via custom.metrics.k8s.io, external via external.metrics.k8s.io — and sets replicas between minReplicas and maxReplicas. Create with kubectl autoscale deployment X --cpu-percent=50 --min=2 --max=10 or YAML. The behavior field tunes scale-up/down speed + stabilization windows to prevent flapping. Requires metrics-server installed or CPU scaling does nothing.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/" target="_blank">Kubernetes Docs - HPA</a>
+**Tags:** k8s::kcna topic::autoscaling topic::hpa src::session
+
+---
+
+<!-- note:1794282718076 model:Many -->
+**Domain:** Autoscaling - VPA mechanics
+**Question:** What is true about the VerticalPodAutoscaler (VPA)?
+**Options:** A. VPA is built into Kubernetes core like HPA<br>B. VPA is a SEPARATE add-on CRD (autoscaling.k8s.io/v1) — unlike HPA it does NOT ship with core Kubernetes; its recommender analyzes usage and its updater adjusts pod requests/limits<br>C. VPA scales the number of pod replicas<br>D. VPA only works with bare Pods, not Deployments
+**Answer:** B (2) – VPA is a SEPARATE add-on CRD (autoscaling.k8s.io/v1) — unlike HPA it does NOT ship with core Kubernetes; its recommender analyzes usage and its updater adjusts pod requests/limits
+**Explanation:** VPA = VerticalPodAutoscaler, apiVersion autoscaling.k8s.io/v1 — a CRD you must INSTALL separately (kubectl apply from the autoscaler repo); HPA is built into core. Three components: recommender (analyzes historical usage, produces recommendations), updater (applies them to the workload), admission-controller (evicts pods so new sizes take effect — or with updateMode InPlaceOrRecreate resizes without eviction; in-place pod vertical scaling is stable since v1.35). Requires metrics-server. WARNING from docs: don't run VPA 'Auto' mode and HPA on the same workload — they fight over CPU.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/autoscaling/vertical-pod-autoscale/" target="_blank">Kubernetes Docs - VPA</a>
+**Tags:** k8s::kcna topic::autoscaling topic::vpa src::session
+
+---
+
+<!-- note:1794282718077 model:Many -->
+**Domain:** Autoscaling - Cluster Autoscaler
+**Question:** What does the Cluster Autoscaler do?
+**Options:** A. Cluster Autoscaler adjusts pod CPU requests<br>B. Cluster Autoscaler adds nodes when pods can't schedule (Insufficient cpu/memory), removes underutilized nodes — it scales the NODE layer, which HPA cannot touch<br>C. Cluster Autoscaler replaces the Kubernetes scheduler<br>D. Cluster Autoscaler only works on bare-metal clusters
+**Answer:** B (2) – Cluster Autoscaler adds nodes when pods can't schedule (Insufficient cpu/memory), removes underutilized nodes — it scales the NODE layer, which HPA cannot touch
+**Explanation:** Cluster Autoscaler is a node-level component (not a K8s API object) that watches for pods stuck Pending due to insufficient cluster resources and adds nodes from the cloud provider's node pool/autoscaling group. It also scales DOWN: removes nodes whose pods can be rescheduled elsewhere, after a stabilization window. Why it exists: HPA can ask for 50 pods but if nodes are full they just pend — Cluster Autoscaler provides the capacity. Typical stack: HPA grows pods → nodes fill → Cluster Autoscaler grows nodes → traffic drops → both shrink back. Cloud providers also have their own node autoscaling (GKE node auto-provisioning, EKS managed node groups, Karpenter as a modern alternative).
+**Sources:** <a href="https://kubernetes.io/docs/concepts/cluster-administration/node-autoscaling/" target="_blank">Kubernetes Docs - Node Autoscaling</a>
+**Tags:** k8s::kcna topic::autoscaling topic::scheduling src::session
+
+---
+
+<!-- note:1794282718078 model:Many -->
+**Domain:** Autoscaling - HPA vs VPA conflict
+**Question:** Why shouldn't HPA and VPA both run in automatic mode on the same workload?
+**Options:** A. HPA and VPA never conflict — they scale different things<br>B. They can conflict: HPA adds replicas assuming current pod size; VPA shrinks requests so HPA may over-scale, or VPA grows requests so fewer pods fit per node — docs recommend VPA recommendations-only mode alongside HPA<br>C. VPA always overrides HPA settings<br>D. Conflict only happens on Windows nodes
+**Answer:** B (2) – They can conflict: HPA adds replicas assuming current pod size; VPA shrinks requests so HPA may over-scale, or VPA grows requests so fewer pods fit per node — docs recommend VPA recommendations-only mode alongside HPA
+**Explanation:** Running HPA (count) and VPA (size) Auto-mode on the same workload creates a feedback fight: VPA shrinks CPU requests → pods look 'less busy' relative to requests → HPA scales count UP unnecessarily; VPA grows requests → fewer pods fit per node → scheduling pressure. Kubernetes docs explicitly warn: use VPA in 'recommendation only' (DryRun/Off updateMode) mode to get right-sizing suggestions while HPA handles count — or pick one strategy. This is a classic 'which is correct' exam trap: they're complementary layers but must not both auto-apply on the same metric.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/autoscaling/" target="_blank">Kubernetes Docs - Autoscaling Workloads</a>
+**Tags:** k8s::kcna topic::autoscaling topic::hpa topic::vpa src::session
+
+---
+
+<!-- note:1794282720169 model:Basic -->
+**Front:** How do HPA, VPA, and Cluster Autoscaler work together as a system?
+**Back:** Traffic spike → HPA adds pod replicas → nodes fill up → pods Pending → Cluster Autoscaler adds nodes → capacity arrives. Traffic drops → HPA removes replicas → Cluster Autoscaler removes underutilized nodes. VPA runs alongside adjusting each pod's CPU/memory requests (recommendations-only if HPA is active). This is 'scale in both directions at every layer' — the cloud-native elasticity loop.
+**Tags:** k8s::kcna topic::autoscaling topic::workloads src::session
+
+---

@@ -159,6 +159,15 @@ a remembered list.
   card, turn it into a card (or surface it to the user as a suggested
   follow-up if it's a stretch beyond the requested scope). The docs
   often know better what's worth drilling than the course notes do.
+- **User/course info vs docs — docs win.** When the user supplies
+  facts (their own words or course material) that contradict what the
+  current docs say, flag the discrepancy explicitly in the reply and
+  card the correct/current behavior — including cases where the
+  provided info is outdated and no longer valid in current Kubernetes.
+  Call out the correction in the card's explanation (e.g. "CORRECTION:
+  the default is X, not Y") so the wrong version doesn't resurface in
+  review. Never silently encode outdated info, and never argue with
+  the docs to match the lecture.
 - **MCQ design (`Many`):** the template supports multi-select — when a
   question's material has more than one genuinely correct option, write
   it as a select-all/multi-answer question ("Which of the following are

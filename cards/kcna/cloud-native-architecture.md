@@ -739,3 +739,87 @@
 **Tags:** k8s::kcna topic::ecosystem topic::cncf src::session
 
 ---
+
+<!-- note:1794288002478 model:Many -->
+**Domain:** Serverless - FaaS basics
+**Question:** What is Function as a Service (FaaS)?
+**Options:** A. You rent virtual machines and install your own runtime<br>B. You upload function code; the provider runs the servers, OS, runtime, and scaling — you pay per execution and code only runs when invoked<br>C. You get a managed Kubernetes cluster to deploy containers<br>D. You write code that runs on a schedule you define yourself
+**Answer:** B (2) – You upload function code; the provider runs the servers, OS, runtime, and scaling — you pay per execution and code only runs when invoked
+**Explanation:** FaaS (Function as a Service — AWS Lambda, Google Cloud Functions, Azure Functions) = the most managed cloud layer: you write a FUNCTION (business logic), upload it, and the provider handles everything else — servers, OS patching, runtimes, capacity, scaling, and triggering. Code executes ONLY in response to events (HTTP request, queue message, schedule, file upload) and typically SCALES TO ZERO when idle — no running processes, no cost. You never see or manage a server. Contrast: IaaS gives you raw VMs, PaaS manages the platform but you still run always-on apps.
+**Sources:** <a href="https://knative.dev/docs/" target="_blank">Knative Docs</a>
+**Tags:** k8s::kcna topic::serverless topic::architecture src::session
+
+---
+
+<!-- note:1794288002479 model:Many -->
+**Domain:** Serverless - what it removes
+**Question:** Which responsibilities does FaaS remove from the developer? (Select all that apply)
+**Options:** A. Provisioning, patching, and maintaining servers<br>B. OS/runtime management and capacity planning<br>C. Deciding how many instances to run and when to scale<br>D. Writing the business logic of the function itself
+**Answer:** A, B, C – FaaS removes server provisioning, OS/runtime maintenance, capacity planning, and scaling management — plus the upfront hardware cost
+**Explanation:** What you STOP worrying about with FaaS: provisioning/patching servers (provider's fleet), OS and runtime management (managed runtimes for Python/Node/Go/etc.), capacity planning (scales automatically), scaling policy (per-invocation concurrency), uptime/HA (provider SLA), and UPFRONT COST — no hardware purchase or reserved capacity, pure pay-per-use. What you KEEP: writing the function code and designing its logic. This is why it's 'serverless' — servers exist but are invisible to you.
+**Sources:** <a href="https://knative.dev/docs/" target="_blank">Knative Docs</a>
+**Tags:** k8s::kcna topic::serverless topic::architecture src::session
+
+---
+
+<!-- note:1794288002480 model:Many -->
+**Domain:** Serverless - economics
+**Question:** How does FaaS pricing actually work?
+**Options:** A. You pay a flat monthly fee regardless of usage<br>B. Pay-per-execution pricing: billed per invocation + milliseconds/GB of compute used; zero cost when idle (scale-to-zero); watch cold starts and always-on workloads where provisioned servers can be cheaper<br>C. You pay per server-hour whether functions run or not<br>D. Pricing is impossible to predict for any workload
+**Answer:** B (2) – Pay-per-execution pricing: billed per invocation + milliseconds/GB of compute used; zero cost when idle (scale-to-zero); watch cold starts and always-on workloads where provisioned servers can be cheaper
+**Explanation:** The pay-as-you-go model: you pay ONLY for the milliseconds×GB your function actually executes plus per-request fees — idle time costs nothing because functions scale to zero. Great for spiky/unpredictable/event-driven workloads where you'd otherwise pay for idle servers 24/7. Caveats exams love: COLD STARTS (first invocation after idle spins up a runtime — latency penalty), always-on/high-throughput workloads can cost MORE than provisioned servers, and vendor lock-in to the function API. Cost is calculable but not always cheaper — 'only pay for what you use' ≠ 'always cheapest'.
+**Sources:** <a href="https://knative.dev/docs/serving/autoscaling/" target="_blank">Knative Docs - Autoscaling</a>
+**Tags:** k8s::kcna topic::serverless topic::architecture src::session
+
+---
+
+<!-- note:1794288002481 model:Many -->
+**Domain:** Serverless - abstraction ladder
+**Question:** Where does FaaS sit in the cloud service abstraction ladder?
+**Options:** A. IaaS → PaaS → SaaS, with containers unrelated<br>B. The managed-services ladder: IaaS (raw VMs) → CaaS/containers (you manage app, platform manages OS) → PaaS (platform runs your app) → FaaS (code runs only on events, zero idle cost) → SaaS (finished software)<br>C. FaaS is just a marketing name for PaaS<br>D. Serverless requires more infrastructure knowledge than IaaS
+**Answer:** B (2) – The managed-services ladder: IaaS (raw VMs) → CaaS/containers (you manage app, platform manages OS) → PaaS (platform runs your app) → FaaS (code runs only on events, zero idle cost) → SaaS (finished software)
+**Explanation:** The cloud abstraction spectrum from most-control to least: IaaS = rent VMs, manage everything above hardware. CONTAINERS/CaaS = package app+deps, orchestrator (K8s) manages placement/lifecycle, you manage the app. PAAS = provider runs your always-on app (Heroku, Cloud Foundry). FAAS/SERVERLESS = provider runs everything including WHEN code executes — functions wake on events, scale to zero, pay per use. SAAS = someone else's finished product (Gmail). Each step trades control for less ops burden — FaaS is the extreme 'you only write business logic' end.
+**Sources:** <a href="https://knative.dev/docs/" target="_blank">Knative Docs</a>
+**Tags:** k8s::kcna topic::serverless topic::architecture src::session
+
+---
+
+<!-- note:1794288002482 model:Many -->
+**Domain:** Serverless - on Kubernetes
+**Question:** What does 'serverless on Kubernetes' actually mean?
+**Options:** A. Kubernetes is natively serverless — pods scale to zero automatically<br>B. K8s provides the substrate — containers, orchestration, LB, self-healing — but isn't serverless itself; Knative/OpenFaaS layer FaaS semantics (scale-to-zero, event triggers) on top<br>C. Serverless on K8s requires replacing the kubelet<br>D. Knative replaces Kubernetes entirely
+**Answer:** B (2) – K8s provides the substrate — containers, orchestration, LB, self-healing — but isn't serverless itself; Knative/OpenFaaS layer FaaS semantics (scale-to-zero, event triggers) on top
+**Explanation:** Nuance the lecture simplified: Kubernetes is NOT itself serverless — pods don't scale to zero and there's no function/event model natively. BUT it's the ideal SUBSTRATE for serverless: containers give isolation, the control plane gives orchestration/self-healing/LB, and CustomResources let you add FaaS abstractions. That's exactly what Knative and OpenFaaS do — they run ON Kubernetes and add the missing pieces: scale-to-zero, event-driven triggers, revision management, per-request billing-shaped autoscaling. 'Serverless Kubernetes' in marketing = managed versions (Google Cloud Run, AWS Fargate) or Knative on your own cluster.
+**Sources:** <a href="https://knative.dev/docs/" target="_blank">Knative Docs</a>
+**Tags:** k8s::kcna topic::serverless topic::architecture topic::container-orchestration src::session
+
+---
+
+<!-- note:1794288002483 model:Many -->
+**Domain:** Serverless - Knative
+**Question:** What is Knative and what does it provide?
+**Options:** A. Knative is a container runtime like containerd<br>B. Knative (CNCF graduated) adds serverless to K8s via 3 pillars: Serving (Knative Service — scale-to-zero, KPA concurrency autoscaling, revisions/traffic-split), Eventing (brokers+triggers+sources — Kafka, webhooks), Functions<br>C. Knative only provides HTTP load balancing<br>D. Knative requires AWS to function
+**Answer:** B (2) – Knative (CNCF graduated) adds serverless to K8s via 3 pillars: Serving (Knative Service — scale-to-zero, KPA concurrency autoscaling, revisions/traffic-split), Eventing (brokers+triggers+sources — Kafka, webhooks), Functions
+**Explanation:** Knative is THE Kubernetes-native serverless framework (CNCF graduated project). Three components: SERVING — Knative Service gives you scale-to-zero (pods die when idle, cold-start on request), KPA (Knative Pod Autoscaler) scales on CONCURRENCY/RPS not just CPU, plus revision-based traffic splitting (canary!). EVENTING — broker+trigger+source model: events from Kafka/APIServerSource/PingSource flow through brokers to triggers that invoke services. FUNCTIONS — developer-friendly function deployment model. This is the 'manage autoscaling, event triggering, lifecycle' layer the lecture described.
+**Sources:** <a href="https://knative.dev/docs/" target="_blank">Knative Docs</a>
+**Tags:** k8s::kcna topic::serverless topic::architecture topic::knative src::session
+
+---
+
+<!-- note:1794288002484 model:Many -->
+**Domain:** Serverless - OpenFaaS vs Knative
+**Question:** How does OpenFaaS compare to Knative?
+**Options:** A. OpenFaaS and Knative are the same project<br>B. OpenFaaS is a functions framework on K8s/Swarm with Prometheus-driven autoscaling + event connectors (Kafka, AWS SQS, webhooks); Knative is deeper — full Serving/Eventing/Functions with scale-to-zero and revision model<br>C. OpenFaaS only runs on AWS Lambda<br>D. Knative has no autoscaling features
+**Answer:** B (2) – OpenFaaS is a functions framework on K8s/Swarm with Prometheus-driven autoscaling + event connectors (Kafka, AWS SQS, webhooks); Knative is deeper — full Serving/Eventing/Functions with scale-to-zero and revision model
+**Explanation:** OpenFaaS = open-source FaaS framework you install on Kubernetes (or Docker Swarm): write functions in any language (containers as functions), it handles build/deploy/autoscaling (Prometheus metrics-driven) and has event connectors for Kafka, AWS SQS/SNS, webhooks, cron. SIMPLER than Knative — great for 'functions on my cluster'. KNATIVE = the deeper CNCF-graduated serverless platform: scale-to-zero is its signature (OpenFaaS keeps warm containers), KPA concurrency autoscaling, Eventing's broker/trigger/source mesh, revision traffic-splitting. Rule: OpenFaaS ≈ 'functions + basic autoscaling', Knative ≈ 'full serverless platform'.
+**Sources:** https://www.openfaas.com/
+**Tags:** k8s::kcna topic::serverless topic::architecture topic::knative src::session
+
+---
+
+<!-- note:1794288008140 model:Basic -->
+**Front:** In one sentence: what do you actually manage in a serverless/FaaS model?
+**Back:** You write ONLY the function's business logic and upload it. The provider/platform handles: servers+OS, runtime, scaling (0→N on events), triggering (HTTP/queue/schedule), uptime, and billing per execution. 'Serverless' = servers exist but are invisible — your code sleeps until an event wakes it, runs milliseconds, and you pay only for those milliseconds. On Kubernetes this is layered: K8s = orchestration substrate, Knative/OpenFaaS = the FaaS semantics on top.
+**Tags:** k8s::kcna topic::serverless topic::architecture src::session
+
+---

@@ -4250,3 +4250,14 @@
 **Tags:** k8s::kcna topic::storage topic::csi topic::volumes src::session
 
 ---
+
+<!-- note:1794275343499 model:Many -->
+**Domain:** K8s Storage - access modes MCQ
+**Question:** What are the different access modes available for a volume in Kubernetes?
+**Options:** A. ReadOnlyOnce, ReadWriteOnce, ReadWriteMany<br>B. ReadOnlyOnce, WriteOnlyOnce, ReadWriteMany<br>C. ReadOnlyMany, ReadWriteOnce, ReadWriteMany<br>D. ReadOnlyMany, WriteOnlyOnce, ReadWriteMany
+**Answer:** C (3) – ReadOnlyMany, ReadWriteOnce, ReadWriteMany are the real modes (current Kubernetes also adds ReadWriteOncePod)
+**Explanation:** The valid access modes: ReadWriteOnce (RWO — one node), ReadOnlyMany (ROX — many nodes read-only), ReadWriteMany (RWX — many nodes read-write), and ReadWriteOncePod (RWOP — single pod, stricter than RWO). 'WriteOnlyOnce' does NOT exist — write-only isn't an access mode concept. 'ReadOnlyOnce' doesn't exist either — read-only access is ReadOnlyMany (or you just don't write). Access modes are BINDING/MATCHING constraints between PVC requests and PV capabilities — they don't enforce read-only at the filesystem level.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes" target="_blank">Kubernetes Docs - Access Modes</a>
+**Tags:** k8s::kcna topic::storage topic::pvc src::session
+
+---

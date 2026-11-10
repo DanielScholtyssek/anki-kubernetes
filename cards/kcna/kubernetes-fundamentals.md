@@ -4261,3 +4261,14 @@
 **Tags:** k8s::kcna topic::storage topic::pvc src::session
 
 ---
+
+<!-- note:1794275623976 model:Many -->
+**Domain:** Docker Storage - drivers MCQ
+**Question:** What is the purpose of Docker storage drivers?
+**Options:** A. To enable the layered architecture of Docker images<br>B. To manage the network interfaces of Docker containers<br>C. To manage the security of Docker containers<br>D. To enable the creation of Docker volumes for persistent data storage
+**Answer:** A (1) – Storage drivers implement the layered image/container filesystem — overlay2/aufs/zfs/btrfs manage the read-only image layers + writable container layer
+**Explanation:** Storage drivers (overlay2 default, aufs, zfs, btrfs…) implement Docker's LAYERED architecture: stacking read-only image layers, the writable container layer, and copy-on-write. D is the classic trap — volumes are NOT storage drivers' job: creating/managing persistent volumes is the VOLUME DRIVERS'/plugins' job (docker volume create --driver=amazon-ebs, local driver → /var/lib/docker/volumes). Storage drivers handle the image+container filesystem layering only; volume plugins handle persistent data lifecycle. B (networks) and C (security) are entirely different subsystems.
+**Sources:** <a href="https://docs.docker.com/engine/storage/" target="_blank">Docker Docs - Storage drivers</a>
+**Tags:** k8s::kcna topic::docker topic::storage src::session
+
+---

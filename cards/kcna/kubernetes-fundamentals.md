@@ -4283,3 +4283,69 @@
 **Tags:** k8s::kcna topic::docker topic::storage topic::volumes src::session
 
 ---
+
+<!-- note:1794285508006 model:Many -->
+**Domain:** KEPs - what & why
+**Question:** What is a Kubernetes Enhancement Proposal (KEP)?
+**Options:** A. A KEP is a Kubernetes custom resource you deploy<br>B. A Kubernetes Enhancement Proposal: a structured design document in the kubernetes/enhancements repo used to propose, communicate, and coordinate new changes before code is written<br>C. A KEP is an etcd backup format for upgrades<br>D. A KEP is a kubectl plugin for extending the CLI
+**Answer:** B (2) – A Kubernetes Enhancement Proposal: a structured design document in the kubernetes/enhancements repo used to propose, communicate, and coordinate new changes before code is written
+**Explanation:** A KEP (Kubernetes Enhancement Proposal) is the project's standardized way to propose changes: a markdown doc in github.com/kubernetes/enhancements (organized per SIG, e.g. keps/sig-architecture/), written via PR using a template. It deliberately combines THREE doc types in one file: a feature/effort tracker + a product requirements doc + a design doc. Mandatory for enhancements since Kubernetes 1.14. Purpose: force design discussion and consensus BEFORE implementation — Kubernetes is too big for drive-by changes.
+**Sources:** <a href="https://github.com/kubernetes/enhancements" target="_blank">kubernetes/enhancements repo</a>
+**Tags:** k8s::kcna topic::kep topic::community src::session
+
+---
+
+<!-- note:1794285508007 model:Many -->
+**Domain:** KEPs - rationale
+**Question:** Why does the KEP process exist? (Select all that apply)
+**Options:** A. To get community consensus on a design before implementation<br>B. To track enhancements across multiple releases through Alpha/Beta/Stable graduation<br>C. To enforce quality gates (tests, docs, production readiness) for user-facing changes<br>D. To replace GitHub issues entirely for all Kubernetes work
+**Answer:** A, B, C – KEPs exist for community consensus before code, to track multi-release Alpha→Beta→GA graduation, and to set quality bars (test plan, PRR, docs) for user-facing changes
+**Explanation:** Why the process exists: (1) CONSENSUS FIRST — an idea gets socialized with SIGs and reviewed before anyone writes production code, catching bad designs early; (2) LONG ARC TRACKING — enhancements span ~9-12 months across Alpha→Beta→Stable, and KEPs keep the design, status, and graduation criteria in version control for the whole journey; (3) QUALITY GATE — KEPs require test plans, risk analysis, and Production Readiness Review before a feature can ship, because once users adopt an enhancement they expect it to work for years. Result: slower to start, much more reliable to ship.
+**Sources:** <a href="https://github.com/kubernetes/enhancements/blob/master/keps/sig-architecture/0000-kep-process/README.md" target="_blank">KEP-0000: The KEP process</a>
+**Tags:** k8s::kcna topic::kep topic::community src::session
+
+---
+
+<!-- note:1794285508008 model:Many -->
+**Domain:** KEPs - the process
+**Question:** How does a change get from idea to shipped feature via the KEP process?
+**Options:** A. Write code first, then document it in a KEP afterward<br>B. Socialize the idea with a SIG → write the KEP via PR in kubernetes/enhancements using the template → iterate through SIG/API/PRR review → get approvals → implement → meet graduation criteria per stage<br>C. KEPs are approved by a single Kubernetes maintainer<br>D. A KEP automatically deploys the feature once merged
+**Answer:** B (2) – Socialize the idea with a SIG → write the KEP via PR in kubernetes/enhancements using the template → iterate through SIG/API/PRR review → get approvals → implement → meet graduation criteria per stage
+**Explanation:** The actual flow: (1) SOCIALIZE — pitch the idea on a SIG mailing list or meeting; you need identified owners willing to drive it ~9-12 months; (2) CREATE — fork kubernetes/enhancements, copy the KEP template (NNNN-kep-template), fill Proposal/Motivation/Design/Risks/Test Plan/Graduation Criteria, open a PR; (3) ITERATE — SIG reviewers, API reviewers, and the Production Readiness Review (PRR) team all comment until approvals are secured; (4) IMPLEMENT — merge code across releases; (5) GRADUATE — meet each stage's criteria (Alpha: off by default/rough edges OK; Beta: on by default, e2e tested; Stable/GA: API frozen, full docs). Enhancement freeze deadlines can kick a KEP out of a release if it's not ready.
+**Sources:** <a href="https://github.com/kubernetes/enhancements" target="_blank">kubernetes/enhancements repo</a>
+**Tags:** k8s::kcna topic::kep topic::community src::session
+
+---
+
+<!-- note:1794285508009 model:Many -->
+**Domain:** KEPs - doc vs tracking issue
+**Question:** What's the difference between a KEP and an enhancement issue?
+**Options:** A. KEP and enhancement issue are the same thing<br>B. KEP = the design doc (in keps/<sig>/NNNN-slug/), enhancement issue = the tracking umbrella in the repo root with milestone + sig/* labels for release management<br>C. The KEP is stored in etcd alongside cluster state<br>D. Enhancement issues are only for bugs, never features
+**Answer:** B (2) – KEP = the design doc (in keps/<sig>/NNNN-slug/), enhancement issue = the tracking umbrella in the repo root with milestone + sig/* labels for release management
+**Explanation:** Two linked artifacts in kubernetes/enhancements: the KEP FILE (keps/sig-<name>/<number>-<slug>/kep.yaml + README.md) holds the actual design — motivation, proposal, design details, risks, test plan, graduation criteria. The ENHANCEMENT ISSUE (repo root, labeled kind/feature + sig/<name>) is the work-tracking umbrella: it links the KEP, gets assigned to a release milestone, and shows on the Enhancements Tracking Board. Rule of thumb: KEP answers 'what and why', the issue answers 'who's doing it and when'. Design discussion happens in the KEP PR, NOT in issue comments.
+**Sources:** <a href="https://github.com/kubernetes/enhancements" target="_blank">kubernetes/enhancements repo</a>
+**Tags:** k8s::kcna topic::kep topic::community src::session
+
+---
+
+<!-- note:1794285508010 model:Many -->
+**Domain:** KEPs - is my change an enhancement
+**Question:** When does a change actually need a KEP?
+**Options:** A. Every code change to Kubernetes requires a KEP<br>B. Roughly: user/operator-facing impact, multi-party/SIG effort, graduation between stages, or significant effort (~10 person-weeks+) — NOT things like CRD-based features, test fixes, or internal refactors<br>C. Only security changes need KEPs<br>D. KEPs are required only for breaking changes
+**Answer:** B (2) – Roughly: user/operator-facing impact, multi-party/SIG effort, graduation between stages, or significant effort (~10 person-weeks+) — NOT things like CRD-based features, test fixes, or internal refactors
+**Explanation:** The repo's own heuristics for 'does this need a KEP': YES if a blog post would be written about it, it needs multiple SIGs/owners, it graduates alpha→beta→GA, it takes ~10 person-weeks or changes a system component/API, or users will notice and rely on it. NO if it's a CRD (custom resources bypass the KEP process — that's the extension escape hatch!), a flaky-test fix, internal refactoring, perf-only improvements, or better error messages. When unsure: socialize with the SIG first — they decide if it rises to enhancement level.
+**Sources:** <a href="https://github.com/kubernetes/enhancements" target="_blank">kubernetes/enhancements repo</a>
+**Tags:** k8s::kcna topic::kep topic::community src::session
+
+---
+
+<!-- note:1794285508011 model:Many -->
+**Domain:** KEPs - graduation criteria
+**Question:** How do KEPs relate to the Alpha → Beta → GA lifecycle?
+**Options:** A. Graduation criteria are decided by the release manager ad hoc<br>B. The KEP is the single source of truth for the feature's design AND its path through Alpha → Beta → Stable/GA, each stage having explicit graduation criteria that must be met (tests, docs, adoption signals)<br>C. Features skip stages if the PR is approved quickly<br>D. Graduation only applies to security features
+**Answer:** B (2) – The KEP is the single source of truth for the feature's design AND its path through Alpha → Beta → Stable/GA, each stage having explicit graduation criteria that must be met (tests, docs, adoption signals)
+**Explanation:** KEPs embed GRADUATION CRITERIA — the checklist a feature must satisfy to advance stages: ALPHA (off by default or opt-in, API may change, minimal docs) → BETA (enabled by default, e2e test coverage, upgrade/downgrade tested, documented) → STABLE/GA (API frozen, full docs, SLOs, deprecation policy applies, 'production ready'). Each stage transition is itself reviewed — you update the KEP's kep.yaml graduation fields and get approval again. This is why features you see in release notes spent ~a year in this pipeline, and why 'alpha in 1.31, beta in 1.33, GA in 1.35' patterns exist.
+**Sources:** <a href="https://github.com/kubernetes/enhancements/blob/master/keps/sig-architecture/0000-kep-process/README.md" target="_blank">KEP-0000: The KEP process</a>
+**Tags:** k8s::kcna topic::kep topic::community src::session
+
+---

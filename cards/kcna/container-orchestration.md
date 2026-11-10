@@ -853,3 +853,83 @@
 **Tags:** k8s::kcna topic::autoscaling topic::hpa topic::yaml src::session
 
 ---
+
+<!-- note:1794284312891 model:Many -->
+**Domain:** VPA - component flow
+**Question:** What are VPA's three components and how do they flow?
+**Options:** A. Recommender resizes pods directly; Updater only watches; Admission Controller is optional<br>B. Recommender analyzes metrics-server usage → writes .status.recommendation; Updater evicts/resizes pods to match; Admission Controller webhook injects recommendations into NEW pods at creation<br>C. All three components run inside kubelet on each node<br>D. The Updater generates recommendations; the Recommender applies them
+**Answer:** B (2) – Recommender analyzes metrics-server usage → writes .status.recommendation; Updater evicts/resizes pods to match; Admission Controller webhook injects recommendations into NEW pods at creation
+**Explanation:** The VPA pipeline: (1) RECOMMENDER reads pod metrics via metrics-server, learns usage patterns, computes target/lowerBound/upperBound CPU+memory, stores them in the VPA's .status.recommendation — it never touches pods itself. (2) UPDATER compares each pod's CURRENT requests vs the recommendation; if updateMode allows, it evicts the pod (Recreate) or resizes in-place — the workload controller recreates it. (3) ADMISSION CONTROLLER is a mutating webhook that intercepts EVERY pod creation and stamps the recommended requests/limits on — so new pods (from eviction, rollout, scale-up) always start right-sized.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/autoscaling/vertical-pod-autoscale/" target="_blank">Kubernetes Docs - VPA</a>
+**Tags:** k8s::kcna topic::autoscaling topic::vpa src::session
+
+---
+
+<!-- note:1794284312892 model:Many -->
+**Domain:** VPA - update modes
+**Question:** What updateMode values does a VPA support?
+**Options:** A. Off applies changes silently; Initial evicts pods; Auto enables in-place updates<br>B. Off=recommendations only; Initial=set at creation only; Recreate=evict+recreate; InPlaceOrRecreate=try resize then evict fallback; InPlace=never evict (alpha); Auto=DEPRECATED alias for Recreate<br>C. There are only two modes: On and Off<br>D. updateMode is configured per-container, not per-VPA
+**Answer:** B (2) – Off=recommendations only; Initial=set at creation only; Recreate=evict+recreate; InPlaceOrRecreate=try resize then evict fallback; InPlace=never evict (alpha); Auto=DEPRECATED alias for Recreate
+**Explanation:** updatePolicy.updateMode controls how recommendations get applied: OFF — analyze+store recs in .status only, change nothing (the 'recommendation-only' mode for safe rollout). INITIAL — apply only when pods are first created via admission, never touch running pods. RECREATE — evict pods whose requests differ, let controller recreate them right-sized (the classic disruptive mode). INPLACEORRECREATE — try resizing the container in place first (uses K8s InPlacePodVerticalScaling, stable v1.35), fall back to eviction if not possible. INPLACE — alpha in VPA 1.7.0, NEVER evicts, retries deferred resizes. AUTO — DEPRECATED since VPA 1.4.0, just an alias for Recreate — CORRECTION: the lecture's 'Off/Initial/Auto' list is outdated.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/autoscaling/vertical-pod-autoscale/" target="_blank">Kubernetes Docs - VPA</a>
+**Tags:** k8s::kcna topic::autoscaling topic::vpa src::session
+
+---
+
+<!-- note:1794284312893 model:Many -->
+**Domain:** VPA - admission controller
+**Question:** How does the VPA admission controller apply recommendations?
+**Options:** A. It runs inside kubelet and adjusts cgroup limits directly<br>B. It's a mutating admission webhook: intercepts pod CREATE requests, checks if a VPA targets the pod, and stamps the recommended requests/limits before the pod is persisted<br>C. It watches etcd for pod changes and edits them after creation<br>D. It only validates pods — it never modifies them
+**Answer:** B (2) – It's a mutating admission webhook: intercepts pod CREATE requests, checks if a VPA targets the pod, and stamps the recommended requests/limits before the pod is persisted
+**Explanation:** The VPA admission controller is a MUTATING WEBHOOK — it sits in the pod-creation path: any pod CREATE request passes through it, it checks whether a VPA's targetRef+selector covers this pod, and if so patches the container resource requests/limits to the VPA's .status.recommendation target BEFORE the pod is stored. This is how 'right-sized at birth' works — every new pod (eviction replacement, rollout, HPA scale-up, manual create) automatically gets VPA-recommended resources. It's the piece that makes Initial mode and Recreate mode actually deliver new sizes to pods.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/autoscaling/vertical-pod-autoscale/" target="_blank">Kubernetes Docs - VPA</a>
+**Tags:** k8s::kcna topic::autoscaling topic::vpa topic::admission src::session
+
+---
+
+<!-- note:1794284312894 model:Many -->
+**Domain:** VPA - updater behavior
+**Question:** What does the VPA Updater actually do to pods?
+**Options:** A. Updater kills pods with SIGKILL directly, ignoring controllers<br>B. Updater compares pod requests vs .status.recommendation: Recreate mode EVICTS the pod (controller recreates it, admission restamps requests); InPlaceOrRecreate resizes live via InPlacePodVerticalScaling — and respects PodDisruptionBudgets<br>C. Updater edits the pod spec in place via kubectl patch<br>D. Updater only works when pods are in CrashLoopBackOff
+**Answer:** B (2) – Updater compares pod requests vs .status.recommendation: Recreate mode EVICTS the pod (controller recreates it, admission restamps requests); InPlaceOrRecreate resizes live via InPlacePodVerticalScaling — and respects PodDisruptionBudgets
+**Explanation:** The updater reconciles: for each VPA it lists matching pods, compares current requests to the recommendation, and acts per updateMode. RECREATE = kubectl-evict-style deletion → Deployment/StatefulSet controller recreates → admission webhook stamps new requests (brief disruption, pod gets fresh scheduling). INPLACEORRECREATE = calls the in-place resize API (stable since K8s v1.35) to change requests/limits on the RUNNING container — no restart, falls back to eviction only if resize is impossible (e.g. memory limit decrease on some runtimes). It respects PodDisruptionBudgets so it won't evict pods the PDB protects. INPLACE (alpha) never evicts — defers and retries instead.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/autoscaling/vertical-pod-autoscale/" target="_blank">Kubernetes Docs - VPA</a>
+**Tags:** k8s::kcna topic::autoscaling topic::vpa src::session
+
+---
+
+<!-- note:1794284312895 model:Many -->
+**Domain:** VPA - CRD not core API
+**Question:** Why is VPA's apiVersion autoscaling.k8s.io/v1 — and why isn't it built-in?
+**Options:** A. autoscaling.k8s.io/v1 is a core Kubernetes API like apps/v1<br>B. VPA is a CustomResourceDefinition served under the autoscaling.k8s.io/v1 API group — same group name as HPA but NOT core; you must install the VPA components first or the kind doesn't exist<br>C. The quotes mean it's a Helm-only resource<br>D. CRDs can't use the autoscaling.k8s.io group
+**Answer:** B (2) – VPA is a CustomResourceDefinition served under the autoscaling.k8s.io/v1 API group — same group name as HPA but NOT core; you must install the VPA components first or the kind doesn't exist
+**Explanation:** apiVersion: autoscaling.k8s.io/v1 looks like a core API but ISN'T — it's a CRD installed by the kubernetes/autoscaler project's VPA deployment (kubectl apply -f .../vpa-install.yaml creates the CRD + recommender + updater + admission-controller deployments). That's why a fresh cluster has no VerticalPodAutoscaler kind: 'no matches for kind VerticalPodAutoscaler' until you install it. The autoscaling.k8s.io GROUP is shared with HPA (which IS core at autoscaling/v2) — group name alone doesn't mean built-in; check whether the resource is served by core or by a CRD. Metrics-server is also required for recommendations to have data.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/autoscaling/vertical-pod-autoscale/" target="_blank">Kubernetes Docs - VPA</a>
+**Tags:** k8s::kcna topic::autoscaling topic::vpa topic::crd src::session
+
+---
+
+<!-- note:1794284312896 model:Many -->
+**Domain:** VPA - resource policy
+**Question:** What does resourcePolicy do in a VPA?
+**Options:** A. resourcePolicy sets the VPA's own CPU/memory requests<br>B. resourcePolicy.containerPolicies per container: minAllowed/maxAllowed bound the recommendations, controlledResources picks cpu/memory, controlledValues RequestsAndLimits (default) or RequestsOnly<br>C. minAllowed/maxAllowed are pod-level, not per-container<br>D. controlledValues can only be set to RequestsAndLimits
+**Answer:** B (2) – resourcePolicy.containerPolicies per container: minAllowed/maxAllowed bound the recommendations, controlledResources picks cpu/memory, controlledValues RequestsAndLimits (default) or RequestsOnly
+**Explanation:** resourcePolicy fine-tunes recommendations per container: containerPolicies[].containerName targets a specific container (omit for all). minAllowed/maxAllowed set hard bounds — VPA never recommends below/above them (protects against bad recommendations). controlledResources lists which resources VPA manages (default: cpu+memory). controlledValues: RequestsAndLimits (DEFAULT — sets both, limit scales proportionally to request preserving your request:limit ratio) vs RequestsOnly (only touches requests, leaves limits alone — useful when limits are intentionally high). This is where you stop VPA from shrinking a memory-hungry container below safe levels.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/autoscaling/vertical-pod-autoscale/" target="_blank">Kubernetes Docs - VPA</a>
+**Tags:** k8s::kcna topic::autoscaling topic::vpa topic::yaml src::session
+
+---
+
+<!-- note:1794284316758 model:Cloze -->
+**Text:** A VPA manifest (autoscaling.k8s.io/v1 — CRD, install VPA first):<br><br>{{c1::<code>apiVersion: autoscaling.k8s.io/v1</code>}}<br>{{c2::<code>kind: VerticalPodAutoscaler</code>}}<br>{{c3::<code>metadata:</code>}}<br>{{c4::<code>spec:</code>}}<br>  {{c5::<code>targetRef:</code>}}<br>    apiVersion: {{c6::<code>apps/v1</code>}}<br>    kind: {{c7::<code>Deployment</code>}}<br>    name: {{c8::<code>my-app</code>}}<br>  {{c9::<code>updatePolicy:</code>}}<br>    {{c10::<code>updateMode:</code>}} {{c11::<code>Recreate</code>}}<br>  {{c12::<code>resourcePolicy:</code>}}<br>    {{c13::<code>containerPolicies:</code>}}<br>    - {{c14::<code>controlledValues:</code>}} {{c15::<code>RequestsAndLimits</code>}}<br>      {{c16::<code>minAllowed:</code>}}<br>        cpu: {{c17::<code>100m</code>}}
+**Back Extra:** targetRef = the workload (apiVersion apps/v1, kind Deployment/StatefulSet). updatePolicy.updateMode: Off|Initial|Recreate|InPlaceOrRecreate|InPlace (Auto deprecated). resourcePolicy.containerPolicies: minAllowed/maxAllowed bounds, controlledResources cpu+memory default, controlledValues RequestsAndLimits(default)/RequestsOnly. Requires: VPA components installed + metrics-server.
+**Tags:** k8s::kcna topic::autoscaling topic::vpa topic::yaml src::session
+
+---
+
+<!-- note:1794284316766 model:Basic -->
+**Front:** How do you see a VPA's resource recommendations?
+**Back:** kubectl get vpa shows the VPA objects and their target; kubectl describe vpa <name> shows STATUS → Recommendations: per-container target/lowerBound/upperBound for cpu and memory (the values the recommender computed from metrics-server history). Also shows Conditions (recommendation freshness) and Events. Use this to see WHAT VPA would set before switching updateMode from Off to Recreate/InPlaceOrRecreate — the safe way to preview right-sizing.
+**Tags:** k8s::kcna topic::autoscaling topic::vpa src::session
+
+---

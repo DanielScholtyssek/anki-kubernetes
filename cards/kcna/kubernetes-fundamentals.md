@@ -3889,3 +3889,105 @@
 **Tags:** k8s::kcna topic::storage topic::csi src::session
 
 ---
+
+<!-- note:1794272298978 model:Many -->
+**Domain:** K8s Volumes - overview
+**Question:** Why do Kubernetes pods need volumes?
+**Options:** A. Volumes make pods run faster by caching images<br>B. Pods are ephemeral like containers — volume mounts give data persistence beyond pod life and let containers share files<br>C. Volumes replace the need for PersistentVolumes entirely<br>D. Volumes are only needed for Windows pods
+**Answer:** B (2) – Pods are ephemeral like containers — volume mounts give data persistence beyond pod life and let containers share files
+**Explanation:** Same problem as Docker, one level up: pods are ephemeral — scheduled, run, deleted; container filesystem writes die with them (kubelet restarts crashed containers with a CLEAN state). Kubernetes volumes solve the two core problems: (1) PERSISTENCE — a mounted volume's data survives pod deletion (for persistent types) and container restarts (always); (2) SHARING — multiple containers in one pod can mount the same volume to share files (app + log-shipper sidecar is the classic). A volume is fundamentally just 'a directory, possibly with data, accessible to the pod's containers' — the type decides what backs it.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/volumes/" target="_blank">Kubernetes Docs - Volumes</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794272298979 model:Many -->
+**Domain:** K8s Volumes - YAML mechanics
+**Question:** How are volumes declared and mounted in a Pod spec?
+**Options:** A. Volumes are declared inside each container's spec automatically<br>B. .spec.volumes declares the volumes; .spec.containers[].volumeMounts mounts each into a specific container path — every container mounts independently<br>C. volumeMounts go at pod level, volumes inside containers<br>D. A single volumeMount entry mounts the volume into all containers at once
+**Answer:** B (2) – .spec.volumes declares the volumes; .spec.containers[].volumeMounts mounts each into a specific container path — every container mounts independently
+**Explanation:** Pod volumes are a TWO-PART declaration: (1) spec.volumes[] — top-level list declaring each volume and its TYPE (emptyDir: {}, hostPath: {path:...}, persistentVolumeClaim: {claimName:...}, secret: {...}…); (2) spec.containers[].volumeMounts[] — per-container list saying mountPath: where inside THAT container + name: which declared volume. Every container that needs the volume must list its own volumeMount — volumes are pod-scoped, mounts are container-scoped. A volume can be mounted by multiple containers (sharing) or just one.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/volumes/" target="_blank">Kubernetes Docs - Volumes</a>
+**Tags:** k8s::kcna topic::storage topic::volumes topic::yaml src::session
+
+---
+
+<!-- note:1794272298980 model:Many -->
+**Domain:** K8s Volumes - hostPath
+**Question:** What does a hostPath volume do in Kubernetes?
+**Options:** A. hostPath copies host files into the pod's image at build time<br>B. hostPath mounts a file or directory from the NODE's filesystem into the pod — a powerful escape hatch with real security risks<br>C. hostPath is the recommended way to share data between pods<br>D. hostPath only works on control-plane nodes
+**Answer:** B (2) – hostPath mounts a file or directory from the NODE's filesystem into the pod — a powerful escape hatch with real security risks
+**Explanation:** hostPath is Kubernetes' version of Docker's bind mount: spec.volumes[].hostPath.path points at a path on the NODE's filesystem, mounted into the pod. It's the 'powerful escape hatch' — needed for node-level access (reading /var/log for log collectors, static pods that can't use ConfigMaps) — but the docs warn heavily: it can expose kubelet credentials or the container runtime socket (container escape!), behavior differs per node (files differ), and hostPath usage does NOT count as ephemeral storage (you monitor disk yourself). Prefer a 'local' PersistentVolume when you can.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/volumes/#hostpath" target="_blank">Kubernetes Docs - Volumes</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794272298981 model:Many -->
+**Domain:** K8s Volumes - hostPath types
+**Question:** Which hostPath volume 'type' values are valid? (Select all that apply)
+**Options:** A. DirectoryOrCreate creates a 0755 directory if the path doesn't exist<br>B. Directory requires the path to already exist as a directory<br>C. FileOrCreate creates a directory with 0755 permissions<br>D. File requires the path to already exist as a file<br>E. Socket requires a UNIX socket at the path<br>F. BlockDeviceOrCreate auto-provisions a block device
+**Answer:** B, D, E – DirectoryOrCreate creates a 0755 dir if missing, FileOrCreate creates a 0644 file; the rest either require existence (Directory/File), require special files (Socket/CharDevice/BlockDevice), or skip checks ("")
+**Explanation:** hostPath.type controls validation/creation at mount time: "" (empty, default) = NO checks — mounts whatever's there, backward compatible; Directory = must already exist; DirectoryOrCreate = creates empty dir 0755 owned by kubelet if missing; File = must exist; FileOrCreate = creates empty file 0644 if missing; Socket = must be a UNIX socket; CharDevice/BlockDevice = must be device nodes (Linux only). A is wrong — File requires an existing FILE not dir; C mixes them up; F doesn't exist.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/volumes/#hostpath" target="_blank">Kubernetes Docs - Volumes</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794272298982 model:Many -->
+**Domain:** K8s Volumes - type survey
+**Question:** Which of these are valid Kubernetes pod volume types? (Select all that apply)
+**Options:** A. emptyDir<br>B. Service<br>C. configMap<br>D. secret<br>E. persistentVolumeClaim<br>F. downwardAPI
+**Answer:** A, C, D, E, F – emptyDir, configMap, secret, downwardAPI, projected, and persistentVolumeClaim are all real pod volume types; Service is a networking object, not a volume
+**Explanation:** Kubernetes pod volume types fall into families: POD-SCOPED (die with pod) — emptyDir, hostPath, configMap, secret, downwardAPI, projected, image; CLUSTER-STORAGE — persistentVolumeClaim (the pod-side handle to durable storage), csi, local, nfs, iscsi, azureDisk, awsElasticBlockStore, gcePersistentDisk (in-tree ones deprecated → CSI). A pod can mix ANY number of types simultaneously. Service is a networking abstraction — not a volume. The survey-level skill: recognize the TYPE NAME in a pod spec and know which family it belongs to.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/volumes/" target="_blank">Kubernetes Docs - Volumes</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794272298983 model:Many -->
+**Domain:** K8s Volumes - ephemeral vs persistent
+**Question:** Which Kubernetes volume types persist data beyond the pod's lifetime?
+**Options:** A. All volume types are destroyed when the pod is deleted<br>B. Ephemeral types (emptyDir, hostPath, configMap, secret…) die with the pod; PVC-backed volumes persist beyond pod deletion; container restarts preserve data for ALL types<br>C. PersistentVolumes die with the pod; emptyDir survives pod deletion<br>D. Volume data is lost on every container restart regardless of type
+**Answer:** B (2) – Ephemeral types (emptyDir, hostPath, configMap, secret…) die with the pod; PVC-backed volumes persist beyond pod deletion; container restarts preserve data for ALL types
+**Explanation:** The lifetime split: EPHEMERAL volumes (emptyDir, hostPath unless on persistent host dir, configMap, secret, downwardAPI, projected, image) are destroyed when the pod is deleted — their lifetime is bound to the pod. PERSISTENT volumes (via persistentVolumeClaim → PV, or CSI) exist beyond any pod's life — delete the pod, the data stays for the next pod to claim. Nuance that trips people: data survives CONTAINER restarts inside a running pod for EVERY volume type — the wipe happens at POD deletion for ephemeral types. hostPath is a gray zone: the mount dies with the pod but the host directory's data persists on the node.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/volumes/" target="_blank">Kubernetes Docs - Volumes</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794272298984 model:Many -->
+**Domain:** K8s Volumes - PVC
+**Question:** How does a pod get durable (persistent) storage in Kubernetes?
+**Options:** A. persistentVolumeClaim creates a new PV on every pod start<br>B. persistentVolumeClaim volume type mounts a PersistentVolume into the pod — the user 'claims' durable storage without knowing cloud details<br>C. PVCs must be defined inside the pod spec itself<br>D. persistentVolumeClaim is only for Windows pods
+**Answer:** B (2) – persistentVolumeClaim volume type mounts a PersistentVolume into the pod — the user 'claims' durable storage without knowing cloud details
+**Explanation:** In the pod spec, persistentVolumeClaim is the volume type that connects pods to durable cluster storage: volumes[].persistentVolumeClaim.claimName references a PersistentVolumeClaim object; the PVC is bound to a PersistentVolume (provisioned statically or dynamically via StorageClass/CSI). This is the indirection that makes pods portable — the pod says 'give me storage named X', the PVC/PV/StorageClass machinery figures out whether that's EBS, Azure Disk, NFS, or local disk. Without it, pods could only use node-local or pod-scoped volumes.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/volumes/#persistentvolumeclaim" target="_blank">Kubernetes Docs - Volumes</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794272298985 model:Many -->
+**Domain:** K8s Volumes - in-tree vs CSI
+**Question:** What is the difference between in-tree and CSI (out-of-tree) volume plugins?
+**Options:** A. In-tree plugins run as sidecar pods next to kubelet<br>B. In-tree plugins were compiled into the Kubernetes binaries themselves; CSI plugins are out-of-tree and install as extensions — same decoupling idea as Docker volume plugins<br>C. CSI is the replacement for in-tree plugins — vendors ship storage as pods without touching k8s core<br>D. In-tree plugins are faster because they skip the API server
+**Answer:** B, C – In-tree plugins were compiled into the Kubernetes binaries themselves; CSI plugins are out-of-tree and install as extensions — same decoupling idea as Docker volume plugins
+**Explanation:** Kubernetes volume plugins come in two eras: IN-TREE — built, linked, and shipped inside the core Kubernetes binaries (awsElasticBlockStore, gcePersistentDisk, azureDisk, vsphereVolume, portworxVolume, flexVolume, gitRepo…). Adding a new storage system required code into the k8s repo — slow, vendor-hostile. OUT-OF-TREE — CSI (and formerly FlexVolume) plugins deploy as ordinary pods/extensions, vendor-developed, no core changes. The migration is done: in-tree cloud plugins are DEPRECATED and in v1.37 their operations redirect to CSI drivers — CSI is the only supported path for new storage.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/volumes/" target="_blank">Kubernetes Docs - Volumes</a>
+**Tags:** k8s::kcna topic::storage topic::volumes topic::csi src::session
+
+---
+
+<!-- note:1794272305615 model:Basic -->
+**Front:** What does subPath do in a volumeMount, and when do you use it?
+**Back:** subPath mounts only a SUBDIRECTORY of a volume instead of the whole thing: volumeMounts[].subPath: 'subdir' exposes just <volume>/subdir at mountPath. Use cases: mount one file/dir out of a shared config volume without exposing siblings; give a container write access to only part of a shared volume; mount a single file from a ConfigMap/Secret volume. Caveat: subPath does NOT get updated when the volume's content changes (no live updates for that subtree) — for config that must stay current, mount the whole volume or use env vars.
+**Tags:** k8s::kcna topic::storage topic::volumes topic::yaml src::session
+
+---
+
+<!-- note:1794272305616 model:Basic -->
+**Front:** What is a projected volume and what problem does it solve?
+**Back:** A projected volume merges MULTIPLE volume sources into ONE directory: volumes[].projected.sources[] can combine secret, configMap, downwardAPI, and serviceAccountToken entries — all appear as files in the same mountPath. Classic use: the kubelet itself mounts the pod's service-account token this way (that's why /var/run/secrets/kubernetes.io/serviceaccount/ contains both the token AND ca.crt — different sources, one projected volume). Contrast: a plain secret/configMap volume mounts ONE source; projected stitches several together.
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---

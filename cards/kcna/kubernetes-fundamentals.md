@@ -3991,3 +3991,83 @@
 **Tags:** k8s::kcna topic::storage topic::volumes src::session
 
 ---
+
+<!-- note:1794272613979 model:Many -->
+**Domain:** K8s Storage - PV/PVC binding
+**Question:** Can a PVC claim only PART of a PersistentVolume, or must it take the whole thing?
+**Options:** A. Yes — multiple PVCs can each claim a portion of one PV<br>B. NO — binding is strictly one-to-one: one PVC claims one WHOLE PV exclusively; PVs cannot be sliced between claims<br>C. Yes — if the PV's capacity is larger than the PVC request<br>D. Only with ReadWriteMany access mode
+**Answer:** B (2) – NO — binding is strictly one-to-one: one PVC claims one WHOLE PV exclusively; PVs cannot be sliced between claims
+**Explanation:** Your skepticism is correct — the docs are explicit: 'A PVC to PV binding is a one-to-one mapping' and 'Once bound, PersistentVolumeClaim binds are exclusive.' A PVC claims an ENTIRE PV; you cannot split one PV across multiple PVCs. What the lecture meant by 'parts': PVs form a cluster-wide POOL of whole volumes, and each PVC claims one whole PV from that pool — 'give me some of the pool's storage' = 'bind me to one whole PV'. Bonus rule: the bound PV may be LARGER than requested — 'the user will always get at least what they asked for, but the volume may be in excess.'
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/#binding" target="_blank">Kubernetes Docs - PV/PVC Binding</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794272613980 model:Many -->
+**Domain:** K8s Storage - PV spec
+**Question:** What is a PersistentVolume (PV) in Kubernetes?
+**Options:** A. apiVersion: storage.k8s.io/v1, kind: PersistentVolume<br>B. apiVersion: v1, kind: PersistentVolume — a cluster-scoped object describing real storage: capacity, accessModes, reclaimPolicy, storageClassName, claimRef, and the backend spec (csi/nfs/hostPath…)<br>C. PersistentVolumes are namespaced like PVCs<br>D. kind: VolumeClaimTemplate
+**Answer:** B (2) – apiVersion: v1, kind: PersistentVolume — a cluster-scoped object describing real storage: capacity, accessModes, reclaimPolicy, storageClassName, claimRef, and the backend spec (csi/nfs/hostPath…)
+**Explanation:** A PersistentVolume is a cluster-scoped API object (apiVersion: v1 — core group, NOT a CRD) that represents a piece of real storage in the cluster. Its spec declares: capacity.storage (size), accessModes (RWO/ROX/RWX/RWOP), persistentVolumeReclaimPolicy (what happens after release), storageClassName (which class it belongs to), claimRef (which PVC it's bound to), volumeMode (Filesystem vs Block), and the backend details — csi:, nfs:, hostPath:, local:, etc. Admins create PVs pointing at actual infrastructure (an EBS volume ID, an NFS server export, a node directory).
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/" target="_blank">Kubernetes Docs - Persistent Volumes</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794272613981 model:Many -->
+**Domain:** K8s Storage - binding rules
+**Question:** What must be true for a PVC to bind to a PV?
+**Options:** A. PVC binds to any available PV regardless of size<br>B. PVC must request ≤ PV capacity, a compatible accessMode, and matching storageClass — otherwise it stays Pending/unbound until a fit appears<br>C. PVCs bind to the oldest PV in the cluster first<br>D. A PVC larger than the PV still binds — it just uses less space
+**Answer:** B (2) – PVC must request ≤ PV capacity, a compatible accessMode, and matching storageClass — otherwise it stays Pending/unbound until a fit appears
+**Explanation:** The control-plane binding loop matches PVCs to PVs on three criteria: SIZE — PVC's requested storage must be ≤ PV's capacity (a 100Gi PVC can't bind a 50Gi PV; it waits for a big enough PV); ACCESS MODE — PVC's requested modes must be satisfiable by the PV's modes; STORAGE CLASS — PVC's storageClassName must match the PV's (empty class '' = no dynamic provisioning, binds only to classless PVs). If nothing matches, the PVC stays UNBOUND indefinitely — 'claims will remain unbound indefinitely if a matching volume does not exist' — until a suitable PV appears or dynamic provisioning creates one.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/#binding" target="_blank">Kubernetes Docs - PV/PVC Binding</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794272613982 model:Many -->
+**Domain:** K8s Storage - access modes
+**Question:** What are Kubernetes PV/PVC access modes?
+**Options:** A. RWO = one pod only, RWX = one node only<br>B. RWO=one node (but multiple pods on that node CAN share!), ROX=read-only many nodes, RWX=read-write many nodes, RWOP=read-write exactly ONE pod (CSI-only, stable since 1.29)<br>C. Access modes enforce filesystem-level read-only protection<br>D. RWOP works with all volume types including hostPath
+**Answer:** B (2) – RWO=one node (but multiple pods on that node CAN share!), ROX=read-only many nodes, RWX=read-write many nodes, RWOP=read-write exactly ONE pod (CSI-only, stable since 1.29)
+**Explanation:** Four access modes, abbreviated RWO/ROX/RWX/RWOP: ReadWriteOnce — mount read-write on ONE node (nuance: multiple pods ON THAT NODE can still share it — it's node-scoped not pod-scoped!); ReadOnlyMany — read-only on many nodes; ReadWriteMany — read-write on many nodes (NFS/EFS/Azure Files style shared storage); ReadWriteOncePod — read-write by exactly ONE pod cluster-wide, the strictest mode (CSI volumes only, stable v1.29). Two traps: (1) access modes are for MATCHING PVC↔PV and constraining mounts — they do NOT enforce read-only (a ROX volume isn't guaranteed read-only!); (2) a volume mounts with ONE mode at a time.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes" target="_blank">Kubernetes Docs - Access Modes</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794272613983 model:Many -->
+**Domain:** K8s Storage - reclaim policy
+**Question:** What do PersistentVolume reclaim policies do?
+**Options:** A. Retain deletes the backing storage; Delete keeps it<br>B. Retain keeps the PV+data for manual reclaim, Delete removes both PV and backing asset (the default — dynamic PVs inherit the StorageClass policy), Recycle is deprecated<br>C. Recycle is the recommended policy for production<br>D. Reclaim policy only applies to static PVs, not dynamic ones
+**Answer:** B (2) – Retain keeps the PV+data for manual reclaim, Delete removes both PV and backing asset (the default — dynamic PVs inherit the StorageClass policy), Recycle is deprecated
+**Explanation:** persistentVolumeReclaimPolicy decides what happens to a PV AFTER its PVC is released: RETAIN — PV and data stay; admin manually cleans up (delete PV object, verify asset, clear claimRef, delete asset) — safest for valuable data; DELETE — PV object AND backing storage asset are both removed — the default, and dynamically-provisioned PVs INHERIT their StorageClass's reclaimPolicy (which defaults to Delete — so dynamic volumes self-destruct unless you change the class); RECYCLE — deprecated scrub-and-reuse, replaced by dynamic provisioning. Classic gotcha: PVC deleted → PV with Delete policy → your EBS volume GONE.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/#reclaiming" target="_blank">Kubernetes Docs - Reclaiming</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794272613984 model:Many -->
+**Domain:** K8s Storage - provisioning
+**Question:** What is the difference between static and dynamic PV provisioning?
+**Options:** A. Static provisioning creates PVs automatically on PVC creation<br>B. Static: admin pre-creates PVs; Dynamic: PVC's storageClass triggers a provisioner to create a PV on demand — no admin PV needed<br>C. Dynamic provisioning requires manually creating PVs first<br>D. Static and dynamic are the same thing with different names
+**Answer:** B (2) – Static: admin pre-creates PVs; Dynamic: PVC's storageClass triggers a provisioner to create a PV on demand — no admin PV needed
+**Explanation:** Two ways PVs come to exist: STATIC — the cluster admin manually creates PersistentVolume objects describing real storage (an NFS export, an EBS volume ID, a node dir); users' PVCs bind to them if criteria match. DYNAMIC — no matching static PV exists → the control plane asks a provisioner (via StorageClass) to CREATE a new PV+backing asset specifically for the PVC; requires the admin to have configured a StorageClass with a provisioner (e.g. ebs.csi.aws.com) and the DefaultStorageClass admission for defaulting. Dynamic is the modern default — users never wait for admin-created PVs.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/#provisioning" target="_blank">Kubernetes Docs - Provisioning</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794272619184 model:Basic -->
+**Front:** Why does Kubernetes split storage into admin-managed PVs and user-facing PVCs instead of letting pods declare storage directly?
+**Back:** Separation of duties, same pattern as the whole cloud-native design: the ADMIN owns cluster infrastructure — creating PVs that describe real storage (EBS volume IDs, NFS exports, node dirs), setting capacity/access modes/reclaim policy, deciding retention. Users shouldn't need to know (or be allowed to touch) cloud storage details — they just create a PVC saying 'I need 10Gi, ReadWriteOnce' and the binding machinery finds or provisions a match. Result: self-service storage for developers, centralized control + audit for admins, and pods stay portable because they reference claims, not vendor specifics.
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794272619191 model:Cloze -->
+**Text:** A PersistentVolume spec — the admin-side storage object:<br><br>{{c1::<code>apiVersion: v1</code>}}<br>{{c2::<code>kind: PersistentVolume</code>}}<br>{{c3::<code>metadata:</code>}}<br>{{c4::<code>spec:</code>}}<br>  capacity:<br>    storage: {{c5::<code>10Gi</code>}}<br>  {{c6::<code>accessModes:</code>}}<br>    - {{c7::<code>ReadWriteOnce</code>}}<br>  {{c8::<code>persistentVolumeReclaimPolicy:</code>}} {{c9::<code>Retain</code>}}<br>  storageClassName: {{c10::<code>standard</code>}}<br>  csi:  # or nfs:/hostPath:/local: — the real backend
+**Back Extra:** apiVersion: v1 + kind: PersistentVolume = core API group (not a CRD). Spec fields: capacity.storage (size like 10Gi), accessModes (RWO/ROX/RWX/RWOP), persistentVolumeReclaimPolicy (Retain/Delete/Recycle), storageClassName, claimRef (bound PVC), volumeMode (Filesystem/Block), and the backend: csi:/nfs:/hostPath:/local:. cluster-scoped — no namespace field.
+**Tags:** k8s::kcna topic::storage topic::volumes topic::yaml src::session
+
+---

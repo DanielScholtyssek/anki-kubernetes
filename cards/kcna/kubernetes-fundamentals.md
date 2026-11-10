@@ -4272,3 +4272,14 @@
 **Tags:** k8s::kcna topic::docker topic::storage src::session
 
 ---
+
+<!-- note:1794275787267 model:Many -->
+**Domain:** Docker Storage - mounts MCQ
+**Question:** What are two types of mounts available in Docker?
+**Options:** A. Persistent and temporary<br>B. Volume and bind mounting<br>C. Local and remote<br>D. Static and dynamic
+**Answer:** B (2) – Volume mounts (docker volume, daemon-managed under /var/lib/docker/volumes) and bind mounts (direct host path mapped into the container)
+**Explanation:** Docker's two mount types: VOLUME MOUNTS — daemon-managed named volumes created via docker volume create, stored under /var/lib/docker/volumes, survive container deletion, can use volume-driver plugins for cloud backends. BIND MOUNTS — a direct host filesystem path mapped into the container (-v /host/path:/container/path); simplest, but you manage the host path yourself and it's tied to that host. 'Persistent vs temporary' describes data lifetime, not mount types; 'local vs remote' and 'static vs dynamic' are storage-class/provisioning concepts, not Docker mounts.
+**Sources:** <a href="https://docs.docker.com/engine/storage/" target="_blank">Docker Docs - Storage</a>
+**Tags:** k8s::kcna topic::docker topic::storage topic::volumes src::session
+
+---

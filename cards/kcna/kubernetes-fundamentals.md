@@ -4071,3 +4071,76 @@
 **Tags:** k8s::kcna topic::storage topic::volumes topic::yaml src::session
 
 ---
+
+<!-- note:1794273603210 model:Many -->
+**Domain:** K8s Storage - PVC spec
+**Question:** Which fields belong in a PersistentVolumeClaim spec? (Select all that apply)
+**Options:** A. accessModes — how the volume can be mounted (RWO/ROX/RWX/RWOP)<br>B. hostPath — the node directory to mount<br>C. resources.requests.storage — how much storage to claim<br>D. storageClassName — which StorageClass/provisioner to use<br>E. containers — the pod spec to run<br>F. volumeMode — Filesystem or Block device
+**Answer:** A, C, D, F – accessModes, resources.requests.storage, storageClassName, and volumeMode; B (selector) and E are also real fields — the trick is which are REQUIRED vs optional
+**Explanation:** A PVC spec declares the CLAIM, not the storage: accessModes (how it can be mounted — required), resources.requests.storage (how much — required, e.g. 8Gi), volumeMode (Filesystem vs Block — optional, defaults Filesystem), storageClassName (which class/provisioner — optional but usually set), selector (label filter to pick a specific PV — optional), volumeName (pin to ONE exact PV — optional). Required = accessModes + resources.requests.storage; everything else steers WHICH PV binds. Namespaced object — PVCs live in your namespace, unlike cluster-scoped PVs.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims" target="_blank">Kubernetes Docs - PVCs</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794273603211 model:Many -->
+**Domain:** K8s Storage - binding modes
+**Question:** How can a PVC control WHICH PersistentVolume it binds to?
+**Options:** A. PVCs can only bind automatically — no way to influence which PV<br>B. Three binding paths: automatic criteria matching (size/accessMode/class), selector label-matching to filter candidates, or volumeName to pin one exact PV<br>C. volumeName creates a new PV with that name<br>D. Selector matches PVCs to Pods, not PVs
+**Answer:** B (2) – Three binding paths: automatic criteria matching (size/accessMode/class), selector label-matching to filter candidates, or volumeName to pin one exact PV
+**Explanation:** A PVC finds its PV three ways: (1) AUTOMATIC — no selector/volumeName: the binding loop matches on capacity, accessModes, volumeMode, storageClassName; (2) SELECTOR — spec.selector.matchLabels/matchExpressions filter PVs by their labels (ANDed with the class requirement — only same-class AND label-matching PVs qualify); (3) VOLUME NAME — spec.volumeName pins the PVC to ONE specific PV (strongest binding; if that PV is already bound, the PVC sits Pending forever). Selector and volumeName are mutually exclusive ways to steer binding — automatic is the default when neither is set.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/#selector" target="_blank">Kubernetes Docs - PVC Selector</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794273603212 model:Many -->
+**Domain:** K8s Storage - selector gotcha
+**Question:** Can a PVC with a spec.selector get a dynamically provisioned volume?
+**Options:** A. Yes — the provisioner copies the selector labels onto the new PV<br>B. NO — a PVC with a non-empty selector cannot get a dynamically provisioned PV; it must bind to an existing matching PV<br>C. Yes — selectors only apply to static provisioning anyway<br>D. The selector is ignored during dynamic provisioning
+**Answer:** B (2) – NO — a PVC with a non-empty selector cannot get a dynamically provisioned PV; it must bind to an existing matching PV
+**Explanation:** Documented limitation: 'a PVC with a non-empty selector can't have a PV dynamically provisioned for it.' Rationale: dynamic provisioning creates a NEW PV on demand — but a selector says 'only bind me to a PV carrying THESE labels', and a freshly provisioned PV won't carry your custom labels (unless the provisioner supports label propagation via StorageClass parameters). So selector = opt into static/pre-labeled PVs only. If you need dynamic provisioning, leave selector empty and steer via storageClassName instead.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/#selector" target="_blank">Kubernetes Docs - PVC Selector</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794273603213 model:Many -->
+**Domain:** K8s Storage - volumeName
+**Question:** What happens when a PVC sets volumeName to a PV that's already bound to another PVC?
+**Options:** A. It binds to the next available PV automatically<br>B. It stays Pending — volumeName is a hard pin: if that PV is already bound to another PVC, this claim can never bind<br>C. It steals the PV from the other PVC<br>D. It fails immediately with an error event
+**Answer:** B (2) – It stays Pending — volumeName is a hard pin: if that PV is already bound to another PVC, this claim can never bind
+**Explanation:** spec.volumeName is the explicit-binding escape hatch: 'bind me to PV named X, period.' The docs warn: 'If the specified PV is already bound to another PVC, the binding will be stuck in a pending state' — volumeName doesn't queue or fall back to other PVs, it's a hard reference. Useful for pinning a pod to specific pre-provisioned storage (e.g. a manually created NFS PV), dangerous if you forget the PV is taken — the PVC just sits Pending with no obvious error. Automatic matching (no volumeName) would have found another PV.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/#volume-name" target="_blank">Kubernetes Docs - PVC Volume Name</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794273603214 model:Many -->
+**Domain:** K8s Storage - PVC lifecycle
+**Question:** What are the phases a PVC/PV pair goes through?
+**Options:** A. Pending → Bound → Available → Deleted<br>B. Pending (unbound, searching) → Bound (matched to a PV) → Released (PVC deleted but resource not yet reclaimed) → Failed; Available is the PV's pre-binding state<br>C. Bound → Pending → Retained → Recycled<br>D. PVCs have no phases — only PVs do
+**Answer:** B (2) – Pending (unbound, searching) → Bound (matched to a PV) → Released (PVC deleted but resource not yet reclaimed) → Failed; Available is the PV's pre-binding state
+**Explanation:** Phase lifecycle: PVC starts PENDING — created but no matching PV yet (waiting for capacity/provisioning); flips BOUND when the control loop binds it to a PV (1:1, exclusive); on PVC deletion the PV enters RELEASED — 'the claim has been deleted, but the associated storage resource is not yet reclaimed' — the reclaim policy then acts (Retain → Available for reuse, Delete → gone); FAILED if something went wrong provisioning/mounting. Don't confuse the actors: these phases describe the CLAIM's view — the PV has its own status (Available/Bound/Released/Failed) tracking the other side of the binding.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/" target="_blank">Kubernetes Docs - PV/PVC Lifecycle</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794273603215 model:Many -->
+**Domain:** K8s Storage - delete & reclaim
+**Question:** What happens to the PV when you delete a PVC?
+**Options:** A. kubectl delete pvc deletes the PV and all data automatically<br>B. kubectl delete pvc removes the CLAIM; the PV's reclaimPolicy decides the volume's fate — and the DEFAULT is Delete, not Retain as the lecture claimed<br>C. The PV always survives PVC deletion with Retain semantics<br>D. kubectl delete pvc --cascade=orphan is required to keep the volume
+**Answer:** B (2) – kubectl delete pvc removes the CLAIM; the PV's reclaimPolicy decides the volume's fate — and the DEFAULT is Delete, not Retain as the lecture claimed
+**Explanation:** CORRECTION to the lecture: 'by default it is set to retain' is WRONG — the default reclaim policy is DELETE. kubectl delete pvc only removes the claim object; the PV's persistentVolumeReclaimPolicy then acts: DELETE (default — dynamic PVs inherit it from StorageClass which defaults to Delete) removes the PV AND the backing asset (EBS volume gone!); RETAIN keeps PV+data — the PV goes Released, admin can manually reclaim (clear claimRef → PV becomes Available → a NEW PVC can bind it — so yes, others CAN reuse a Retained PV); RECYCLE scrubs contents (deprecated, only nfs/hostPath support it). So deleting a PVC can destroy real cloud storage — check reclaimPolicy first.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/persistent-volumes/#deleting-a-pvc" target="_blank">Kubernetes Docs - PV/PVC</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794273606342 model:Cloze -->
+**Text:** A PersistentVolumeClaim — the user-side storage request:<br><br>{{c1::<code>apiVersion: v1</code>}}<br>{{c2::<code>kind: PersistentVolumeClaim</code>}}<br>{{c3::<code>metadata:</code>}}<br>{{c4::<code>spec:</code>}}<br>  {{c5::<code>accessModes:</code>}}<br>    - {{c6::<code>ReadWriteOnce</code>}}<br>  {{c7::<code>volumeMode:</code>}} {{c8::<code>Filesystem</code>}}<br>  resources:<br>    requests:<br>      storage: {{c9::<code>8Gi</code>}}<br>  storageClassName: {{c10::<code>slow</code>}}<br>  selector:<br>    matchLabels:<br>      release: {{c11::<code>"stable"</code>}}
+**Back Extra:** Required: accessModes + resources.requests.storage. volumeMode defaults Filesystem (Block = raw device, no filesystem). selector + storageClassName are ANDed — and a non-empty selector BLOCKS dynamic provisioning. volumeName pins to one exact PV (stuck Pending if taken). storageClassName: "" = explicitly NO class (binds only classless PVs); missing = uses DefaultStorageClass if configured.
+**Tags:** k8s::kcna topic::storage topic::volumes topic::yaml src::session
+
+---

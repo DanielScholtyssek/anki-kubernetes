@@ -717,3 +717,14 @@
 **Tags:** k8s::kcna topic::service-mesh topic::architecture src::session
 
 ---
+
+<!-- note:1794286429515 model:Many -->
+**Domain:** Cloud Native Architecture - FaaS
+**Question:** What is the benefit of using FaaS?
+**Options:** A. It requires no custom code to be written.<br>B. It is flexible and affordable, and companies only pay for the computing resources they use.<br>C. It is always cheaper than traditional server management.<br>D. It is time-efficient as developers don't have to coordinate with the infrastructure team.
+**Answer:** B (2) – FaaS is flexible and affordable — you only pay for the compute your functions actually consume, with zero server management
+**Explanation:** FaaS (Function as a Service — Lambda, Cloud Functions, Azure Functions) benefit: event-driven, pay-per-invocation pricing — you pay only for the milliseconds/GB your code actually runs, and the provider handles ALL infrastructure. A is wrong — you DO write code (the functions!); FaaS removes infrastructure work, not code. C is the 'always' trap — at sustained high volume FaaS can cost MORE than provisioned servers; it's cheapest for spiky/idle workloads. D is partially true (no infra team coordination) but it's a side benefit, not the core economic advantage — B is the textbook answer.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/overview/" target="_blank">Kubernetes Docs - Overview</a>
+**Tags:** k8s::kcna topic::architecture topic::serverless src::session
+
+---

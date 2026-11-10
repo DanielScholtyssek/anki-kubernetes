@@ -728,3 +728,14 @@
 **Tags:** k8s::kcna topic::architecture topic::serverless src::session
 
 ---
+
+<!-- note:1794287040777 model:Many -->
+**Domain:** CNCF - Kubernetes dates quiz
+**Question:** When did Kubernetes join the Cloud Native Computing Foundation (CNCF)?
+**Options:** A. 2020<br>B. 2014<br>C. 2016<br>D. 2018
+**Answer:** C (3) – 2016: Kubernetes joined CNCF on March 10, 2016 as its first hosted project (Incubating); it GRADUATED March 6, 2018
+**Explanation:** Don't confuse the three dates: 2014 = Kubernetes was CREATED (first commit June 6, 2014, open-sourced by Google); 2016 = JOINED CNCF (March 10, 2016 — CNCF's first hosted project, entered at Incubating maturity); 2018 = GRADUATED (March 6, 2018 — first CNCF project ever to reach Graduated status, API frozen + governance proven). The options test exactly this distinction: 'join' = 2016, not creation (2014) and not graduation (2018). CNCF itself was founded in 2015 by the Linux Foundation.
+**Sources:** <a href="https://www.cncf.io/projects/kubernetes/" target="_blank">CNCF - Kubernetes project page</a>
+**Tags:** k8s::kcna topic::ecosystem topic::cncf src::session
+
+---

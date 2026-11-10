@@ -4404,3 +4404,14 @@
 **Tags:** k8s::kcna topic::kep topic::community src::session
 
 ---
+
+<!-- note:1794287209671 model:Many -->
+**Domain:** KEPs - status lifecycle quiz
+**Question:** What is the significance of the provisional status in the KEP workflow?
+**Options:** A. The KEP has been approved and is ready for implementation.<br>B. The KEP has been rejected and will not be implemented.<br>C. The KEP has been withdrawn by the authors.<br>D. The KEP has been suggested and is being discussed.
+**Answer:** D (4) – Provisional is the INITIAL status: the KEP exists as a draft/proposal and the design is still being discussed and iterated
+**Explanation:** kep.yaml's status field has 7 values: provisional → implementable → implemented, plus deferred/rejected/withdrawn/replaced. PROVISIONAL = 'suggested and being discussed' — design not settled, PR still iterating with reviewers. IMPLEMENTABLE = design approved enough to code (≈ option A). IMPLEMENTED = merged. DEFERRED = pushed to a later release. REJECTED = declined (≈ B). WITHDRAWN = authors pulled it (≈ C). REPLACED = superseded by another KEP. Provisional is where every KEP starts — it's the 'proposal under discussion' state.
+**Sources:** <a href="https://github.com/kubernetes/enhancements/blob/master/keps/NNNN-kep-template/kep.yaml" target="_blank">KEP template kep.yaml</a>
+**Tags:** k8s::kcna topic::kep topic::community src::session
+
+---

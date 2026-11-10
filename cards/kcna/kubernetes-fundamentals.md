@@ -4144,3 +4144,98 @@
 **Tags:** k8s::kcna topic::storage topic::volumes topic::yaml src::session
 
 ---
+
+<!-- note:1794274357891 model:Many -->
+**Domain:** K8s Storage - StorageClass
+**Question:** What problem do StorageClasses solve?
+**Options:** A. StorageClasses encrypt data at rest in etcd<br>B. StorageClasses enable DYNAMIC provisioning — a PVC's storageClassName triggers a provisioner to create the disk+PV automatically, no manual PV<br>C. StorageClasses replace PVCs with a simpler object<br>D. StorageClasses are only for local node storage
+**Answer:** B (2) – StorageClasses enable DYNAMIC provisioning — a PVC's storageClassName triggers a provisioner to create the disk+PV automatically, no manual PV
+**Explanation:** Static provisioning (the manual way): admin must create the real disk FIRST (GCP PD, AWS EBS, NFS export), then hand-write a PersistentVolume describing it, then users' PVCs bind to it — slow, error-prone, doesn't scale. StorageClasses solve it via DYNAMIC provisioning: admin defines a StorageClass ONCE naming a provisioner + parameters; a user creates ONLY a PVC with storageClassName + requested size; the external provisioner creates the backing disk AND the PV object automatically, then binds. Users never touch PVs — 'you do not need to write it.'
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/storage-classes/" target="_blank">Kubernetes Docs - Storage Classes</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794274357892 model:Many -->
+**Domain:** K8s Storage - StorageClass spec
+**Question:** What does a StorageClass object look like at the API level?
+**Options:** A. apiVersion: v1, kind: StorageClass — namespaced per team<br>B. apiVersion: storage.k8s.io/v1, kind: StorageClass — a cluster-scoped object (not namespaced, admins define it once for everyone)<br>C. kind: PersistentVolumeClaimTemplate<br>D. apiVersion: storage.k8s.io/v1beta1 only
+**Answer:** B (2) – apiVersion: storage.k8s.io/v1, kind: StorageClass — a cluster-scoped object (not namespaced, admins define it once for everyone)
+**Explanation:** A StorageClass is apiVersion: storage.k8s.io/v1 (named API group — NOT v1 core, NOT a CRD you write yourself) + kind: StorageClass. It's CLUSTER-SCOPED: admins define classes once ('standard' = fast SSD, 'slow' = cheap HDD, 'encrypted' = encrypted volumes) and every namespace's PVCs can reference them by name via storageClassName. Think of it as a 'storage product catalog' — the class bundles provisioner + parameters + policies into a reusable profile users pick by name.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/storage-classes/" target="_blank">Kubernetes Docs - Storage Classes</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794274357893 model:Many -->
+**Domain:** K8s Storage - provisioner
+**Question:** What does the 'provisioner' field in a StorageClass do?
+**Options:** A. provisioner is the Kubernetes node that hosts the volume<br>B. The provisioner names WHICH volume plugin creates the disks — internal ones (kubernetes.io/gce-pd) or external CSI provisioners (ebs.csi.aws.com, pd.csi.storage.gke.io)<br>C. provisioner specifies the pod that will mount the volume<br>D. provisioner is optional — Kubernetes picks one automatically
+**Answer:** B (2) – The provisioner names WHICH volume plugin creates the disks — internal ones (kubernetes.io/gce-pd) or external CSI provisioners (ebs.csi.aws.com, pd.csi.storage.gke.io)
+**Explanation:** spec.provisioner is the REQUIRED field — it names the volume plugin that does the actual provisioning. Two flavors: INTERNAL/built-in provisioners named kubernetes.io/<backend> (gce-pd, aws-ebs, azure-disk — legacy in-tree names) and EXTERNAL provisioners — independent programs following the external-provisioner spec, almost always CSI drivers (ebs.csi.aws.com for AWS EBS, pd.csi.storage.gke.io for GCP PD, efs.csi.aws.com…). Third parties can write their own external provisioners — storage vendors ship them as the CSI ecosystem matured; in-tree provisioners are deprecated in favor of CSI.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/storage-classes/" target="_blank">Kubernetes Docs - Storage Classes</a>
+**Tags:** k8s::kcna topic::storage topic::volumes topic::csi src::session
+
+---
+
+<!-- note:1794274357894 model:Many -->
+**Domain:** K8s Storage - parameters
+**Question:** What are 'parameters' in a StorageClass?
+**Options:** A. parameters are Kubernetes-wide settings applied to all classes<br>B. Provisioner-specific key-value options passed to the provisioner — e.g. type: pd-ssd, zones, iopsPerGB, fsType, encrypted — max 512 parameters<br>C. parameters must be identical across all StorageClasses<br>D. parameters configure pod resource requests
+**Answer:** B (2) – Provisioner-specific key-value options passed to the provisioner — e.g. type: pd-ssd, zones, iopsPerGB, fsType, encrypted — max 512 parameters
+**Explanation:** spec.parameters is a free-form map of options handed to the provisioner — each provisioner accepts its own keys: GCP PD takes type (pd-standard/pd-ssd/pd-balanced), zones, iopsPerGB?, fsType; AWS EBS takes type (gp2/gp3/io1/io2), iopsPerGB, encrypted, kmsKeyId, fsType; Azure takes skuName, kind, storageAccount. Omitted params get provisioner defaults. Limits: at most 512 parameters, and they're validated differently per provisioner — a param valid for EBS may be meaningless (or rejected) for PD. This is where 'fast SSD' vs 'cheap HDD' classes actually differ.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/storage-classes/" target="_blank">Kubernetes Docs - Storage Classes</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794274357895 model:Many -->
+**Domain:** K8s Storage - class reclaimPolicy
+**Question:** How does StorageClass.reclaimPolicy affect dynamically provisioned volumes?
+**Options:** A. reclaimPolicy on the class overrides each PV's own setting permanently<br>B. The class's reclaimPolicy is INHERITED by every dynamically provisioned PV — Delete (default) destroys backing storage on PVC delete; Retain preserves it<br>C. reclaimPolicy: Retain is the default for all classes<br>D. reclaimPolicy applies only to static PVs, not dynamic ones
+**Answer:** B (2) – The class's reclaimPolicy is INHERITED by every dynamically provisioned PV — Delete (default) destroys backing storage on PVC delete; Retain preserves it
+**Explanation:** StorageClass.reclaimPolicy sets the default for all PVs it dynamically provisions: DELETE (the default when unspecified) — PVC deleted → PV + backing disk both destroyed; RETAIN — PVC deleted → PV+data survive for manual reclaim/reuse. This connects directly to the earlier gotcha: a PVC on a default class + kubectl delete pvc = your cloud disk GONE. For anything precious, either set reclaimPolicy: Retain on the class or verify before deleting claims. Only Delete/Retain are valid here — Recycle isn't allowed on classes.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/storage-classes/" target="_blank">Kubernetes Docs - Storage Classes</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794274357896 model:Many -->
+**Domain:** K8s Storage - volumeBindingMode
+**Question:** What is the difference between Immediate and WaitForFirstConsumer volumeBindingMode?
+**Options:** A. Immediate waits for pod scheduling; WaitForFirstConsumer provisions instantly<br>B. Immediate (default) provisions at PVC creation — possibly in the WRONG zone; WaitForFirstConsumer waits until the pod is scheduled, then provisions in the pod's zone/topology<br>C. volumeBindingMode only affects static PVs<br>D. WaitForFirstConsumer requires NFS volumes
+**Answer:** B (2) – Immediate (default) provisions at PVC creation — possibly in the WRONG zone; WaitForFirstConsumer waits until the pod is scheduled, then provisions in the pod's zone/topology
+**Explanation:** volumeBindingMode controls WHEN provisioning happens: IMMEDIATE (default) — PV is provisioned the moment the PVC is created, BEFORE any pod exists. Problem: a zonal disk (EBS/GCE-PD) provisioned immediately may land in zone A while the pod later schedules in zone B → 'no available volume zone' / multi-attach errors (your earlier card!). WaitForFirstConsumer — the PVC stays Pending until a pod using it is scheduled; the provisioner then creates the volume IN THE POD'S ZONE/topology — the fix for zone-aware storage. Caveats: don't set nodeName in the pod spec (breaks the wait); allowedTopologies can further restrict zones.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/storage-classes/" target="_blank">Kubernetes Docs - Storage Classes</a>
+**Tags:** k8s::kcna topic::storage topic::volumes topic::scheduling src::session
+
+---
+
+<!-- note:1794274357897 model:Many -->
+**Domain:** K8s Storage - volume expansion
+**Question:** What does allowVolumeExpansion do on a StorageClass?
+**Options:** A. allowVolumeExpansion lets pods request more CPU<br>B. allowVolumeExpansion: true permits growing the PVC's storage request — the provisioner resizes the backing volume and filesystem online<br>C. Expansion works regardless of the class setting<br>D. allowVolumeExpansion shrinks volumes automatically
+**Answer:** B (2) – allowVolumeExpansion: true permits growing the PVC's storage request — the provisioner resizes the backing volume and filesystem online
+**Explanation:** allowVolumeExpansion: true on the StorageClass opts the class into PVC RESIZING: edit the PVC's resources.requests.storage upward (or kubectl patch) and Kubernetes asks the provisioner to grow the backing disk, then the node resizes the filesystem — online, no pod restart needed (filesystem must support online growth — ext4/xfs do). Requirements stack: class allows it AND provisioner supports expansion AND the volume plugin handles it. With it false/unset, PVC size is FROZEN at creation — plan capacity upfront or recreate.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/storage-classes/" target="_blank">Kubernetes Docs - Storage Classes</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794274357898 model:Many -->
+**Domain:** K8s Storage - user flow
+**Question:** What does a user actually create to get dynamically provisioned storage?
+**Options:** A. User must create the PV first, then the PVC<br>B. User creates only a PVC naming the class + size — provisioner creates disk+PV, binds, pod mounts it; the PV object exists but was never hand-written<br>C. User creates a Pod with a storageClass field directly<br>D. The admin creates a PV for every expected PVC manually
+**Answer:** B (2) – User creates only a PVC naming the class + size — provisioner creates disk+PV, binds, pod mounts it; the PV object exists but was never hand-written
+**Explanation:** The dynamic-provisioning user experience: (1) admin defines StorageClass once; (2) user applies a PVC with storageClassName: fast + resources.requests.storage: 10Gi; (3) PVC goes Pending briefly; (4) the external-provisioner sees it, calls the CSI CreateVolume RPC, the cloud disk appears, a PV object is auto-created describing it; (5) binding loop binds PVC↔PV; (6) pod mounts via persistentVolumeClaim.claimName. The user NEVER writes PV YAML — that's the entire point. kubectl get pv shows the auto-created PV with labels like failure-domain.beta.kubernetes.io/zone.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/storage-classes/" target="_blank">Kubernetes Docs - Storage Classes</a>
+**Tags:** k8s::kcna topic::storage topic::volumes src::session
+
+---
+
+<!-- note:1794274362470 model:Cloze -->
+**Text:** A StorageClass — the admin-side dynamic-provisioning profile:<br><br>{{c1::<code>apiVersion: storage.k8s.io/v1</code>}}<br>{{c2::<code>kind: StorageClass</code>}}<br>{{c3::<code>metadata:</code>}}<br>{{c4::<code>provisioner:</code>}} {{c5::<code>pd.csi.storage.gke.io</code>}}<br>{{c6::<code>parameters:</code>}}<br>  type: {{c7::<code>pd-ssd</code>}}<br>  {{c8::<code>reclaimPolicy:</code>}} {{c9::<code>Delete</code>}}<br>  {{c10::<code>volumeBindingMode:</code>}} {{c11::<code>WaitForFirstConsumer</code>}}<br>  {{c12::<code>allowVolumeExpansion:</code>}} {{c13::<code>true</code>}}
+**Back Extra:** provisioner = REQUIRED (which plugin creates disks: kubernetes.io/gce-pd legacy, or CSI like ebs.csi.aws.com/pd.csi.storage.gke.io). parameters = provisioner-specific (type, zones, iopsPerGB, fsType, encrypted — max 512). reclaimPolicy Delete(default)/Retain — inherited by dynamically created PVs. volumeBindingMode Immediate(default)/WaitForFirstConsumer (provision in pod's zone). allowVolumeExpansion true = PVC resizable. mountOptions = filesystem mount flags.
+**Tags:** k8s::kcna topic::storage topic::volumes topic::yaml src::session
+
+---

@@ -988,3 +988,14 @@
 **Tags:** k8s::kcna topic::autoscaling topic::hpa topic::scheduling src::session
 
 ---
+
+<!-- note:1794286565088 model:Many -->
+**Domain:** OCI - runtime spec quiz
+**Question:** What does the container runtime specification, governed by the OCI, include?
+**Options:** A. Details on downloading, unpacking, and running the file system bundle using an OCI-compliant runtime<br>B. Guidelines on how to create an OCI-compliant image<br>C. Guidelines on how to distribute an OCI-compliant image<br>D. Guidelines on how to create an OCI-compliant runtime
+**Answer:** A (1) – The runtime spec covers executing the bundle: downloading/unpacking the rootfs, config.json, and the container lifecycle (create→start→kill→delete) that an OCI runtime must implement
+**Explanation:** OCI publishes SEPARATE specs — don't mix them: RUNTIME spec = how to RUN a container (the 'bundle': rootfs + config.json, the process args, mounts, namespaces; lifecycle states create/start/kill/delete) — that's option A. IMAGE spec = how to CREATE/format an image (option B). DISTRIBUTION spec = how to PUSH/PULL images via registries (option C). D is nonsense — runtimes (runc, crun) IMPLEMENT the spec; you don't 'create a runtime' per the spec. In Kubernetes: CRI is the kubelet↔runtime API, and runtimes like containerd speak OCI runtime spec underneath.
+**Sources:** <a href="https://opencontainers.org/" target="_blank">Open Container Initiative</a>
+**Tags:** k8s::kcna topic::cri-oci topic::containers src::session
+
+---

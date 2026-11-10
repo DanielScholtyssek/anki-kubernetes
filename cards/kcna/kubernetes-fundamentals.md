@@ -4360,3 +4360,14 @@
 **Tags:** k8s::kcna topic::kep topic::community src::session
 
 ---
+
+<!-- note:1794286572211 model:Many -->
+**Domain:** KEPs - proposing changes quiz
+**Question:** What is the recommended way to propose a change in Kubernetes?
+**Options:** A. Write a KEP<br>B. Submit a design document<br>C. Contact a Special Interest Group (SIG)<br>D. Open a GitHub issue
+**Answer:** A (1) – Write a KEP in kubernetes/enhancements — it's the formal proposal vehicle; in practice you socialize the idea with a SIG first, but the KEP is what gets reviewed and approved
+**Explanation:** The KEP IS the proposal — a structured doc (motivation, design, risks, test plan, graduation criteria) submitted via PR to kubernetes/enhancements. Nuance the question glosses: the PROCESS starts by socializing with a SIG (mailing list/meeting) to gauge interest and find owners — 'contact a SIG' is step zero, not the proposal itself. GitHub issues in that repo are tracking umbrellas, not proposals; 'submit a design document' is too vague — the KEP template IS the required design doc format. So: SIG first for consensus, KEP for the actual proposal.
+**Sources:** <a href="https://github.com/kubernetes/enhancements" target="_blank">kubernetes/enhancements repo</a>
+**Tags:** k8s::kcna topic::kep topic::community src::session
+
+---

@@ -4382,3 +4382,14 @@
 **Tags:** k8s::kcna topic::kep topic::community src::session
 
 ---
+
+<!-- note:1794286742194 model:Many -->
+**Domain:** KEPs - test plan quiz
+**Question:** What is the purpose of a test plan in a KEP?
+**Options:** A. To track the progress of the proposal<br>B. To outline the requirements for a successful enhancement<br>C. To ensure that the proposed change is thoroughly tested before implementation<br>D. To provide a high-level overview of the proposed change
+**Answer:** C (3) – The test plan section specifies HOW the change will be verified — unit tests, e2e tests, upgrade/downgrade tests — ensuring it's thoroughly tested before it ships
+**Explanation:** Every KEP template requires a Test Plan section: it enumerates the testing strategy for the enhancement — which unit/integration/e2e tests will be added, how upgrades and downgrades are tested, and what test coverage is required at each graduation stage (Alpha needs less, Beta/GA demand full e2e + upgrade testing). It's a quality gate reviewed alongside the design. A is wrong — progress tracking lives in the enhancement ISSUE, not the KEP's test plan. B describes graduation criteria/proposal requirements, not testing. D is the proposal summary's job.
+**Sources:** <a href="https://github.com/kubernetes/enhancements/blob/master/keps/NNNN-kep-template/README.md" target="_blank">KEP template</a>
+**Tags:** k8s::kcna topic::kep topic::community src::session
+
+---

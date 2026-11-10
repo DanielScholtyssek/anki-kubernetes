@@ -933,3 +933,58 @@
 **Tags:** k8s::kcna topic::autoscaling topic::vpa src::session
 
 ---
+
+<!-- note:1794284463041 model:Many -->
+**Domain:** Cluster Autoscaler - mechanics
+**Question:** How does Cluster Autoscaler work mechanically?
+**Options:** A. CA resizes existing nodes to be bigger<br>B. CA spots pods stuck Pending/unschedulable, simulates whether a new node would fit them, asks the cloud API to grow the node group, then drains+terminates underutilized nodes on scale-down<br>C. CA replaces the Kubernetes scheduler entirely<br>D. CA only adds nodes — it can never remove them
+**Answer:** B (2) – CA spots pods stuck Pending/unschedulable, simulates whether a new node would fit them, asks the cloud API to grow the node group, then drains+terminates underutilized nodes on scale-down
+**Explanation:** UP: kube-scheduler fails to place pods (Insufficient cpu/memory) → CA checks if adding ONE node from a candidate node group would make them schedulable → calls the cloud provider API to increase that group's size (ASG/GKE node pool/etc.) → node boots, kubelet registers, pods schedule. DOWN: after a stabilization window, CA finds nodes whose pods fit elsewhere, cordons+drains them (respecting PodDisruptionBudgets), then terminates via cloud API. CA never touches pods directly — it only changes NODE COUNT through the provider.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/cluster-administration/node-autoscaling/" target="_blank">Kubernetes Docs - Node Autoscaling</a>
+**Tags:** k8s::kcna topic::autoscaling topic::scheduling src::session
+
+---
+
+<!-- note:1794284463042 model:Many -->
+**Domain:** Cluster Autoscaler - cloud provider requirement
+**Question:** What does Cluster Autoscaler need to actually create/delete nodes?
+**Options:** A. CA works on any cluster with zero configuration<br>B. CA is cloud-agnostic autoscaling LOGIC, but it can only create/delete nodes through a cloud provider implementation (--cloud-provider flag); nodes must belong to 'node groups' of identical machines<br>C. CA talks directly to kubelet to power nodes on/off<br>D. Node groups can mix different machine types freely
+**Answer:** B (2) – CA is cloud-agnostic autoscaling LOGIC, but it can only create/delete nodes through a cloud provider implementation (--cloud-provider flag); nodes must belong to 'node groups' of identical machines<br>C. CA talks directly to kubelet to power nodes on/off<br>D. Node groups can mix different machine types freely
+**Explanation:** CA's core logic is generic, but all VM lifecycle calls go through a CloudProvider interface — one implementation per cloud (GCE, AWS, Azure, OpenStack, CloudStack…). --cloud-provider=<name> picks which. Critical assumption: nodes belong to NODE GROUPS — sets of IDENTICAL machines (same machine type/resources, same labels+taints, same zone). CA grows/shrinks whole groups, never individual oddball nodes. Bare metal has no such API by default — you'd need to implement the interface yourself or bridge through something that can create machines.
+**Sources:** https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler/cloudprovider
+**Tags:** k8s::kcna topic::autoscaling topic::scheduling src::session
+
+---
+
+<!-- note:1794284463043 model:Many -->
+**Domain:** Cluster Autoscaler - managed vs self-hosted
+**Question:** How does CA setup differ between managed cloud and self-hosted clusters?
+**Options:** A. Managed and self-hosted clusters use identical CA setup<br>B. On GKE/EKS/AKS the platform manages CA for you (the lecture's --cluster-autoscaler=min-nodes=3,max-nodes=10 is a GKE cluster-creation flag); self-hosted = you deploy CA itself AND supply a working cloud provider<br>C. The GKE flag installs CA on any cluster type<br>D. Self-hosted clusters cannot use Cluster Autoscaler at all
+**Answer:** B (2) – On GKE/EKS/AKS the platform manages CA for you (the lecture's --cluster-autoscaler=min-nodes=3,max-nodes=10 is a GKE cluster-creation flag); self-hosted = you deploy CA itself AND supply a working cloud provider
+**Explanation:** On managed Kubernetes the cloud IS the provider — GKE's --cluster-autoscaler flags configure a CA the platform runs for you; EKS has cluster-autoscaler as a managed addon; AKS similar. Self-hosted flips both requirements: (1) you deploy the CA deployment yourself (it lives in kube-system, needs RBAC + cloud credentials), and (2) you must point --cloud-provider at an implementation that can actually create your nodes' VMs/machines. On Talos that second part is the hard bit — Talos gives you immutable nodes but nothing that says 'make me 3 more VMs'.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/cluster-administration/node-autoscaling/" target="_blank">Kubernetes Docs - Node Autoscaling</a>
+**Tags:** k8s::kcna topic::autoscaling topic::scheduling src::session
+
+---
+
+<!-- note:1794284463044 model:Many -->
+**Domain:** Cluster Autoscaler - self-hosted options
+**Question:** I self-host Talos on Proxmox — how do I get node autoscaling?
+**Options:** A. CA has a built-in 'proxmox' cloud provider<br>B. kubernetes/autoscaler ships NO Proxmox/bare-metal provider — options: Sidero Omni + omni-node-autoscaler (gRPC provider bridging to Omni's machine provisioning), Cluster API + Proxmox infra provider + CCM, or a DIY watcher adjusting Terraform worker_count<br>C. Talos nodes can be created by kubelet automatically<br>D. The only option is buying a managed Kubernetes service
+**Answer:** B (2) – kubernetes/autoscaler ships NO Proxmox/bare-metal provider — options: Sidero Omni + omni-node-autoscaler (gRPC provider bridging to Omni's machine provisioning), Cluster API + Proxmox infra provider + CCM, or a DIY watcher adjusting Terraform worker_count
+**Explanation:** For Talos-on-Proxmox specifically: (1) SIDERO OMNI path — omni-node-autoscaler implements CA's external gRPC cloudprovider interface; CA asks it to grow a machine set, Omni provisions VMs via its Proxmox infra provider — the cleanest 'real CA' experience. (2) CLUSTER API path — run CA with --cloud-provider=cluster-api; Cluster API's Proxmox infrastructure provider creates Machines; needs a cloud-controller-manager for providerID. (3) DIY — a small service watching metrics that bumps worker_count in terraform.tfvars + terraform apply (Talos auto-joins); scale-down = terraform destroy after drain. (4) TRUE bare metal — projects like cluster-bare-autoscaler power nodes off/on via WoL/IPMI instead of create/delete. None are turnkey.
+**Sources:** https://github.com/rothgar/omni-node-autoscaler
+**Tags:** k8s::kcna topic::autoscaling topic::scheduling topic::talos src::session
+
+---
+
+<!-- note:1794284463045 model:Many -->
+**Domain:** Cluster Autoscaler - vs HPA layering
+**Question:** How do HPA and Cluster Autoscaler divide the work?
+**Options:** A. CA replaces HPA — you only need one<br>B. HPA scales pod COUNT inside existing capacity; CA adds the NODES that give HPA's extra pods somewhere to run — CA can't help if HPA isn't asking for more pods, and HPA can't exceed what nodes provide<br>C. CA watches application metrics like HPA does<br>D. HPA creates nodes; CA creates pods
+**Answer:** B (2) – HPA scales pod COUNT inside existing capacity; CA adds the NODES that give HPA's extra pods somewhere to run — CA can't help if HPA isn't asking for more pods, and HPA can't exceed what nodes provide
+**Explanation:** They solve different bottlenecks: traffic spike → HPA adds replicas → pods pend because nodes are FULL → CA detects unschedulable pods → adds nodes → HPA's pods finally schedule. CA doesn't watch your app's load at all — it only reacts to pods that CANNOT SCHEDULE. Conversely, CA won't add nodes for a Deployment sitting at 2 replicas on an underutilized cluster — nothing is asking for capacity. Rule of thumb: HPA answers 'how many pods does the APP need', CA answers 'does the CLUSTER have room for them'.
+**Sources:** <a href="https://kubernetes.io/docs/concepts/workloads/autoscaling/" target="_blank">Kubernetes Docs - Autoscaling Workloads</a>
+**Tags:** k8s::kcna topic::autoscaling topic::hpa topic::scheduling src::session
+
+---

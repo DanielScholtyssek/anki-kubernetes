@@ -791,3 +791,65 @@
 **Tags:** k8s::kcna topic::autoscaling topic::workloads src::session
 
 ---
+
+<!-- note:1794282968512 model:Many -->
+**Domain:** HPA - YAML anatomy
+**Question:** What does an HPA manifest look like?
+**Options:** A. apiVersion: autoscaling/v2beta2, kind: HorizontalPodAutoscaler<br>B. apiVersion autoscaling/v2, kind HorizontalPodAutoscaler, spec.scaleTargetRef pointing at the Deployment + minReplicas/maxReplicas + metrics array<br>C. kind: PodMonitor with a replicas field<br>D. apiVersion: v1, kind: HorizontalPodAutoscaler
+**Answer:** B (2) – apiVersion autoscaling/v2, kind HorizontalPodAutoscaler, spec.scaleTargetRef pointing at the Deployment + minReplicas/maxReplicas + metrics array
+**Explanation:** A HorizontalPodAutoscaler YAML: apiVersion autoscaling/v2 (v2beta2 is long gone), kind: HorizontalPodAutoscaler, metadata.name. spec.scaleTargetRef says WHAT to scale — apiVersion: apps/v1, kind: Deployment, name: <target> (also works for StatefulSet, ReplicaSet, or anything with a /scale subresource). spec.minReplicas/maxReplicas bound the range; spec.metrics defines WHAT to watch. HPA is namespaced — it lives in the same namespace as its target.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/" target="_blank">Kubernetes Docs - HPA Walkthrough</a>
+**Tags:** k8s::kcna topic::autoscaling topic::hpa topic::yaml src::session
+
+---
+
+<!-- note:1794282968513 model:Many -->
+**Domain:** HPA - controller mechanics
+**Question:** What does the HPA controller actually do? (verify the lecture's claim)
+**Options:** A. HPA is a scheduler that directly creates and deletes pods<br>B. HPA reads metrics via metrics-server and writes the target's replica count — for a Deployment that's deployment.spec.replicas; the ReplicaSet controller then creates/deletes pods<br>C. HPA modifies the ReplicaSet's pod template directly<br>D. HPA runs on each node like kubelet
+**Answer:** B (2) – HPA reads metrics via metrics-server and writes the target's replica count — for a Deployment that's deployment.spec.replicas; the ReplicaSet controller then creates/deletes pods
+**Explanation:** Lecture check: HPA IS a controller (runs inside kube-controller-manager as the horizontal-pod-autoscaler controller) and it DOES monitor via metrics-server — both true. The imprecise part: it doesn't 'scale the ReplicaSet' directly. HPA writes to the target's SCALE SUBRESOURCE — for a Deployment that's spec.replicas on the Deployment object. The Deployment controller propagates to its ReplicaSet, whose controller creates/deletes pods. If scaleTargetRef pointed at a bare ReplicaSet, then yes it would scale the RS directly. So: HPA adjusts a NUMBER on an object; the workload's own controllers do the pod-level work.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/" target="_blank">Kubernetes Docs - HPA</a>
+**Tags:** k8s::kcna topic::autoscaling topic::hpa src::session
+
+---
+
+<!-- note:1794282968514 model:Many -->
+**Domain:** HPA - metric types
+**Question:** What metric types can an HPA use?
+**Options:** A. HPA can only use CPU — memory and custom metrics aren't supported<br>B. Resource metrics (cpu/memory as % of requests or absolute) via metrics.k8s.io, plus custom types: Pods metrics and Object metrics via adapter APIs<br>C. HPA reads metrics directly from etcd<br>D. Any Prometheus query can be used without an adapter
+**Answer:** B (2) – Resource metrics (cpu/memory as % of requests or absolute) via metrics.k8s.io, plus custom types: Pods metrics and Object metrics via adapter APIs
+**Explanation:** HPA's metrics array supports: RESOURCE metrics — name: cpu or memory, target type Utilization (averageUtilization: 50 = 50% of the pods' CPU REQUESTS) or AverageValue (absolute, e.g. 500Mi); served by metrics-server via metrics.k8s.io. PODS metrics — custom per-pod metric averaged across pods, AverageValue only. OBJECT metrics — a metric describing another object (e.g. requests-per-second on an Ingress), Value or AverageValue. Custom metrics need an adapter (Prometheus adapter → custom.metrics.k8s.io); external metrics → external.metrics.k8s.io. Default resource metrics only cover cpu+memory — the ONLY two built-in resource metrics.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/" target="_blank">Kubernetes Docs - HPA Walkthrough</a>
+**Tags:** k8s::kcna topic::autoscaling topic::hpa topic::observability src::session
+
+---
+
+<!-- note:1794282968515 model:Many -->
+**Domain:** HPA - status and inspection
+**Question:** How do you inspect what an HPA is doing?
+**Options:** A. kubectl get hpa shows pod logs directly<br>B. kubectl get hpa shows TARGETS as current/desired utilization %; status fields track currentReplicas, desiredReplicas, currentMetrics, lastScaleTime<br>C. HPA status only shows the last error message<br>D. You must exec into the controller to see replica counts
+**Answer:** B (2) – kubectl get hpa shows TARGETS as current/desired utilization %; status fields track currentReplicas, desiredReplicas, currentMetrics, lastScaleTime<br>C. HPA status only shows the last error message<br>D. You must exec into the controller to see replica counts
+**Explanation:** kubectl get hpa shows columns: REFERENCE (target), TARGETS (current utilization / target, e.g. 42%/50%), MINPODS, MAXPODS, REPLICAS, AGE. kubectl describe hpa reveals CONDITIONS: AbleToScale (target found + has scale subresource), ScalingActive (metrics flowing — if false, check metrics-server!), ScalingLimited (hit min/max). The status block in the object itself carries observedGeneration, lastScaleTime, currentReplicas vs desiredReplicas, and currentMetrics — gold for 'why isn't it scaling' debugging. If TARGETS shows <unknown> the metrics pipeline is broken.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/" target="_blank">Kubernetes Docs - HPA</a>
+**Tags:** k8s::kcna topic::autoscaling topic::hpa topic::debugging src::session
+
+---
+
+<!-- note:1794282968516 model:Many -->
+**Domain:** HPA - kubectl autoscale vs YAML
+**Question:** When do you need HPA YAML instead of kubectl autoscale?
+**Options:** A. kubectl autoscale is deprecated — always write YAML<br>B. kubectl autoscale creates the HPA object for you; hand-written YAML is needed for custom metrics (Pods/Object types), the behavior tuning fields, or anything beyond cpu/memory<br>C. kubectl autoscale only works on ReplicaSets, not Deployments<br>D. YAML and kubectl autoscale create different object kinds
+**Answer:** B (2) – kubectl autoscale creates the HPA object for you; hand-written YAML is needed for custom metrics (Pods/Object types), the behavior tuning fields, or anything beyond cpu/memory
+**Explanation:** kubectl autoscale deployment <name> --cpu=50% --min=1 --max=10 creates a working HPA instantly — it generates autoscaling/v2 YAML with a Resource cpu Utilization metric under the hood. But it only handles the simple case: ONE resource metric, no custom metrics, no behavior tuning. For Pods/Object/custom metrics, multiple metrics, scaleUp/scaleDown policies, stabilizationWindowSeconds, or selectPolicy you MUST write the YAML and kubectl apply it. Think: autoscale = quickstart, YAML = production config.
+**Sources:** <a href="https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/" target="_blank">Kubernetes Docs - HPA Walkthrough</a>
+**Tags:** k8s::kcna topic::autoscaling topic::hpa topic::yaml src::session
+
+---
+
+<!-- note:1794282972132 model:Cloze -->
+**Text:** An HPA manifest (autoscaling/v2) — watches CPU and adds/removes replicas:<br><br>{{c1::<code>apiVersion: autoscaling/v2</code>}}<br>{{c2::<code>kind: HorizontalPodAutoscaler</code>}}<br>{{c3::<code>metadata:</code>}}<br>{{c4::<code>spec:</code>}}<br>  {{c5::<code>scaleTargetRef:</code>}}<br>    apiVersion: {{c6::<code>apps/v1</code>}}<br>    kind: {{c7::<code>Deployment</code>}}<br>    name: {{c8::<code>php-apache</code>}}<br>  {{c9::<code>minReplicas:</code>}} {{c10::<code>1</code>}}<br>  {{c11::<code>maxReplicas:</code>}} {{c12::<code>10</code>}}<br>  {{c13::<code>metrics:</code>}}<br>  - type: {{c14::<code>Resource</code>}}<br>    resource:<br>      name: {{c15::<code>cpu</code>}}<br>      target:<br>        type: {{c16::<code>Utilization</code>}}<br>        {{c17::<code>averageUtilization:</code>}} {{c18::<code>50</code>}}
+**Back Extra:** scaleTargetRef = WHAT gets scaled (apiVersion apps/v1, kind Deployment, name — must have a /scale subresource). minReplicas/maxReplicas = bounds (minReplicas defaults to 1). metrics[].type Resource + resource.name cpu|memory + target.type Utilization (averageUtilization = % of pod CPU REQUESTS) or AverageValue (absolute). Requires metrics-server; pods need CPU requests set or utilization is meaningless.
+**Tags:** k8s::kcna topic::autoscaling topic::hpa topic::yaml src::session
+
+---

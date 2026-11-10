@@ -4371,3 +4371,14 @@
 **Tags:** k8s::kcna topic::kep topic::community src::session
 
 ---
+
+<!-- note:1794286648516 model:Many -->
+**Domain:** Community - Working Groups quiz
+**Question:** What is the role of Working Groups in the Kubernetes community?
+**Options:** A. Developing new features and fixing bugs in Kubernetes<br>B. Coordinating feature development in Kubernetes releases<br>C. Come together to work on specific issues of the project<br>D. Organizing community events and education initiatives
+**Answer:** C (3) – Working Groups are smaller, time-bound teams that form around a SPECIFIC issue or topic, deliver it, then disband — narrower and shorter-lived than SIGs
+**Explanation:** Kubernetes community structure: SIGs (Special Interest Groups) are the permanent domain owners — SIG Apps, SIG Node, SIG Architecture do ongoing feature dev and bug work (that's option A — SIG work, not WG). Working Groups are the opposite shape: small, temporary teams spawned for a SPECIFIC issue or cross-cutting topic (e.g. a WG on a particular API area or migration), which disband when done. Release coordination is the RELEASE TEAM's job (B). Events/education are USER GROUPS and community programs (D). Memory aid: SIG = standing committee by domain; WG = task force by issue.
+**Sources:** https://github.com/kubernetes/community
+**Tags:** k8s::kcna topic::kep topic::community src::session
+
+---

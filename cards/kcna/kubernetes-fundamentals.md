@@ -4239,3 +4239,14 @@
 **Tags:** k8s::kcna topic::storage topic::volumes topic::yaml src::session
 
 ---
+
+<!-- note:1794275284974 model:Many -->
+**Domain:** K8s Storage - CSI quiz
+**Question:** What is the role of storage drivers in the Container Storage Interface (CSI) standard?
+**Options:** A. To implement the set of remote procedure calls defined by CSI<br>B. To manage the container volumes and storage resources<br>C. To ensure compatibility between the container orchestrator and the storage solutions<br>D. To define a set of remote procedure calls that will be called by the container orchestrator
+**Answer:** A (1) – Drivers implement the RPC set CSI defines — the spec says WHAT calls exist (CreateVolume, NodePublishVolume…); the driver is the vendor program that actually performs them
+**Explanation:** Split the roles carefully: the CSI STANDARD/SPEC defines the RPC interface (option D is the spec's job, not the driver's). The storage DRIVER (CSI plugin) is the vendor-side program that IMPLEMENTS those RPCs — when the orchestrator calls CreateVolume, the driver's code runs and actually creates the EBS volume/PD/etc. Option B describes what drivers end up doing in practice, but their formal role 'in the standard' is implementing its RPC contract. Option C is the purpose of CSI as a whole — the driver is one half of that compatibility story (orchestrator calls standard RPCs, driver fulfills them for its backend).
+**Sources:** <a href="https://kubernetes.io/docs/concepts/storage/volumes/#csi" target="_blank">Kubernetes Docs - CSI Volumes</a>
+**Tags:** k8s::kcna topic::storage topic::csi topic::volumes src::session
+
+---

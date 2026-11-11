@@ -675,3 +675,32 @@
 **Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::alerting
 
 ---
+
+<!-- note:1794363700613 model:Many -->
+**Domain:** Prometheus - local storage
+**Question:** Where does Prometheus store scraped metrics, and how long by default?
+**Options:** A. Local on-disk TSDB — default retention 15 days; optional size cap; not replicated, so long-term history needs remote-write/Thanos<br>B. Cloud object storage by default — retention is unlimited<br>C. In-memory only — data is lost on restart<br>D. It forwards everything to Grafana for storage
+**Answer:** A (1) – Local on-disk TSDB, default 15d retention; not replicated → remote-write for long-term
+**Explanation:** Prometheus embeds a local time-series database (TSDB) on disk — data in 2-hour blocks plus a WAL for the in-memory head. --storage.tsdb.retention.time defaults to 15d; retention.size can cap bytes; whichever triggers first wins. It's a SINGLE-NODE store — not clustered or replicated — fine for recent monitoring/alerting data, but years of history or durability need remote-write to Thanos/Cortex/Mimir. Samples cost ~1-2 bytes so capacity planning is easy. NFS is explicitly unsupported for the data dir.
+**Sources:** <a href="https://prometheus.io/docs/prometheus/latest/storage/" target="_blank">Prometheus Docs - Storage</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus
+
+---
+
+<!-- note:1794363700614 model:Many -->
+**Domain:** Prometheus - numeric only
+**Question:** Why is Prometheus designed around numeric time-series data specifically?
+**Options:** A. Numbers aggregate and compute cheaply — rate/avg/percentiles over dimensions (labels) — while logs/traces are high-volume events that need different storage and query models<br>B. Because Prometheus can't parse text<br>C. Because numeric data is more secure<br>D. Because Kubernetes only produces numeric metrics
+**Answer:** A (1) – Numbers aggregate/compute cheaply via labels; logs/traces are events needing different stores
+**Explanation:** Deliberate design, not a limitation: numeric samples compress to ~1-2 bytes, labels give cheap dimensions, and PromQL math (rate, histogram_quantile, aggregations) only works because values are numbers. Logs are unstructured text events and traces are request trees — neither fits a timeseries store; that's why Loki/ELK handle logs and Jaeger/Tempo handle traces while Prometheus owns metrics. 'Monitors numeric time series' IS the data model.
+**Sources:** <a href="https://prometheus.io/docs/introduction/overview/" target="_blank">Prometheus Docs - Overview</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus
+
+---
+
+<!-- note:1794363704624 model:Cloze -->
+**Text:** scrape_configs anatomy:<br><br>- job_name: {{c1::node-exporter}} — logical job grouping targets<br>  metrics_path: {{c2::/metrics}} — HTTP endpoint Prometheus scrapes<br>  scrape_interval: {{c3::1m}} — default: every minute (timeout defaults to 10s)<br>  static_configs:<br>  - targets: [{{c4::node1:9100}}, {{c5::node2:9100}}] — host:port of exporters
+**Back Extra:** Field roles: job_name = logical grouping of targets sharing one scrape config; metrics_path = the HTTP endpoint Prometheus GETs (default /metrics); scrape_interval = how often to scrape (default 1m; scrape_timeout defaults to 10s and must be ≤ interval); static_configs.targets = manually listed host:port endpoints — each scraped target becomes an 'instance' label, and job/instance labels are auto-attached to every sample. Alternatives to static_configs: file_sd, http_sd, and kubernetes_sd for dynamic discovery (pods/endpoints change constantly in K8s). Node Exporter conventionally listens on :9100.
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus
+
+---

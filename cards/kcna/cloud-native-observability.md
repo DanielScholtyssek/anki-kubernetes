@@ -470,3 +470,113 @@
 **Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::logging topic::tracing
 
 ---
+
+<!-- note:1794362066575 model:Many -->
+**Domain:** SLI - definition
+**Question:** What is a Service Level Indicator (SLI)?
+**Options:** A. A carefully defined quantitative measure of some aspect of the level of service provided — e.g. request latency, error rate, throughput, or availability<br>B. A target value your team commits to for a service metric<br>C. A contract between vendor and customer with financial penalties<br>D. A Prometheus alerting rule that pages on-call
+**Answer:** A (1) – Quantitative measure of service level: latency, error rate, throughput, availability, durability
+**Explanation:** SLI = Service Level Indicator — the MEASUREMENT of service quality. Classic examples: request latency (often p99/p999 over a window), error rate (failed/total requests), throughput (req/s), availability (fraction of well-formed requests succeeding = 'yield'), durability for storage systems, correctness for all. Measurements are aggregated over a window into rates/averages/percentiles. B is the SLO (target), C is the SLA (contract), D is just an alert that may consume an SLI.
+**Sources:** <a href="https://sre.google/sre-book/service-level-objectives/" target="_blank">Google SRE Book - Service Level Objectives</a>
+**Tags:** k8s::kcna src::session topic::observability topic::monitoring
+
+---
+
+<!-- note:1794362066576 model:Many -->
+**Domain:** SLI - selection
+**Question:** What is the right way to choose SLIs for a service?
+**Options:** A. Pick a handful that map to what users actually care about — user experience — even if that means using proxies; don't use every metric you can measure<br>B. Use every metric your monitoring system can collect so nothing is missed<br>C. Use only the easiest metrics to collect at the server<br>D. Use only infrastructure metrics like CPU and memory
+**Answer:** A (1) – Pick a handful mapping to user experience; use proxies where needed; not every metric
+**Explanation:** Google SRE: 'You shouldn't use every metric you can track in your monitoring system as an SLI' — too many SLIs dilute attention, too few leave blind spots. Start from what USERS care about and work backward to measurable proxies (e.g. client-side latency beats server-side because it captures slow JS page loads). Pure infrastructure metrics (CPU/memory) describe the machine, not the service level the user experiences.
+**Sources:** <a href="https://sre.google/sre-book/service-level-objectives/" target="_blank">Google SRE Book - Service Level Objectives</a>
+**Tags:** k8s::kcna src::session topic::observability topic::monitoring
+
+---
+
+<!-- note:1794362066577 model:Many -->
+**Domain:** SLI - examples select-all
+**Question:** Which of the following are common Service Level Indicators? (Select all that apply)
+**Options:** A. Request latency (e.g. p99 response time)<br>B. Error rate (failed requests / total requests)<br>C. Availability (fraction of well-formed requests that succeed — 'yield')<br>D. Durability (likelihood stored data is retained — for storage systems)<br>E. Deployment frequency (how often releases ship)<br>F. Number of pods currently running
+**Answer:** A, B, C, D – latency, error rate, availability/yield, durability are canonical SLIs
+**Explanation:** Canonical SLIs (Google SRE): latency, error rate, throughput, availability (fraction of well-formed requests that succeed — 'yield'), durability (stored data retained — storage systems), correctness (right answer returned — all systems). E is a DORA delivery metric, not a service-level measure. F is infra state — though SATURATION (resource exhaustion) is a legitimate SLI via the USE method for capacity. Prefer percentiles over averages for latency: averages hide the long tail, and users prefer consistent-mediocre over fast-with-spikes.
+**Sources:** <a href="https://sre.google/sre-book/service-level-objectives/" target="_blank">Google SRE Book - Service Level Objectives</a>
+**Tags:** k8s::kcna src::session topic::observability topic::monitoring
+
+---
+
+<!-- note:1794362066578 model:Many -->
+**Domain:** SLO - definition
+**Question:** What is a Service Level Objective (SLO)?
+**Options:** A. A target value or range for an SLI — e.g. '99% of requests complete in <500ms' — the level you intend to hit<br>B. The measured value of a service metric over a time window<br>C. A legally binding contract with financial penalties for missed targets<br>D. A dashboard showing current service health
+**Answer:** A (1) – Target value/range for an SLI, e.g. '99% of requests <500ms'
+**Explanation:** SLO = Service Level Objective — the TARGET for how well the service should perform, expressed against an SLI: 'SLI ≤ target' or 'lower ≤ SLI ≤ upper'. Example: '99% of Get RPCs < 100ms'; layered targets like '90% <1ms, 99% <10ms, 99.9% <100ms' shape the latency distribution. B is the SLI measurement itself, C is the SLA, D is visualization. You don't always pick the value (QPS is set by users) — but you choose the threshold you commit to defend.
+**Sources:** <a href="https://sre.google/sre-book/service-level-objectives/" target="_blank">Google SRE Book - Service Level Objectives</a>
+**Tags:** k8s::kcna src::session topic::observability topic::monitoring
+
+---
+
+<!-- note:1794362066579 model:Many -->
+**Domain:** SLO vs SLA
+**Question:** A cloud vendor advertises '99.9% monthly uptime' and issues service credits if it falls short. What is this?
+**Options:** A. An SLA — it pairs the SLO-style target with explicit consequences (credits) for missing it<br>B. Just an SLO — uptime targets are always SLOs<br>C. An SLI — it measures the actual uptime achieved<br>D. An error budget — it defines allowed failures
+**Answer:** A (1) – SLA: the uptime target PLUS explicit consequences (service credits)
+**Explanation:** Litmus test from Google SRE: 'What happens if the SLOs aren't met?' Explicit consequence — credits, penalties, contract terms — means SLA. The 99.9% alone would be an SLO; the credits make it an agreement. Footnote worth memorizing: 'Most people really mean SLO when they say SLA' — an 'SLA violation' usually means a missed SLO; a real SLA violation can mean breach of contract. Mnemonic: SLIs measure, SLOs target, SLAs contract + consequences.
+**Sources:** <a href="https://sre.google/sre-book/service-level-objectives/" target="_blank">Google SRE Book - Service Level Objectives</a>
+**Tags:** k8s::kcna src::session topic::observability topic::monitoring
+
+---
+
+<!-- note:1794362066580 model:Many -->
+**Domain:** SLA - definition
+**Question:** Which statement about Service Level Agreements (SLAs) is correct?
+**Options:** A. An SLA is a business contract — often legally binding — that includes consequences (rebates, penalties, other remedies) for meeting or missing its SLOs; it's usually a slightly relaxed version of internal SLOs<br>B. An SLA is a technical monitoring dashboard for service health<br>C. An SLA is the raw measurement of service quality over time<br>D. An SLA is a Kubernetes object you apply to enforce uptime
+**Answer:** A (1) – Business contract with consequences for meeting/missing SLOs; usually a relaxed version of internal SLOs
+**Explanation:** SLA = Service Level Agreement — the contractual layer between vendor and customer, including consequences (rebates, penalties, other remedies) for missing its SLOs. It's a BUSINESS/LEGAL artifact, not engineering: SRE helps define the SLIs needed to measure it and avoid triggering consequences, but doesn't negotiate contracts. Google Search has NO public SLA (reputation + ad revenue are the implicit consequences); Google for Work does. Internal SLOs are typically TIGHTER than advertised SLAs — that gap is your safety margin.
+**Sources:** <a href="https://sre.google/sre-book/service-level-objectives/" target="_blank">Google SRE Book - Service Level Objectives</a>
+**Tags:** k8s::kcna src::session topic::observability topic::monitoring topic::sre
+
+---
+
+<!-- note:1794362066581 model:Many -->
+**Domain:** Error budget
+**Question:** What is an error budget?
+**Options:** A. The tolerance for failed events over a period — 100% minus the SLO over the window (e.g. a 99.9% monthly SLO = 0.1% ≈ 43 minutes of downtime budget)<br>B. The money set aside for incident response tooling<br>C. The extra replicas kept running for redundancy<br>D. The percentage of requests allowed to be slow
+**Answer:** A (1) – 100% minus SLO over the window: 99.9% monthly = 0.1% ≈ 43 min downtime budget
+**Explanation:** Error budget = tolerance for failed events over a period — 'an SLO for meeting other SLOs.' 99.9% over 30 days → 0.1% budget ≈ 43.2 minutes of full downtime (or equivalent partial failures). It converts reliability into a spendable resource: budget left → ship features and experiments; budget exhausted → freeze launches, fix reliability. This is what lets teams balance velocity vs stability rationally instead of 'never break anything' — and it's what drives SLO-based alerting.
+**Sources:** <a href="https://github.com/cncf/tag-observability/blob/main/whitepaper.md" target="_blank">CNCF TAG Observability - Whitepaper</a>
+**Tags:** k8s::kcna src::session topic::observability topic::monitoring topic::sre
+
+---
+
+<!-- note:1794362066582 model:Many -->
+**Domain:** Burn rate
+**Question:** What does error-budget 'burn rate' measure?
+**Options:** A. How fast the service consumes its error budget relative to the SLO window — burn rate 1 means exactly 0 budget remains at window end<br>B. How quickly on-call engineers respond to pages<br>C. The rate at which cloud costs grow month over month<br>D. How fast a deployment pipeline runs
+**Answer:** A (1) – How fast error budget is consumed; burn 1 = exactly 0 budget at window end
+**Explanation:** Burn rate = error consumption speed relative to the SLO window. With a 99.9% SLO: sustained 0.1% errors = burn 1 (budget lasts the full 30 days); 1% errors = burn 10 → budget gone in ~3 days; 100% errors = burn 1000 → gone in ~43 minutes. Burn-rate alerting fires proportional to budget consumption — far more actionable than naive 'error rate > threshold' alerts that fire on blips which wouldn't actually breach the SLO.
+**Sources:** <a href="https://github.com/cncf/tag-observability/blob/main/whitepaper.md" target="_blank">CNCF TAG Observability - Whitepaper</a>
+**Tags:** k8s::kcna src::session topic::observability topic::monitoring topic::sre topic::prometheus
+
+---
+
+<!-- note:1794362066583 model:Many -->
+**Domain:** Availability nines
+**Question:** Availability is often expressed in 'nines' — which pairing is correct?
+**Options:** A. 99.9% = three nines; 99.99% = four nines; 99.999% = five nines<br>B. 99% = three nines; 99.9% = four nines; 99.99% = five nines<br>C. 99.99% = two nines; 99.999% = three nines<br>D. Each additional nine adds a fixed 0.1% regardless of level
+**Answer:** A (1) – 99.9% = 3 nines, 99.99% = 4 nines, 99.999% = 5 nines
+**Explanation:** Count the nines after '99.': 99% = 2 nines, 99.9% = 3, 99.99% = 4, 99.999% = 5. Google Compute Engine's published target is 99.95% = 'three and a half nines.' The stakes escalate brutally: 99.9% allows ~8.7h/year downtime; 99.99% ~52min; 99.999% ~5min — each nine is ~10x stricter. This is why SLIs/SLOs matter: 'high availability' is meaningless without a number.
+**Sources:** <a href="https://sre.google/sre-book/service-level-objectives/" target="_blank">Google SRE Book - Service Level Objectives</a>
+**Tags:** k8s::kcna src::session topic::observability topic::monitoring topic::sre
+
+---
+
+<!-- note:1794362066584 model:Many -->
+**Domain:** SLO - practices
+**Question:** Which are recommended practices when setting SLOs? (Select all that apply)
+**Options:** A. Keep the number of SLOs small — enough to cover key attributes, no more<br>B. Set an internal SLO tighter than the one advertised to users (safety margin)<br>C. Anchor the target to current measured performance so it's guaranteed achievable<br>D. Avoid absolute targets like 'always available' or 'infinitely scalable'<br>E. Start loose and tighten over time rather than set an unattainable strict target
+**Answer:** A, B, D, E – few SLOs + safety margin + no absolutes + start loose
+**Explanation:** From Google SRE 'Choosing Targets': few SLOs (defend each — if you can't win priority arguments quoting it, drop it); safety margin (internal SLO tighter than advertised absorbs chronic issues and reimplementation trade-offs); avoid absolutes ('always available', 'infinitely scalable' are unrealistic and stifle innovation); perfection can wait (loose→tight beats strict→relaxed). C is the anti-pattern — 'don't pick a target based on current performance': it locks you into heroics or forces redesign. Start from what users need, not what you can measure today.
+**Sources:** <a href="https://sre.google/sre-book/service-level-objectives/" target="_blank">Google SRE Book - Service Level Objectives</a>
+**Tags:** k8s::kcna src::session topic::observability topic::monitoring topic::sre
+
+---

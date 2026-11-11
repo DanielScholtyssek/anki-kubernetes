@@ -759,3 +759,98 @@
 **Tags:** k8s::kcna src::session topic::observability topic::prometheus
 
 ---
+
+<!-- note:1794373029142 model:Many -->
+**Domain:** Prometheus config - file
+**Question:** How does Prometheus configuration work? (Select all that apply)
+**Options:** A. prometheus.yaml defines scrape jobs and rule files; command-line flags set immutable system params like storage/retention<br>B. Config reloads at runtime via SIGHUP or POST /-/reload (with --web.enable-lifecycle) — a bad config is simply not applied<br>C. The file is YAML and supports duration values like 1d, 1h30m, 5m, 10s<br>D. prometheus.yaml contains the Alertmanager receiver configuration<br>E. The config file can only be changed by restarting Prometheus
+**Answer:** A, B, C – file defines scraping/rules; flags define system params; reload via SIGHUP or /-/reload
+**Explanation:** Split of concerns: prometheus.yaml (via --config.file) defines WHAT to do — scrape_configs, rule_files, alerting, remote_write — everything 'declarative'. Command-line flags configure IMMUTABLE system parameters — storage paths, retention, listen address. Reload at runtime WITHOUT restart: send SIGHUP or POST /-/reload (requires --web.enable-lifecycle). Malformed config → changes NOT applied (old config keeps running). Durations use regex like 1d, 1h30m, 5m, 10s.
+**Sources:** <a href="https://prometheus.io/docs/prometheus/latest/configuration/configuration/" target="_blank">Prometheus Docs - Configuration</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::yaml
+
+---
+
+<!-- note:1794373029143 model:Many -->
+**Domain:** Prometheus config - global
+**Question:** What does the `global:` section of prometheus.yaml do?
+**Options:** A. It configures the Alertmanager receivers<br>B. It sets defaults inherited by all scrape configs: scrape_interval (1m), scrape_timeout (10s), evaluation_interval (1m), external_labels<br>C. It defines the list of targets to scrape<br>D. It stores the scraped metrics
+**Answer:** B (2) – scrape_interval 1m, scrape_timeout 10s, evaluation_interval 1m, external_labels
+**Explanation:** The global: section sets defaults INHERITED by every other section — each scrape_config can override them. Core fields: scrape_interval (default 1m — how often to scrape), scrape_timeout (default 10s — per-scrape HTTP deadline, can't exceed interval), evaluation_interval (default 1m — how often rules/alerts evaluate), external_labels (labels attached when talking to EXTERNAL systems — federation, remote storage, Alertmanager — so you can tell which Prometheus a series came from). Also query_log_file, scrape_failure_log_file, runtime.log_level/gogc.
+**Sources:** <a href="https://prometheus.io/docs/prometheus/latest/configuration/configuration/#global_config" target="_blank">Prometheus Docs - global_config</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::yaml
+
+---
+
+<!-- note:1794373029144 model:Many -->
+**Domain:** Prometheus config - top-level
+**Question:** Which are valid top-level sections of prometheus.yaml? (Select all that apply)
+**Options:** A. rule_files — globs pointing at recording/alerting rule files<br>B. scrape_configs — the list of jobs and their targets<br>C. alerting — Alertmanager discovery and alert relabeling<br>D. dashboards — Grafana panel definitions<br>E. remote_write — shipping samples to external storage<br>F. receivers — Slack/email notification configs
+**Answer:** A, B, C, E – rule_files, scrape_configs, alerting, remote_write are top-level; dashboards aren't
+**Explanation:** Top-level keys of prometheus.yaml: global (defaults), rule_files (globs for recording/alerting rules), scrape_config_files (globs for extra scrape configs), scrape_configs (the jobs), alerting (alertmanager discovery + alert relabeling), remote_write / remote_read (external TSDB), storage (tsdb/exemplars runtime settings), otlp (OTLP receiver), tracing, runtime (log_level, gogc). Grafana dashboards and Alertmanager receivers are NOT configured here — they live in Grafana and alertmanager.yml respectively.
+**Sources:** <a href="https://prometheus.io/docs/prometheus/latest/configuration/configuration/" target="_blank">Prometheus Docs - Configuration</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::yaml
+
+---
+
+<!-- note:1794373029145 model:Many -->
+**Domain:** Prometheus config - intervals
+**Question:** What is the relationship between scrape_interval and scrape_timeout?
+**Options:** A. Per-scrape HTTP deadline — it cannot exceed scrape_interval; a scrape exceeding it fails and up goes to 0<br>B. How long Prometheus waits before retrying a failed scrape<br>C. The total time a target is allowed to be down<br>D. How often alerting rules are evaluated
+**Answer:** A (1) – Per-scrape HTTP deadline; must be ≤ scrape_interval; exceeding it fails the scrape
+**Explanation:** scrape_interval = how often Prometheus GETs the target's metrics_path (default inherits global 1m). scrape_timeout = deadline for ONE scrape HTTP request (default inherits global 10s) — it CANNOT exceed the interval or the config is invalid. If a scrape exceeds the timeout it FAILS: the target's up metric goes to 0 and samples go stale — this is your primary 'target is down/slow' signal. Both can be overridden per scrape_config for jobs needing different cadence (e.g. fast app metrics at 15s, slow infra at 5m).
+**Sources:** <a href="https://prometheus.io/docs/prometheus/latest/configuration/configuration/#scrape_config" target="_blank">Prometheus Docs - scrape_config</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::yaml
+
+---
+
+<!-- note:1794373029146 model:Many -->
+**Domain:** Prometheus config - honor_labels
+**Question:** What does honor_labels control in a scrape config?
+**Options:** A. It controls whether Prometheus honors the target's own timestamps<br>B. It decides who wins label conflicts: false renames scraped labels to exported_*; true keeps scraped labels (for federation/Pushgateway)<br>C. It enables HTTPS scraping<br>D. It limits how many labels a metric may have
+**Answer:** B (2) – false: scraped label renamed to exported_*; true: scraped labels win (federation/Pushgateway)
+**Explanation:** Label conflict resolution: scraped metrics may carry their own job/instance/etc labels, and Prometheus also attaches server-side ones (job from job_name, instance from address, SD labels). honor_labels: false (DEFAULT) → conflicting scraped labels get renamed to exported_<name> (exported_job, exported_instance) and server labels win. honor_labels: true → scraped label values WIN and server-side conflicts are dropped — needed for federation and scraping Pushgateway where the pushed labels must be preserved. external_labels are unaffected either way.
+**Sources:** <a href="https://prometheus.io/docs/prometheus/latest/configuration/configuration/#scrape_config" target="_blank">Prometheus Docs - scrape_config</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::yaml
+
+---
+
+<!-- note:1794373029147 model:Many -->
+**Domain:** Prometheus config - honor_timestamps
+**Question:** What does honor_timestamps do?
+**Options:** A. Whether Prometheus uses the timestamps exposed by the target (true, default) or stamps samples with scrape time (false)<br>B. Whether Prometheus honors labels already present in scraped data<br>C. Whether scrape timeouts apply to this job<br>D. Whether metrics are stored long-term
+**Answer:** A (1) – true (default): use target's timestamps; false: ignore them, use scrape time
+**Explanation:** honor_timestamps (default TRUE) = Prometheus respects the timestamps the target put on each sample — useful when the exporter batches/pre-aggregates data with meaningful times. Set false to IGNORE target timestamps and stamp samples with scrape time — the fix for targets with wrong/clocks-skewed timestamps that would corrupt your graphs. Distinct from honor_labels (which is about label conflicts, not timestamps). track_timestamps_staleness is the related companion flag for staleness markers on timestamped metrics.
+**Sources:** <a href="https://prometheus.io/docs/prometheus/latest/configuration/configuration/#scrape_config" target="_blank">Prometheus Docs - scrape_config</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::yaml
+
+---
+
+<!-- note:1794373029148 model:Many -->
+**Domain:** Prometheus config - relabeling
+**Question:** What is the difference between relabel_configs and metric_relabel_configs?
+**Options:** A. relabel_configs edits samples; metric_relabel_configs edits targets — they're interchangeable<br>B. relabel_configs rewrites target labels BEFORE scraping (filter/rewrite targets); metric_relabel_configs rewrites sample labels AFTER scraping (drop series, cut cardinality)<br>C. relabel_configs is for alerting; metric_relabel_configs is for recording rules<br>D. They are deprecated — use params instead
+**Answer:** B (2) – relabel_configs rewrites TARGET labels before scraping; metric_relabel_configs rewrites SAMPLES after scraping
+**Explanation:** Two relabel stages, same syntax (source_labels + regex + action keep/drop/replace/labeldrop...): relabel_configs runs on TARGET labels BEFORE scraping — filter which discovered targets get scraped (keep pods with label app=myapp), rewrite __address__/__metrics_path__, add/drop labels. metric_relabel_configs runs on scraped SAMPLES after ingestion into the pipeline — drop unwanted series, reduce cardinality (the classic use: drop expensive per-request labels before they hit TSDB). __meta_* and __address__ labels exist only during target relabeling; __-prefixed labels are stripped afterward.
+**Sources:** <a href="https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config" target="_blank">Prometheus Docs - relabel_config</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::yaml topic::labels
+
+---
+
+<!-- note:1794373029149 model:Many -->
+**Domain:** Prometheus config - http scheme
+**Question:** How do you configure Prometheus to scrape an HTTPS endpoint that requires basic auth?
+**Options:** A. scheme: tls and tls_config: enabled<br>B. scheme: https plus an http_config block with basic_auth/authorization/tls_config as needed<br>C. Authentication is configured globally only — per-job auth isn't possible<br>D. You must put credentials in external_labels
+**Answer:** B (2) – scheme: https + http_config with basic_auth/authorization/TLS settings
+**Explanation:** To scrape an HTTPS endpoint: scheme: https in the scrape config (default http). For authentication/TLS/proxy/custom headers, the scrape config takes an http_config block: basic_auth (username/password), authorization (Bearer token), tls_config (ca_file/cert_file/insecure_skip_verify), proxy_url, custom headers via headers:. params: adds URL query parameters to every scrape request. enable_compression: false asks the target for uncompressed responses.
+**Sources:** <a href="https://prometheus.io/docs/prometheus/latest/configuration/configuration/#scrape_config" target="_blank">Prometheus Docs - scrape_config</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::yaml
+
+---
+
+<!-- note:1794373034025 model:Cloze -->
+**Text:** Advanced scrape_config — kubernetes job with relabeling:<br><br>- job_name: {{c1::kubernetes-pods}}<br>  kubernetes_sd_configs:<br>  - role: {{c2::pod}}<br>  scheme: {{c3::https}}<br>  params:<br>    module: [{{c4::http_2xx}}]<br>  honor_labels: {{c5::true}}<br>  scrape_interval: {{c6::30s}}<br>  scrape_timeout: {{c7::10s}}<br>  relabel_configs:<br>  - source_labels: [__meta_kubernetes_pod_label_app]<br>    regex: myapp<br>    action: {{c8::keep}}<br>  metric_relabel_configs:<br>  - regex: {{c9::expensive_metric.*}}<br>    action: {{c10::drop}}
+**Back Extra:** Advanced scrape_config fields: kubernetes_sd_configs discovers pods/endpoints via the K8s API (role: pod|service|endpoints|node|ingress); scheme selects http/https; params adds URL query args to every scrape; honor_labels resolves label conflicts (scraped wins vs exported_* rename); honor_timestamps controls whether target timestamps are trusted; scrape_timeout ≤ scrape_interval else invalid config; relabel_configs filters/rewrites TARGETS pre-scrape using __meta_* labels and actions keep/drop/replace; metric_relabel_configs drops/rewrites SAMPLES post-scrape — the cardinality-control lever. __-prefixed labels are stripped after target relabeling.
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::yaml
+
+---

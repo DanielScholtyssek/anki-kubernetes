@@ -920,3 +920,14 @@
 **Tags:** k8s::kcna src::session topic::observability topic::logs
 
 ---
+
+<!-- note:1794379430249 model:Many -->
+**Domain:** Metrics - data point fields
+**Question:** What are the four pieces of information typically included in metrics?
+**Options:** A. Metric ID, unit, interval, and scope<br>B. Metric category, severity, frequency, and description<br>C. Metric type, frequency, threshold, and source<br>D. Metric Name, value, timestamp, and dimensions
+**Answer:** D (4) – Metric name + value + timestamp + dimensions (labels)
+**Explanation:** A metric data point (one timeseries sample) = NAME (what's measured, e.g. http_requests_total) + VALUE (the number) + TIMESTAMP (when, unix epoch ms) + DIMENSIONS/LABELS (key-value pairs identifying which series — pod, method, status). 'Dimensions' is the course term for what Prometheus calls LABELS. The distractors mix in alerting/metadata concepts: ID/unit/interval/scope, category/severity/threshold — none of those are per-sample data; severity/threshold belong to alerting rules, not the metric itself.
+**Sources:** <a href="https://prometheus.io/docs/concepts/data_model/" target="_blank">Prometheus Docs - Data model</a>
+**Tags:** k8s::kcna src::session topic::observability topic::metrics topic::prometheus
+
+---

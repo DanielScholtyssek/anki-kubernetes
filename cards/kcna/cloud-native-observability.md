@@ -854,3 +854,58 @@
 **Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::yaml
 
 ---
+
+<!-- note:1794378540938 model:Many -->
+**Domain:** Prometheus metric types
+**Question:** Which are the four Prometheus metric types? (Select all that apply)
+**Options:** A. Counter<br>B. Gauge<br>C. Histogram<br>D. Summary<br>E. Percentile<br>F. Rate
+**Answer:** A, B, C, D – Counter, Gauge, Histogram, Summary are the four types
+**Explanation:** The four Prometheus metric types: COUNTER — monotonically increasing value (requests_total; resets on restart). GAUGE — value that goes up AND down (temperature, memory, queue depth). HISTOGRAM — counts observations into configurable buckets (_bucket/_sum/_count series; for quantiles server-side). SUMMARY — like a histogram but computes quantiles CLIENT-side at fixed φ values baked into the metric. 'Percentile' and 'Rate' are not types — they're computed stats/functions (histogram_quantile(), rate() in PromQL).
+**Sources:** <a href="https://prometheus.io/docs/concepts/metric_types/" target="_blank">Prometheus Docs - Metric types</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::metrics
+
+---
+
+<!-- note:1794378540939 model:Many -->
+**Domain:** Prometheus metric - counter
+**Question:** What defines a Prometheus Counter?
+**Options:** A. Monotonically increasing count ending in _total — query it with rate()/increase() since it resets on restart<br>B. A value that goes up and down like temperature or memory usage<br>C. A distribution of observations split into buckets for quantiles<br>D. A client-side pre-computed set of quantiles
+**Answer:** A (1) – Monotonically increasing count; _total suffix; resets on restart so use rate()/increase()
+**Explanation:** A Counter is a monotonically increasing cumulative value — it only goes UP (or resets to 0 on process restart). Convention: counter names end in _total (http_requests_total). Because the raw value is meaningless alone (is 15234 a lot?), you query counters with rate()/increase() to get per-second change — these functions handle the restart-reset automatically. Use counters for things you COUNT: requests, errors, bytes sent. Never use a counter for something that can decrease (memory usage = gauge).
+**Sources:** <a href="https://prometheus.io/docs/concepts/metric_types/#counter" target="_blank">Prometheus Docs - Counter</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::metrics
+
+---
+
+<!-- note:1794378540940 model:Many -->
+**Domain:** Prometheus metric - histogram vs summary
+**Question:** How do Histogram and Summary differ? (Select all that apply)
+**Options:** A. Histogram buckets observations server-side into _bucket/_sum/_count — quantiles computed later with histogram_quantile() at any value<br>B. Summary buckets observations server-side and is strictly better than histogram<br>C. Summary computes quantiles client-side at fixed φ values baked into the metric — no re-quantiling, no cross-instance aggregation<br>D. Histogram and Summary are interchangeable — they produce identical series
+**Answer:** A, C – Histogram buckets server-side (_bucket/le, any quantile later, aggregatable); Summary computes fixed quantiles client-side
+**Explanation:** HISTOGRAM: counts each observation into configurable buckets exposed as _bucket series with le (less-than-or-equal) labels, plus _sum and _count. Quantiles computed SERVER-side via histogram_quantile() — you can pick ANY quantile later AND aggregate histograms across pods. SUMMARY: the CLIENT library computes quantiles at FIXED φ values (e.g. φ=0.5, 0.9, 0.99) at scrape time and exposes them as separate series — cheaper, but you can't change the quantiles or aggregate summaries across instances. Rule of thumb: histogram for flexibility, summary when you only need fixed quantiles and minimal storage.
+**Sources:** <a href="https://prometheus.io/docs/practices/histograms/" target="_blank">Prometheus Docs - Histograms and summaries</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::metrics
+
+---
+
+<!-- note:1794378540941 model:Many -->
+**Domain:** Prometheus metric - labels
+**Question:** What are labels in Prometheus metrics and why use them? (Select all that apply)
+**Options:** A. Key-value pairs that add dimensions to a metric — slice, filter, and aggregate one metric name many ways<br>B. They prevent metric-name explosion: one name with labels beats a separate metric per combination<br>C. Every unique label combination creates a new timeseries — high-cardinality labels are dangerous<br>D. Labels are mandatory and fixed — every metric must have the same label set<br>E. Labels store the metric's numeric value
+**Answer:** A, B, C – key=value dims attached to a metric; let you slice/filter/aggregate one metric many ways without new names; bad labels = cardinality explosion
+**Explanation:** Labels are key-value pairs attached to every sample of a metric — they add DIMENSIONS so one metric name can be sliced many ways: http_requests_total{method='GET', status='200', pod='api-1'} vs {method='POST', status='500'}. Why use them: filter in PromQL (http_requests_total{status='500'}), aggregate by label (sum by (pod)), and avoid metric-name explosion (one name + N labels beats N names). The cost: EVERY unique label combination is a new timeseries — high-cardinality labels (user_id, request_id, PID) cause storage/cost blowups; that's the cardinality problem.
+**Sources:** <a href="https://prometheus.io/docs/concepts/data_model/" target="_blank">Prometheus Docs - Data model</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::labels topic::metrics
+
+---
+
+<!-- note:1794378540942 model:Many -->
+**Domain:** Prometheus metric - default labels
+**Question:** Which labels does Prometheus attach automatically to scraped metrics?
+**Options:** A. Only job — instance is optional and rarely used<br>B. job (the scrape job_name) and instance (the target address) are auto-attached to every sample; __name__ holds the metric name internally; __-prefixed labels are internal and stripped<br>C. hostname, datacenter, and environment are always attached automatically<br>D. No labels are automatic — you must add job and instance via relabel_configs
+**Answer:** B (2) – Every sample auto-gets job (from job_name) and instance (target address); __name__ stores the metric name; __-prefixed labels are internal and stripped
+**Explanation:** Prometheus automatically attaches TWO labels to every scraped sample: job (the scrape config's job_name — which job scraped it) and instance (the target's address — which instance it came from). These let you distinguish identical metrics from different jobs/hosts. Internally the metric NAME is itself stored as a label called __name__ (so http_requests_total{...} is really __name__='http_requests_total'). Labels prefixed with __ are INTERNAL — __address__, __scheme__, __meta_* during discovery/relabeling — and are stripped before storage. That's also why relabel_configs can see them but queries never do.
+**Sources:** <a href="https://prometheus.io/docs/prometheus/latest/configuration/configuration/#scrape_config" target="_blank">Prometheus Docs - scrape_config</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::labels topic::metrics
+
+---

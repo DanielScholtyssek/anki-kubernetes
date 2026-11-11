@@ -942,3 +942,14 @@
 **Tags:** k8s::kcna src::session topic::observability topic::slo topic::sli topic::reliability
 
 ---
+
+<!-- note:1794379883646 model:Many -->
+**Domain:** Traces - trace ID purpose
+**Question:** In the context of distributed systems, what is the purpose of a trace-id?
+**Options:** A. To identify and correlate log entries related to a specific request<br>B. To track the performance of individual system components<br>C. To provide real-time monitoring of system operations<br>D. To capture error messages and exceptions
+**Answer:** A (1) – trace-id identifies and correlates all telemetry for ONE request across every service it touches
+**Explanation:** In distributed tracing, a TRACE-ID is a unique identifier assigned when a request enters the system and PROPAGATED through every hop — each service's span carries the same trace-id (plus its own span-id and parent-span-id). Purpose: correlation — given one trace-id you can pull together the logs, spans, and timings of that single request across all services, reconstructing its end-to-end path. B is metrics territory (per-component perf = span durations/metrics); C is alerting/real-time monitoring; D is logging. Trace ≠ span: the TRACE is the whole request journey; each SPAN is one operation within it.
+**Sources:** <a href="https://opentelemetry.io/docs/concepts/signals/traces/" target="_blank">OpenTelemetry Docs - Traces</a>
+**Tags:** k8s::kcna src::session topic::observability topic::traces topic::opentelemetry
+
+---

@@ -382,3 +382,25 @@
 **Tags:** k8s::kcna src::session topic::gitops topic::delivery
 
 ---
+
+<!-- note:1794383411472 model:Many -->
+**Domain:** GitOps - OpenGitOps project
+**Question:** What is the OpenGitOps project?
+**Options:** A. OpenGitOps is the GitOps agent that runs inside Kubernetes clusters<br>B. OpenGitOps is a CNCF project (TAG App Delivery GitOps WG) publishing vendor-neutral principles and standards — not a tool itself<br>C. OpenGitOps is a CI/CD pipeline engine by a single vendor<br>D. OpenGitOps is a Kubernetes SIG that maintains kubectl
+**Answer:** B (2) – OpenGitOps is a CNCF project (TAG App Delivery GitOps WG) publishing vendor-neutral principles/standards — not a tool
+**Explanation:** OpenGitOps (opengitops.dev) is a CNCF project overseen by the GitOps Working Group under TAG App Delivery — it publishes the vendor-neutral GitOps PRINCIPLES and standards that tools like ArgoCD and Flux implement. It's a STANDARDS/Education body, not software: you don't 'install OpenGitOps'. Its v1.0.0 release defines the four principles (declarative, versioned+immutable, pulled automatically, continuously reconciled). ArgoCD and Flux are IMPLEMENTATIONS of those principles; OpenGitOps is the spec they align to.
+**Sources:** <a href="https://opengitops.dev/" target="_blank">OpenGitOps</a>
+**Tags:** k8s::kcna src::session topic::gitops topic::delivery
+
+---
+
+<!-- note:1794383411473 model:Many -->
+**Domain:** GitOps - making changes
+**Question:** In a GitOps workflow, what is the correct way to change a running system?
+**Options:** A. kubectl edit the live resource, then commit the same change to git afterward<br>B. Commit a new version of the desired state to git — the agent detects and applies it; direct cluster edits are drift that gets reconciled away<br>C. Edit the resource in-place through the cloud console — GitOps syncs it later<br>D. SSH into the node and modify the manifest files directly
+**Answer:** B (2) – Commit a new version to git; the agent applies it — direct cluster edits get reconciled away (immutability)
+**Explanation:** In GitOps, ALL changes flow one direction: edit the desired state in GIT (commit/PR/merge), the in-cluster agent detects the new version and applies it. You NEVER edit the live cluster directly — kubectl edit, console changes, or API calls create DRIFT that the reconciliation agent will revert (or flag), because live state must always converge back to git. 'Immutable' doesn't mean git history can't change — commits are append-only and each change is a NEW commit, so you can always roll back to any previous version. Direct cluster mutation is the anti-pattern GitOps exists to eliminate.
+**Sources:** <a href="https://opengitops.dev/" target="_blank">OpenGitOps - GitOps Principles</a>
+**Tags:** k8s::kcna src::session topic::gitops topic::delivery
+
+---

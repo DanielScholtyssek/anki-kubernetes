@@ -371,3 +371,14 @@
 **Tags:** k8s::kcna src::session topic::gitops topic::delivery
 
 ---
+
+<!-- note:1794382906996 model:Many -->
+**Domain:** GitOps - pull tradeoffs
+**Question:** What is a potential drawback of the pull-based deployment approach (GitOps)?
+**Options:** A. Being coupled with the CD system, making migration to other platforms complex<br>B. Being bound to specific tools and requiring agent installation/configuration for each cluster<br>C. Exposing cluster credentials outside the cluster<br>D. Having the CI system with read/write access to the cluster
+**Answer:** B (2) – You must install, configure, and operate a reconciliation agent in EVERY cluster you want managed
+**Explanation:** The genuine cost of pull-based GitOps: an in-cluster agent (ArgoCD/Flux) must be deployed and maintained PER CLUSTER — more moving parts, agent upgrades, per-cluster credentials for git access, and the agent itself becomes infrastructure to secure/operate. Why not C or D: those are PUSH-model flaws — pull specifically keeps cluster credentials INSIDE the cluster and CI never gets cluster access (the security benefit). A is weak: GitOps agents are portable across platforms (ArgoCD/Flux run on any K8s, VMs via agents). Trade-off summary: pull = better security + audit + drift detection, paid for with per-cluster agent operations.
+**Sources:** <a href="https://opengitops.dev/" target="_blank">OpenGitOps - GitOps Principles</a>
+**Tags:** k8s::kcna src::session topic::gitops topic::delivery
+
+---

@@ -909,3 +909,14 @@
 **Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::labels topic::metrics
 
 ---
+
+<!-- note:1794379388268 model:Many -->
+**Domain:** Logs - purpose and nature
+**Question:** Which statement accurately describes the purpose of logs in a system or application?
+**Options:** A. Logs provide insights into system performance and resource utilization<br>B. Logs are historical records that capture information about specific events<br>C. Logs are used for real-time event monitoring<br>D. Logs are primarily used for error tracking and debugging
+**Answer:** B (2) – Logs are historical records of discrete events — timestamp + message + context
+**Explanation:** A log is a HISTORICAL RECORD: an append-only stream of timestamped entries capturing discrete events as they happened — request received, error thrown, pod scheduled. You read logs AFTER the fact to reconstruct what occurred. The distractors describe use cases or other signals: A (performance/resource) is METRICS territory — numbers over time; C (real-time monitoring) is closer to alerting/metrics — log pipelines are near-real-time at best; D (error tracking) is a major USE of logs but not their purpose — logs record ALL events, not just errors. CNCF framing: logs answer 'what happened, when, in which component?' — the forensic record.
+**Sources:** <a href="https://github.com/cncf/tag-observability/blob/main/whitepaper.md" target="_blank">CNCF Observability Whitepaper</a>
+**Tags:** k8s::kcna src::session topic::observability topic::logs
+
+---

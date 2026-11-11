@@ -931,3 +931,14 @@
 **Tags:** k8s::kcna src::session topic::observability topic::metrics topic::prometheus
 
 ---
+
+<!-- note:1794379615324 model:Many -->
+**Domain:** SLI/SLO/SLA - SLO purpose
+**Question:** What is the primary purpose of an SLO (Service Level Objective) in the context of service reliability?
+**Options:** A. To establish benchmarks for service availability<br>B. To quantify the reliability of a product to a customer<br>C. To define the target response time for customer support<br>D. To monitor system performance and health
+**Answer:** B (2) – SLO quantifies the reliability target offered to the customer — the 'contract with users' on how reliable the service will be
+**Explanation:** An SLO (Service Level Objective) sets the TARGET value for an SLI — it quantifies how reliable the service commits to being FROM THE CUSTOMER'S perspective (99.9% of requests under 300ms, <0.1% error rate). Google SRE frames it as 'a contract with users that specifies how reliable the service will be.' Why B over A: SLOs cover more than availability — latency, errors, throughput, durability all qualify; 'benchmarks' also implies measuring current state, whereas an SLO is a TARGET you aim for (measured by the SLI). C confuses customer support with the service itself; D describes MONITORING — that's what the SLI does, the SLO is the goal it measures against.
+**Sources:** <a href="https://sre.google/sre-book/service-level-objectives/" target="_blank">Google SRE Book - SLOs</a>
+**Tags:** k8s::kcna src::session topic::observability topic::slo topic::sli topic::reliability
+
+---

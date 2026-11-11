@@ -704,3 +704,58 @@
 **Tags:** k8s::kcna src::session topic::observability topic::prometheus
 
 ---
+
+<!-- note:1794367042610 model:Many -->
+**Domain:** Prometheus - architecture
+**Question:** Which are the three core parts of a Prometheus server's data path? (Select all that apply)
+**Options:** A. Retrieval worker that scrapes targets via HTTP<br>B. TSDB that stores the collected samples<br>C. HTTP server that answers PromQL queries<br>D. Alertmanager that sends Slack notifications<br>E. Grafana dashboard server
+**Answer:** A, B, C – scraper + TSDB + PromQL query API are the data path
+**Explanation:** The Prometheus SERVER's data path has three parts: RETRIEVAL WORKER — HTTP-scrapes each target's /metrics endpoint on the configured interval; TSDB — stores the samples in the local time-series database; HTTP QUERY SERVER — accepts PromQL queries and returns stored data (used by the expression browser, Grafana, API clients). Alertmanager is a SEPARATE component for notifications; Grafana is an external visualization layer; rules are evaluated inside the server but aren't part of the collect→store→query path.
+**Sources:** <a href="https://prometheus.io/docs/introduction/overview/" target="_blank">Prometheus Docs - Overview</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus
+
+---
+
+<!-- note:1794367042611 model:Many -->
+**Domain:** Prometheus - service discovery
+**Question:** Why does Prometheus need service discovery in Kubernetes?
+**Options:** A. Pod IPs churn constantly — SD watches the cluster and keeps the scrape target list automatically up to date<br>B. Prometheus can't reach Kubernetes APIs so SD translates them<br>C. SD is required for PromQL queries to work<br>D. SD replaces the need for exporters
+**Answer:** A (1) – Pull model must know every target; K8s pod IPs churn → SD auto-updates
+**Explanation:** Pull-based scraping means Prometheus must KNOW every target's address before scraping — but in Kubernetes pod IPs appear/disappear constantly, so a hand-maintained list is instantly stale. Service Discovery mechanisms (kubernetes_sd_configs, file_sd, http_sd, dns_sd, cloud SDs) watch the environment and keep the target list current automatically — pods get scraped as they come up, removed when they die. static_configs is the manual alternative for stable bare-metal targets.
+**Sources:** <a href="https://prometheus.io/docs/prometheus/latest/configuration/configuration/#kubernetes_sd_config" target="_blank">Prometheus Docs - kubernetes_sd_config</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::kubernetes
+
+---
+
+<!-- note:1794367042612 model:Many -->
+**Domain:** Prometheus - SD mechanisms
+**Question:** Which are real Prometheus service discovery mechanisms? (Select all that apply)
+**Options:** A. kubernetes_sd_configs — discovers pods/services/endpoints via the K8s API<br>B. file_sd_configs — reads targets from a watched file<br>C. http_sd_configs — fetches targets from an HTTP endpoint<br>D. dns_sd_configs — discovers targets via DNS records<br>E. push_sd_configs — targets push themselves into Prometheus<br>F. static_sd_configs — the default discovery mechanism
+**Answer:** A, B, C, D – kubernetes_sd, file_sd, http_sd, dns_sd are real mechanisms
+**Explanation:** Real SD mechanisms: kubernetes_sd (watches pods/services/endpoints via the K8s API), file_sd (reads target list from a file that can be rewritten), http_sd (fetches target list from an HTTP endpoint), dns_sd (resolves DNS names), plus cloud SDs (ec2, gce, azure, consul...). 'static_sd' isn't a mechanism — static_configs is the non-SD way to list targets manually. 'push_sd' doesn't exist — SD is inherently about Prometheus pulling its target list.
+**Sources:** <a href="https://prometheus.io/docs/prometheus/latest/configuration/configuration/" target="_blank">Prometheus Docs - Configuration</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus
+
+---
+
+<!-- note:1794367042613 model:Many -->
+**Domain:** Prometheus - pushgateway
+**Question:** How does the Pushgateway let Prometheus monitor short-lived batch jobs?
+**Options:** A. The job pushes metrics to Pushgateway before exiting; Prometheus scrapes Pushgateway's /metrics like a normal target<br>B. Pushgateway stores metrics permanently so jobs never need re-pushing<br>C. Prometheus pushes scrape requests to the Pushgateway<br>D. Pushgateway replaces Alertmanager for batch job alerts
+**Answer:** A (1) – Job pushes to Pushgateway; Prometheus scrapes the gateway like a normal target
+**Explanation:** The Pushgateway bridges push→pull: short-lived batch jobs (cron, ETL) POST their metrics to the Pushgateway before exiting; the Pushgateway exposes them on its own /metrics endpoint; Prometheus scrapes the Pushgateway like any other target. GOTCHA: it's a dumb cache — metrics persist until overwritten or deleted via its API, so finished jobs leave STALE series behind (a known source of ghost metrics). Push fits event-driven/short-lived workloads Prometheus's pull model can't reach.
+**Sources:** <a href="https://prometheus.io/docs/practices/pushing/" target="_blank">Prometheus Docs - When to use the Pushgateway</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus
+
+---
+
+<!-- note:1794367042614 model:Many -->
+**Domain:** Prometheus - exporter vs client lib
+**Question:** What is the difference between a Prometheus exporter and a client library?
+**Options:** A. Exporters push metrics; client libraries are pulled<br>B. An exporter is a separate process re-exposing a target's metrics; a client library is linked into your app which exposes /metrics itself<br>C. Client libraries only work for Go; exporters work for all languages<br>D. Exporters are for logs; client libraries are for metrics
+**Answer:** B (2) – Exporter = separate process re-exposing target metrics; client lib = in-app /metrics
+**Explanation:** Both end at the same place — a /metrics endpoint Prometheus scrapes — but differ in WHERE the exposition lives. EXPORTER: standalone process alongside the target that collects its native metrics and re-exposes them in Prometheus format — node_exporter (Linux host), windows_exporter, mysqld_exporter, apache_exporter, haproxy_exporter, postgres_exporter, blackbox_exporter. CLIENT LIBRARY: language library (Go, Java, Python, Rust...) linked into YOUR application — the app exposes /metrics itself, no extra process. Use exporters for third-party software you can't instrument; client libs for your own services.
+**Sources:** <a href="https://prometheus.io/docs/instrumenting/clientlibs/" target="_blank">Prometheus Docs - Client libraries</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus
+
+---

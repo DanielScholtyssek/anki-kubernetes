@@ -580,3 +580,98 @@
 **Tags:** k8s::kcna src::session topic::observability topic::monitoring topic::sre
 
 ---
+
+<!-- note:1794363142438 model:Many -->
+**Domain:** Prometheus - multi datacenter
+**Question:** You need metrics from servers across three datacenters visible on one dashboard. How does Prometheus support this?
+**Options:** A. Run Prometheus (or agent mode) per site and federate/remote-write to a central store, then query it all from one Grafana<br>B. One Prometheus server scrapes every target across all WAN links<br>C. Prometheus automatically syncs metrics between datacenters<br>D. You can't — Prometheus is single-datacenter only
+**Answer:** A (1) – Prometheus per site + federation/remote-write to central + one Grafana
+**Explanation:** Prometheus's pull model keeps scraping LOCAL — you don't scrape across WAN from one server (latency, WAN dependency, single point of failure). Standard pattern: Prometheus per site/DC (or Prometheus Agent mode for scrape-only), metrics leave via federation or remote-write to a central store (Thanos/Cortex/Mimir for long-term retention), and Grafana queries the central store for the single pane of glass. B works in a tiny setup but is an anti-pattern at scale.
+**Sources:** <a href="https://prometheus.io/docs/prometheus/latest/federation/" target="_blank">Prometheus Docs - Federation</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::monitoring
+
+---
+
+<!-- note:1794363142439 model:Many -->
+**Domain:** Prometheus - alert pipeline
+**Question:** Memory usage crosses 80% and an alerting rule fires in Prometheus. What actually delivers the Slack message?
+**Options:** A. Alertmanager — Prometheus sends firing alerts to it, which routes them to receivers like Slack/email<br>B. Prometheus sends the Slack webhook directly<br>C. Grafana polls Prometheus and posts to Slack<br>D. The kubelet notifies the ops channel
+**Answer:** A (1) – Alertmanager routes firing alerts to receivers like Slack/email
+**Explanation:** Two-stage design: Prometheus evaluates alerting rules (PromQL expr + for-duration) and sends alert state to Alertmanager; Alertmanager handles grouping, deduplication, silences, inhibition, rate-limiting and dispatches notifications to receivers — email, Slack, PagerDuty, webhook, OpsGenie, on-call systems. Prometheus deliberately doesn't do notification routing: the docs say rules are 'good at figuring what is broken right now, but they are not a fully-fledged notification solution.'
+**Sources:** <a href="https://prometheus.io/docs/alerting/latest/overview/" target="_blank">Prometheus Docs - Alerting overview</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::alerting
+
+---
+
+<!-- note:1794363142440 model:Many -->
+**Domain:** Prometheus - alertmanager
+**Question:** Which are Alertmanager responsibilities? (Select all that apply)
+**Options:** A. Grouping related alerts into one notification<br>B. Deduplication and inhibition (suppress alerts caused by a bigger outage)<br>C. Silences — mute alerts during maintenance windows<br>D. Routing alerts to receivers (email, Slack, PagerDuty) with rate limiting<br>E. Scraping /metrics endpoints from targets
+**Answer:** A, B, C, D – grouping, dedup/inhibition, silences, routing+rate-limiting
+**Explanation:** Alertmanager = the notification brain: it GROUPS alerts (one page for a cluster outage, not 500), DEDUPLICATES across Prometheus replicas, supports SILENCES (scheduled muting for maintenance) and INHIBITION (if 'DC down' fires, suppress 'all pods down' alerts it causes), routes by labels to different receivers, and RATE-LIMITS notifications. E is Prometheus's job — Alertmanager never scrapes metrics.
+**Sources:** <a href="https://prometheus.io/docs/alerting/latest/overview/" target="_blank">Prometheus Docs - Alerting overview</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::alerting
+
+---
+
+<!-- note:1794363142441 model:Many -->
+**Domain:** Prometheus - alert for clause
+**Question:** What does `for: 10m` do in an alerting rule?
+**Options:** A. Keeps the alert in 'pending' until the condition holds for 10 minutes — prevents flapping on momentary spikes<br>B. Sends the notification every 10 minutes while active<br>C. Keeps the alert firing for 10 minutes after the condition clears<br>D. Scrapes the target every 10 minutes
+**Answer:** A (1) – Pending until condition holds 10m across evaluations — anti-flap
+**Explanation:** `for` = pending period: the expr must evaluate true at EVERY evaluation for the duration before the alert counts as firing — a one-sample spike never notifies anyone. (C describes `keep_firing_for`, the companion clause that keeps an alert firing briefly AFTER the condition clears — also anti-flap.) Pending alerts show on the Alerts tab; firing alerts become ALERTS{alertstate="firing"} synthetic series. A rule with no `for` fires on first evaluation.
+**Sources:** <a href="https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/" target="_blank">Prometheus Docs - Alerting rules</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::alerting
+
+---
+
+<!-- note:1794363142442 model:Many -->
+**Domain:** Prometheus - memory alert expr
+**Question:** Which expression correctly alerts when a host's memory usage exceeds 80%?
+**Options:** A. (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 80<br>B. node_memory_MemTotal_bytes > 80<br>C. node_memory_MemAvailable_bytes < 80<br>D. rate(node_memory_MemTotal_bytes[5m]) > 80
+**Answer:** A (1) – (MemTotal - MemAvailable)/MemTotal*100 > 80 — a ratio of two gauges
+**Explanation:** Memory % = (total − available)/total × 100 — you compute a RATIO of two gauges, then compare to 80. B compares total bytes to 80 (nonsense units). C compares available bytes to 80 bytes (always true). D misuses rate() — that's for counters, and gives bytes/sec change not a percentage. Node Exporter exposes node_memory_MemTotal_bytes / node_memory_MemAvailable_bytes; for containers you'd use the analogous cAdvisor/kubelet metrics.
+**Sources:** <a href="https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/" target="_blank">Prometheus Docs - Alerting rules</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::alerting topic::promql
+
+---
+
+<!-- note:1794363142443 model:Many -->
+**Domain:** Prometheus - alert receivers
+**Question:** Email, Slack, and PagerDuty notifications from Alertmanager are configured as what?
+**Options:** A. Receivers — notification integrations Alertmanager routes matched alerts to<br>B. Scrape configs — they tell Prometheus what to collect<br>C. Recording rules — they pre-compute metrics<br>D. ServiceMonitors — they define Kubernetes scrape targets
+**Answer:** A (1) – Receivers: notification integrations Alertmanager routes matched alerts to
+**Explanation:** In alertmanager.yml you define `receivers` (email_configs, slack_configs, pagerduty_configs, webhook_configs, opsgenie_configs, victorops, telegram...) and `routes` that match alert labels — e.g. severity=page → pager receiver, severity=ticket → email — with grouping/dedup/rate-limit settings. This is how 'page on-call for critical, email a ticket for warnings' works: routing happens on the LABELS the alert rule attached, which is why rules set labels like severity: page.
+**Sources:** <a href="https://prometheus.io/docs/alerting/latest/configuration/" target="_blank">Alertmanager Docs - Configuration</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::alerting
+
+---
+
+<!-- note:1794363142444 model:Many -->
+**Domain:** Prometheus - visualization
+**Question:** The ops team wants Grafana dashboards plotting CPU vs memory vs request rate on one chart. How does that work?
+**Options:** A. Grafana queries Prometheus via PromQL/HTTP API — panels run expressions (including arithmetic across metrics) and render time series<br>B. Grafana scrapes the metrics itself directly from the apps<br>C. Prometheus exports PNG charts that Grafana embeds<br>D. Each metric needs its own separate Grafana instance
+**Answer:** A (1) – Grafana queries Prometheus via PromQL/HTTP API; panels render the results
+**Explanation:** Grafana is the visualization layer ON TOP of Prometheus: panels issue PromQL queries (instant or range) to Prometheus's HTTP API and render the time series — one dashboard can combine many metrics across many panels, and a single expression can do arithmetic across vectors. Grafana never scrapes — Prometheus owns collection, Grafana owns rendering. It can also hold MULTIPLE Prometheus datasources, which is exactly how the multi-datacenter 'single page' works.
+**Sources:** <a href="https://prometheus.io/docs/visualization/grafana/" target="_blank">Prometheus Docs - Grafana</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::grafana
+
+---
+
+<!-- note:1794363142445 model:Many -->
+**Domain:** Prometheus - use cases
+**Question:** Which are core Prometheus use cases? (Select all that apply)
+**Options:** A. Collecting and centrally storing metrics from many targets<br>B. Alerting when metric conditions are met (e.g. memory > 80%)<br>C. Visualizing and cross-referencing metrics in dashboards<br>D. Storing and analyzing application logs<br>E. Distributed request tracing across microservices
+**Answer:** A, B, C – collect metrics + alert on conditions + visualize/cross-reference
+**Explanation:** Prometheus = metrics platform: pull-scrape collection from many targets (A), PromQL + alerting rules + Alertmanager for condition alerts like memory >80% (B), Grafana visualization on top for charting and cross-referencing (C). D is Loki/ELK/Fluent Bit territory; E is Jaeger/Tempo/OpenTelemetry — Prometheus handles METRICS ONLY (the tool-mapping card). 'Prometheus for everything' is wrong by design: it deliberately doesn't do logs or traces.
+**Sources:** <a href="https://prometheus.io/docs/introduction/overview/" target="_blank">Prometheus Docs - Overview</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus
+
+---
+
+<!-- note:1794363156751 model:Cloze -->
+**Text:** Alerting rule YAML anatomy:<br><br>- alert: {{c1::HighMemoryUsage}} — the rule's name<br>  expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 {{c2::> 80}} — PromQL firing condition<br>  for: {{c3::10m}} — pending period before it counts as firing<br>  keep_firing_for: {{c4::5m}} — stay firing after the condition clears<br>  labels:<br>    severity: {{c5::page}} — Alertmanager routes on this<br>  annotations:<br>    summary: "High memory usage" — templated with $labels / $value
+**Back Extra:** Field roles: alert = rule name; expr = PromQL evaluated every scrape interval — when it returns elements, the alert becomes active for those label sets; for = pending period (must hold at EVERY evaluation — anti-flap); keep_firing_for = stays firing briefly after the condition clears (prevents flapping/false-resolves); labels = attached to the alert and used by Alertmanager ROUTES (severity: page → pager, severity: ticket → email); annotations = long human text (summary, runbook links) templated with $labels / $value / $externalLabels. States: pending → firing; ALERTS{alertname, alertstate} synthetic series tracks them.
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::alerting
+
+---

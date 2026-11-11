@@ -953,3 +953,14 @@
 **Tags:** k8s::kcna src::session topic::observability topic::traces topic::opentelemetry
 
 ---
+
+<!-- note:1794379959595 model:Many -->
+**Domain:** Prometheus - how metrics are collected
+**Question:** How does Prometheus collect metrics from targets?
+**Options:** A. By querying a centralized database for metric data<br>B. By using agents installed on target systems to collect metrics<br>C. By sending metrics directly to the Prometheus server<br>D. By scraping targets that expose metrics through an HTTP endpoint
+**Answer:** D (4) – Prometheus scrapes targets' HTTP /metrics endpoints — pull model
+**Explanation:** Prometheus uses the PULL model: it periodically makes HTTP GET requests to each target's metrics endpoint (conventionally /metrics) and parses the exposition format. The target must be CONFIGURED in scrape_configs (static or via service discovery) — Prometheus never discovers targets on its own. A is wrong — there's no centralized metrics database; TSDB is Prometheus's own store. B is wrong — no agent required on targets (exporters are optional helpers, not agents). C describes PUSH — that's the Pushgateway pattern for short-lived jobs, the exception not the rule. Pull benefits: Prometheus knows when a target is down (scrape fails → up=0), single control point for what's monitored, targets need no knowledge of Prometheus.
+**Sources:** <a href="https://prometheus.io/docs/introduction/overview/" target="_blank">Prometheus Docs - Overview</a>
+**Tags:** k8s::kcna src::session topic::observability topic::prometheus topic::metrics
+
+---

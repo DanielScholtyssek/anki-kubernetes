@@ -294,3 +294,80 @@
 **Tags:** k8s::kcna topic::networking topic::ingress src::session
 
 ---
+
+<!-- note:1794381090344 model:Many -->
+**Domain:** App Delivery - manual problems
+**Question:** Which are problems with manual application delivery that CI/CD and GitOps solve? (Select all that apply)
+**Options:** A. Bugs only surface during deployment because testing was manual or skipped<br>B. Long lead times — manual build/test/deploy steps serialize and delay every release<br>C. Error-prone manual steps create risky deployments with no reliable rollback<br>D. Manual changes leave no versioned record — drift and audit gaps
+**Answer:** A, B, C, D – all four are real failure modes of manual delivery
+**Explanation:** Manual application delivery — building, testing, deploying by hand — fails in predictable ways: BUGS ESCAPE TO DEPLOY TIME (little/no automated testing before release), LONG LEAD TIMES (manual steps serialize the pipeline; a 'critical new feature' waits days), RISKY RELEASES (manual steps are error-prone — wrong config, missed step, no rollback path), and CONFIG DRIFT/AUDIT GAPS (manual changes leave no versioned record — you can't answer 'who changed what when'). CI/CD + GitOps exist to automate and version-control exactly these steps.
+**Sources:** <a href="https://opengitops.dev/" target="_blank">OpenGitOps - GitOps Principles</a>
+**Tags:** k8s::kcna src::session topic::delivery topic::cicd topic::gitops
+
+---
+
+<!-- note:1794381090345 model:Many -->
+**Domain:** App Delivery - CI
+**Question:** What does Continuous Integration (CI) actually do?
+**Options:** A. Developers merge small changes frequently; every merge auto-triggers build+test so bugs surface early and main stays releasable<br>B. CI automatically deploys every commit straight to production<br>C. CI is a manual step where developers build releases on their laptops<br>D. CI stores infrastructure configuration in a Git repository
+**Answer:** A (1) – Developers merge small changes FREQUENTLY; every merge triggers automated build+test so main stays releasable
+**Explanation:** CONTINUOUS INTEGRATION (CI): developers integrate SMALL code changes into a shared repository FREQUENTLY (multiple times/day, not big-bang merges), and each merge AUTOMATICALLY triggers build + test. Purpose: catch integration bugs EARLY while they're cheap to fix, keep the main branch always in a releasable ('green') state. CI output = a tested, versioned build artifact (often a container image pushed to a registry). It does NOT deploy — that's CD's job. Tools: Jenkins, GitLab CI, GitHub Actions, Tekton.
+**Sources:** <a href="https://about.gitlab.com/topics/ci-cd/" target="_blank">GitLab - CI/CD explained</a>
+**Tags:** k8s::kcna src::session topic::delivery topic::cicd
+
+---
+
+<!-- note:1794381090346 model:Many -->
+**Domain:** App Delivery - CD
+**Question:** What does Continuous Delivery/Deployment (CD) do in a pipeline?
+**Options:** A. CD re-runs the full test suite before every deployment<br>B. CD automatically deploys CI-validated artifacts through environments — Delivery may keep a manual approval gate, Deployment goes fully automatic<br>C. CD is the same as CI — just a different name<br>D. CD manually packages artifacts for release engineers to deploy
+**Answer:** B (2) – CD automatically deploys CI-validated artifacts through environments; 'Delivery' adds a manual approval gate vs 'Deployment' fully automatic
+**Explanation:** CONTINUOUS DELIVERY/DEPLOYMENT (CD): takes the tested artifact from CI and AUTOMATICALLY deploys it through environments (dev → staging → prod). The subtle distinction exams love: Continuous DELIVERY = every validated change is RELEASE-READY but a human approval gate may precede production; Continuous DEPLOYMENT = fully automatic all the way to prod if all stages pass. In practice 'CD' covers both. CD never re-tests — it deploys what CI already validated.
+**Sources:** <a href="https://about.gitlab.com/topics/ci-cd/" target="_blank">GitLab - CI/CD explained</a>
+**Tags:** k8s::kcna src::session topic::delivery topic::cicd
+
+---
+
+<!-- note:1794381090347 model:Many -->
+**Domain:** GitOps - definition
+**Question:** What is GitOps?
+**Options:** A. GitOps means all code must be written in the Go language<br>B. GitOps uses a Git repository as the single source of truth for desired state — infra and deployments defined as versioned code, reconciled automatically<br>C. GitOps is a CI tool that builds container images<br>D. GitOps requires manual kubectl apply for every change
+**Answer:** B (2) – Git repo = single source of truth for desired state; infra+deployments as versioned code; agent reconciles cluster to match
+**Explanation:** GitOps = using a GIT REPOSITORY as the centralized, reliable SOURCE OF TRUTH for delivering infrastructure as code. Everything declarative — app manifests, K8s configs, infra definitions — lives in git, versioned and immutable. A software agent inside the cluster continuously reconciles: live state is made to MATCH git. Every change is tracked (who/what/when via commits+PRs) → easy issue identification, comprehensive change record, instant rollback (git revert). Manual/live changes are the anti-pattern — they create drift outside the record.
+**Sources:** <a href="https://opengitops.dev/" target="_blank">OpenGitOps - GitOps Principles</a>
+**Tags:** k8s::kcna src::session topic::gitops topic::delivery
+
+---
+
+<!-- note:1794381090348 model:Many -->
+**Domain:** GitOps - pull model
+**Question:** How does the GitOps pull model differ from traditional CI/CD deployment?
+**Options:** A. GitOps pushes manifests from CI directly into the cluster API<br>B. GitOps agents (ArgoCD/Flux) run inside the cluster, pull desired state from git, and reconcile — no cluster credentials needed in CI<br>C. GitOps requires developers to run kubectl apply manually after merging<br>D. GitOps stores metrics and logs in the Git repository
+**Answer:** B (2) – GitOps agents (ArgoCD/Flux) run IN the cluster and PULL desired state from git; push model = CI/CD pushes manifests directly to the cluster
+**Explanation:** The key GitOps mechanic: deployment agents like ArgoCD or Flux run INSIDE the cluster and PULL desired state FROM the git repo, then apply it — the cluster pulls, git pushes nothing. Contrast with traditional CI/CD PUSH: the pipeline authenticates to the cluster API and applies manifests directly (needs cluster credentials in CI, fire-and-forget — no record of what was applied). Pull model wins: no cluster creds in CI (better security), every change reviewed via PR before it lands, git history = complete audit trail, agent can detect drift. CI still builds/tests/pushes the IMAGE; it just updates the git manifest — the agent does the applying.
+**Sources:** <a href="https://argo-cd.readthedocs.io/en/stable/" target="_blank">Argo CD Docs</a>
+**Tags:** k8s::kcna src::session topic::gitops topic::argocd topic::delivery
+
+---
+
+<!-- note:1794381090349 model:Many -->
+**Domain:** GitOps - four principles
+**Question:** What are the four OpenGitOps principles? (Select all that apply)
+**Options:** A. Declarative — desired state expressed as declarations, not commands<br>B. Versioned and Immutable — state stored in git with enforced versioning and full history<br>C. Pulled Automatically — agents pull desired state from the source<br>D. Continuously Reconciled — agents observe actual state and apply desired state<br>E. Centrally Scheduled — a cron job applies changes at fixed times
+**Answer:** A, B, C, D – declarative, versioned+immutable, pulled automatically, continuously reconciled
+**Explanation:** The OpenGitOps standard (CNCF GitOps WG) defines FOUR principles: 1) DECLARATIVE — desired state expressed declaratively (YAML manifests), not imperative commands. 2) VERSIONED AND IMMUTABLE — desired state stored in git enforcing immutability + complete version history (commits are append-only). 3) PULLED AUTOMATICALLY — software agents pull desired state from the source (git) — nothing pushes into the cluster. 4) CONTINUOUSLY RECONCILED — agents observe ACTUAL system state and continuously apply desired state — that's what makes drift self-healing. All four together = GitOps; missing any one = just 'using git'.
+**Sources:** <a href="https://opengitops.dev/" target="_blank">OpenGitOps - GitOps Principles v1.0.0</a>
+**Tags:** k8s::kcna src::session topic::gitops topic::delivery
+
+---
+
+<!-- note:1794381090350 model:Many -->
+**Domain:** GitOps - config drift
+**Question:** What is configuration drift and how does GitOps handle it?
+**Options:** A. Drift is when the Git repository becomes corrupted<br>B. Drift is when live state diverges from the git-declared state — GitOps agents detect it and reconcile back<br>C. Drift only happens in multi-cluster setups<br>D. Drift is a CI/CD pipeline failure where tests don't run
+**Answer:** B (2) – Drift = live state diverges from git; GitOps agent detects it and reconciles back to the declared state
+**Explanation:** CONFIG DRIFT happens when someone changes the live environment directly (kubectl edit, console clickops, manual scaling) — now reality differs from what's in git. Why it's bad: no audit trail of who/what/when, no rollback path (the change exists nowhere but the cluster), recovery means reverse-engineering live state, and the next git sync can silently UNDO or fight the manual change. GitOps solves it via CONTINUOUS RECONCILIATION: the agent constantly compares live vs git and either auto-reverts drift or flags it — manual changes simply cannot persist outside the source of truth.
+**Sources:** <a href="https://opengitops.dev/" target="_blank">OpenGitOps - GitOps Principles</a>
+**Tags:** k8s::kcna src::session topic::gitops topic::delivery
+
+---

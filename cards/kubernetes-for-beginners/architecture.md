@@ -46,7 +46,7 @@
 
 <!-- note:1793643778658 model:Basic -->
 **Front:** Which Kubernetes components run on the control plane, and which run on every node?
-**Back:** Control plane only: kube-apiserver, etcd, kube-scheduler, controller-manager. Every node (control plane and workers): kubelet and the container runtime — on workers they serve the application containers.
+**Back:** Control plane only: kube-apiserver, etcd, kube-scheduler, controller-manager (+ cloud-controller-manager for cloud-integrated control loops). Every node (control plane AND workers): kubelet, container runtime, AND kube-proxy — kube-proxy runs as a DaemonSet so every node gets service networking rules.
 **Tags:** k8s::beginners topic::architecture src::session
 
 ---

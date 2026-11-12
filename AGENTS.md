@@ -232,14 +232,12 @@ tools/export_anki.py   dumps the live collection to cards/ (Anki -> repo)
 tools/parse_cards.py   cards/*.md -> add_notes JSONL (repo -> Anki input)
 tools/resplit.py       re-splits decks thematically (CKS/KCNA exam domains)
 models/models.json     note type defs (fields/templates/css) for restore
-cards/                 markdown mirror of every deck. THEMATIC/TOPIC
-  <cert>/<topic>.md    SPLIT IS PREFERRED — one folder per cert acronym
-  kcsa/<domain>.md     (cka/, ckad/, pca/, lfcs/, …), one file per topic:
-  cks/<domain>.md      ckad::* tag -> file per topic; KCSA 'Domain' field;
-  kcna/<domain>.md     CKS -> CKS exam domain files (tools/resplit.py);
-                       KCNA -> KCNA exam domain files (tools/resplit.py);
-                       cert decks for other certs = topic files like
-                       kubernetes-for-beginners/.
+cards/                 markdown mirror of every deck. SPLIT IS PREFERRED —
+  <cert>/<domain>.md   one folder per cert acronym (cka/, ckad/, kcna/, …),
+                       one file per cert EXAM DOMAIN where the cert
+                       publishes one (KCNA -> 5 domain files, CKS -> 6,
+                       CKA -> 5, via tools/resplit.py); otherwise one file
+                       per topic like kubernetes-for-beginners/.
 downloads/             (gitignored) original .apkg files / import notes
 ```
 
@@ -271,12 +269,19 @@ The DB path resolves via `--db`, `$ANKI_COLLECTION`, or auto-detection
 WSL `/mnt/c/Users/*/AppData/Roaming/Anki2/*/collection.anki2`).
 
 - **Grouping preference:** the user prefers thematic files —
-  `cards/<deck>/<topic>.md`, one file per topic, filename = lowercase
-  slug of the topic. When adding cards to Anki via MCP, append them to
-  the matching topic file (create it if needed, same format) so the repo
-  stays a restorable record — or re-run the export to re-sync
-  everything. Never start a new `part-NN` file for authored content when
-  a topic file fits.
+  `cards/<deck>/<topic>.md`. **For cert decks, the file categorization
+  MUST follow the certification's official exam domains** — one file
+  per domain, named after the domain (slugified), the same way KCNA is
+  split into its five domains and CKS into its six. Look up the cert's
+  current domain list (CNCF curriculum / cert page — domains change,
+  e.g. CKA's Feb-2025 update folded security into Cluster Architecture
+  and made Troubleshooting 30%) and bucket each card into its domain.
+  Topic-level granularity is a fallback only for certs without a
+  published domain structure. When adding cards to Anki via MCP,
+  append them to the matching domain/topic file (create it if needed,
+  same format) so the repo stays a restorable record — or re-run the
+  export to re-sync everything. Never start a new `part-NN` file for
+  authored content when a topic file fits.
 - **Session deck → folder mapping:** the user names the target deck at
   the start of a session. Mirror new notes into
   `cards/<deck-folder>/<topic>.md` where `<deck-folder>` is the

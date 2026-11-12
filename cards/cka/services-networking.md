@@ -1,6 +1,6 @@
 # CKA - Certified Kubernetes Administrator — Services & Networking
 
-> Deck: `CKA - Certified Kubernetes Administrator` · Group: `Services & Networking` · Notes: 78 · Models: Basic, Basic (and reversed card), Cloze
+> Deck: `CKA - Certified Kubernetes Administrator` · Group: `Services & Networking` · Notes: 81 · Models: Basic, Basic (and reversed card), Cloze
 
 <!-- note:1794496839257 model:Basic -->
 **Front:** How does traffic between pods on DIFFERENT nodes actually get delivered?
@@ -545,5 +545,26 @@
 **Front:** How does the Gateway API relate to Ingress, and why is it in the current CKA curriculum?
 **Back:** Gateway API is the successor-standard to Ingress: instead of one Ingress resource doing everything, it splits roles — GatewayClass (the implementation, e.g. 'istio'), Gateway (a listener/entrypoint instance), and routes like HTTPRoute/TCPRoute (L7/L4 traffic rules) — giving typed, role-based, more expressive traffic management that Ingress's single-resource model can't express. The 2025 CKA updates added 'Introduction to Gateway API'; the classic Ingress + annotations (nginx.ingress.kubernetes.io/rewrite-target etc.) remains exam content too. Know both: Ingress = single resource per host/path rules; Gateway API = Gateway + HTTPRoute separation.
 **Tags:** k8s::cka src::course-kodekloud topic::gateway-api topic::networking
+
+---
+
+<!-- note:1794506309318 model:Basic -->
+**Front:** What are the parts of an Ingress resource and how does traffic reach pods?
+**Back:** Ingress (networking.k8s.io/v1) declares HTTP routing rules; an INGRESS CONTROLLER (nginx, traefik, ALB) watches them and programs the actual load balancer. Structure: <code>spec.rules[].host</code> (hostname, empty = all hosts) → <code>http.paths[]</code> with <code>path</code> + <code>pathType</code> + <code>backend.service</code> (name+port) pointing at a Service — the Service's endpoints then reach pods. Ingress itself creates NO pods or IPs — without a controller installed, the Ingress object exists but nothing routes traffic.
+**Tags:** k8s::cka topic::ingress topic::networking src::course-kodekloud
+
+---
+
+<!-- note:1794506309319 model:Basic -->
+**Front:** What are the three Ingress pathType values and when does each match?
+**Back:** <b>Exact</b> — matches the path character-for-character, nothing else. <b>Prefix</b> — matches on a path ELEMENT boundary (split by /): /foo matches /foo and /foo/bar but NOT /foobar. <b>ImplementationSpecific</b> — matching is up to the Ingress controller (nginx treats it like Prefix-ish regex-ish behavior; used for custom matching). Most exam examples use Prefix; Exact for single endpoints, ImplementationSpecific when you need controller-specific features.
+**Tags:** k8s::cka topic::ingress topic::networking src::course-kodekloud
+
+---
+
+<!-- note:1794506309320 model:Basic -->
+**Front:** How does IngressClass control which controller serves an Ingress?
+**Back:** IngressClass (networking.k8s.io/v1) names a controller implementation via spec.controller (e.g. k8s.io/ingress-nginx). An Ingress sets <code>spec.ingressClassName: nginx</code> to bind to that class; if omitted, the cluster's default IngressClass (annotation ingressclass.kubernetes.io/is-default-class) applies. Multiple controllers can coexist — routes go only to the controller whose class the Ingress names. Check installed classes: <code>kubectl get ingressclass</code>.
+**Tags:** k8s::cka topic::ingress topic::networking src::course-kodekloud
 
 ---

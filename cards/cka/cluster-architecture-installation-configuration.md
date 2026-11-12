@@ -1,6 +1,6 @@
 # CKA - Certified Kubernetes Administrator — Cluster Architecture, Installation & Configuration
 
-> Deck: `CKA - Certified Kubernetes Administrator` · Group: `Cluster Architecture, Installation & Configuration` · Notes: 217 · Models: Basic, Basic (and reversed card), Cloze
+> Deck: `CKA - Certified Kubernetes Administrator` · Group: `Cluster Architecture, Installation & Configuration` · Notes: 229 · Models: Basic, Basic (and reversed card), Cloze
 
 <!-- note:1794496839221 model:Basic -->
 **Front:** What happens to your application if the node it runs on fails?
@@ -1518,5 +1518,89 @@
 **Front:** What is etcd's role in Kubernetes?
 **Back:** etcd is the cluster's authoritative distributed key-value store — ALL cluster state lives there: pod specs, service definitions, secrets, RBAC objects, everything the API server persists. Every kubectl write ultimately lands in etcd; if a majority of etcd members fail, the cluster can't change state (existing workloads keep running but nothing new schedules). kubeadm runs etcd as a static pod on control-plane nodes; back it up with etcdctl/etcdutl snapshots.
 **Tags:** k8s::cka src::course-kodekloud topic::control-plane topic::etcd
+
+---
+
+<!-- note:1794506309308 model:Basic -->
+**Front:** What problem does Helm solve, and what is a chart?
+**Back:** Helm is the Kubernetes package manager: a CHART is a versioned bundle of templated manifests + default values that installs as a unit. Without Helm you kubectl apply raw YAML per file and hand-track versions; Helm wraps them into a release you can install, upgrade, rollback and uninstall atomically — the 'apt/yum for Kubernetes' model. Charts live in repositories (helm repo add) and are published to Artifact Hub / OCI registries.
+**Tags:** k8s::cka topic::helm topic::package-management src::course-kodekloud
+
+---
+
+<!-- note:1794506309309 model:Basic -->
+**Front:** What are the key files inside a Helm chart?
+**Back:** Chart.yaml (name, version, apiVersion: v2, dependencies), values.yaml (the DEFAULT configuration users override), templates/ (Kubernetes manifests with Go-template placeholders like {{ .Values.replicaCount }}), and _helpers.tpl (named template helpers for labels/selectors). crds/ holds CRDs installed before templates. 'helm create mychart' scaffolds this layout; 'helm template' renders it.
+**Tags:** k8s::cka topic::helm topic::charts src::course-kodekloud
+
+---
+
+<!-- note:1794506309310 model:Basic -->
+**Front:** How do Helm values override precedence work?
+**Back:** Lowest→highest: chart's values.yaml defaults < earlier -f files < later -f files < --set/--set-string/--set-file/--set-json flags. Example: <code>helm install web stable/nginx -f prod.yaml -f override.yaml --set replicaCount=3 --set image.tag=v2</code> — flags win over files, later files win over earlier. Verify what a release actually got with <code>helm get values &lt;release&gt;</code>.
+**Tags:** k8s::cka topic::helm topic::values src::course-kodekloud
+
+---
+
+<!-- note:1794506309311 model:Basic -->
+**Front:** How do you add a Helm repository and search/install from it?
+**Back:** <code>helm repo add bitnami https://charts.bitnami.com/bitnami</code> registers a repo (index.yaml of charts); <code>helm repo update</code> refreshes it; <code>helm search repo nginx</code> finds charts locally; <code>helm search hub nginx</code> searches Artifact Hub remotely; <code>helm install myrelease bitnami/nginx</code> installs. Chart reference format is repo/chart. Modern clusters can also use OCI: helm install x oci://registry/chart.
+**Tags:** k8s::cka topic::helm topic::repos src::course-kodekloud
+
+---
+
+<!-- note:1794506309312 model:Basic -->
+**Front:** What does helm template do, and when do you use it over helm install --dry-run?
+**Back:** <code>helm template &lt;name&gt; &lt;chart&gt;</code> renders the final Kubernetes manifests client-side WITHOUT contacting the cluster — pure templating, good for reviewing/diffing/gitops. <code>helm install --dry-run</code> renders AND validates against a live cluster (catches missing CRDs, bad values); newer Helm splits it as --dry-run=client vs --dry-run=server. For CI review of rendered output: helm template > rendered.yaml then kubectl apply --dry-run=client -f.
+**Tags:** k8s::cka topic::helm topic::kubectl src::course-kodekloud
+
+---
+
+<!-- note:1794506309313 model:Basic -->
+**Front:** How do Helm release upgrades and rollbacks work?
+**Back:** Every install/upgrade creates a numbered REVISION — <code>helm history &lt;release&gt;</code> lists them, <code>helm get manifest &lt;release&gt; --revision N</code> shows what revision N deployed. <code>helm upgrade &lt;release&gt; &lt;chart&gt; -f new.yaml</code> applies changes and bumps the revision; if it breaks, <code>helm rollback &lt;release&gt; &lt;N&gt;</code> redeploys revision N's manifests. Rollback doesn't restore cluster state deleted out-of-band — it only re-applies the recorded manifests.
+**Tags:** k8s::cka topic::helm topic::releases src::course-kodekloud
+
+---
+
+<!-- note:1794506309314 model:Basic -->
+**Front:** When would you choose Helm vs Kustomize for deploying manifests?
+**Back:** Helm = templating + packaging + release lifecycle (versions, rollback, repos) — best for third-party apps and multi-environment config via values. Kustomize = pure manifest overlay/patching, no templating engine or release state — best for your own apps where you want plain YAML diffs and kubectl-native workflow (<code>kubectl apply -k</code>). Helm adds a release object + CRDs to manage; Kustomize adds nothing to the cluster. Many shops use Kustomize for app overlays and Helm for infra/vendor charts.
+**Tags:** k8s::cka topic::helm topic::kustomize src::course-kodekloud
+
+---
+
+<!-- note:1794506309315 model:Basic -->
+**Front:** What is Kustomize and how do you use it with kubectl?
+**Back:** Kustomize manages Kubernetes manifests via an overlay model: a kustomization.yaml lists resources plus transformers (namespace, namePrefix, images, replicas, patches) that customize them per environment — no templating, output is plain YAML. Built into kubectl: <code>kubectl apply -k ./overlays/prod</code> applies the kustomization, <code>kubectl diff -k ./dir</code> previews changes, <code>kubectl kustomize ./dir</code> (or standalone <code>kustomize build ./dir</code>) prints the rendered manifests. Directory form: base/ + overlays/dev|prod/.
+**Tags:** k8s::cka topic::kustomize topic::kubectl src::course-kodekloud
+
+---
+
+<!-- note:1794506309316 model:Basic -->
+**Front:** What are the main fields of a kustomization.yaml and what do they do?
+**Back:** <b>resources:</b> files/dirs/globs of base manifests to include. <b>namespace:</b> sets metadata.namespace on all namespaced resources. <b>namePrefix/nameSuffix:</b> prepends/appends to resource names. <b>commonLabels:</b> adds labels to all resources AND selectors (careful — can break immutable fields). <b>images:</b> rewrites image name:tag/newName:newTag per image. <b>replicas:</b> overrides replica counts. <b>patches:</b> strategic-merge or JSON6902 patches to modify specific fields. <b>configMapGenerator:</b> builds ConfigMaps from files/envs with hash suffixes. <b>secretGenerator:</b> same for Secrets.
+**Tags:** k8s::cka topic::kustomize topic::yaml src::course-kodekloud
+
+---
+
+<!-- note:1794506309317 model:Basic -->
+**Front:** How do Kustomize image and replica transformers work?
+**Back:** <b>images:</b> list entries {name, newName?, newTag?, digest?} — match by image 'name' (repo) and rewrite tag/name per environment: prod overlay sets newTag: v2.1.0, dev sets newTag: latest. <b>replicas:</b> {name: deploy-name, count: N} or just count for single-resource sets — overrides spec.replicas without editing the base. Both are declarative overlays: the base manifest stays untouched, each environment directory only carries the deltas.
+**Tags:** k8s::cka topic::kustomize topic::overlays src::course-kodekloud
+
+---
+
+<!-- note:1794506309322 model:Cloze -->
+**Text:** Core Helm lifecycle commands:<br><br>Install: <code>helm install {{c1::release-name}} &lt;chart&gt;</code><br>Upgrade: <code>helm {{c2::upgrade}} &lt;release&gt; &lt;chart&gt;</code> (adds a revision)<br>Rollback: <code>helm {{c3::rollback}} &lt;release&gt; &lt;revision&gt;</code><br>Uninstall: <code>helm {{c4::uninstall}} &lt;release&gt;</code><br>List: <code>helm {{c5::list}}</code> / history: <code>helm history &lt;release&gt;</code>
+**Back Extra:** Release names must be unique per namespace. helm upgrade on a non-existent release errors — use 'helm upgrade --install' for upsert behavior. helm uninstall deletes the release AND its Kubernetes objects (unless --keep-history).
+**Tags:** k8s::cka topic::helm topic::commands src::course-kodekloud
+
+---
+
+<!-- note:1794506309323 model:Cloze -->
+**Text:** Kustomize overlay layout:<br><br><code>app-base/<br>  kustomization.yaml   # resources: [deployment.yaml, service.yaml]<br>app-overlay-prod/<br>  kustomization.yaml   # resources: [../app-base] + transformers<br>  namespace.yaml</code><br><br>Apply with: <code>kubectl apply -k {{c1::./app-overlay-prod}}</code> or preview with <code>kubectl {{c2::kustomize}} ./dir</code> / <code>kustomize build ./dir</code>
+**Back Extra:** Overlays reference bases via 'resources: [../base]' — bases stay generic, overlays carry env-specific patches/images/replicas. kubectl -k needs the directory to contain kustomization.yaml.
+**Tags:** k8s::cka topic::kustomize topic::kubectl src::course-kodekloud
 
 ---

@@ -1,6 +1,6 @@
 # CKA - Certified Kubernetes Administrator — Workloads & Scheduling
 
-> Deck: `CKA - Certified Kubernetes Administrator` · Group: `Workloads & Scheduling` · Notes: 250 · Models: Basic, Basic (and reversed card), Cloze
+> Deck: `CKA - Certified Kubernetes Administrator` · Group: `Workloads & Scheduling` · Notes: 256 · Models: Basic, Basic (and reversed card), Cloze
 
 <!-- note:1794496839228 model:Basic -->
 **Front:** Why use a Deployment instead of creating a ReplicaSet directly?
@@ -1756,5 +1756,47 @@
 **Text:** Spec example — 'dbnet' conflist chaining bridge + tuning + portmap:<br><br><code>{<br>  cniVersion: {{c1::"1.1.0"}},<br>  name: {{c2::dbnet}},<br>  plugins: [<br>    { type: {{c3::bridge}}, bridge: cni0,<br>      ipam: { type: {{c4::host-local}}, subnet: 10.1.0.0/16 } },<br>    { type: {{c5::tuning}}, capabilities: { mac: true } },<br>    { type: {{c6::portmap}}, capabilities: { portMappings: true } }<br>  ]<br>}</code>
 **Back Extra:** dbnet example from the spec: bridge creates cni0 + assigns IP via host-local IPAM (10.1.0.0/16, gw 10.1.0.1, default route); dns sets pod resolv.conf nameserver; tuning adjusts sysctls/MAC via capabilities; portmap exposes hostPort mappings via capabilities.portMappings. 'type' in each entry = binary filename in /opt/cni/bin. ipam is itself a plugin delegation (ipam.type = IPAM binary).
 **Tags:** k8s::cka src::session topic::cni topic::networking topic::yaml
+
+---
+
+<!-- note:1794498397445 model:Basic -->
+**Front:** What is a PriorityClass and how does preemption work?
+**Back:** A PriorityClass assigns a numeric priority to pods; the scheduler prefers higher-priority pods and can PREEMPT (evict) lower-priority pods on a node when a high-priority pod can't be scheduled. Built-ins: system-cluster-critical and system-node-critical for control-plane/critical workloads. Preemption isn't guaranteed — the scheduler evicts victims only if it lets the pending pod schedule. Check a pod's effective priority in <code>kubectl get pod &lt;name&gt; -o jsonpath='{.spec.priority}'</code> or describe (PriorityClass shown).
+**Tags:** k8s::cka src::course-kodekloud topic::priorityclass topic::scheduling
+
+---
+
+<!-- note:1794498397446 model:Basic -->
+**Front:** Where do admission controllers sit in an API request, and how do you change which are enabled?
+**Back:** Order: Authentication (who) → Authorization/RBAC (may they) → ADMISSION CONTROLLERS (validate or mutate the object) → persist to etcd. They can reject requests or modify objects before storage — the hook for cluster-wide policy (block latest tag, require labels, inject sidecars, DefaultStorageClass filling PVC storageClassName). Enable/disable via kube-apiserver flags: --enable-admission-plugins=A,B and --disable-admission-plugins=X,Y — edit the apiserver static-pod manifest (/etc/kubernetes/manifests) on kubeadm or the systemd unit; the apiserver restarts and picks them up. List current plugins: <code>kube-apiserver -h | grep enable-admission-plugins</code>. CORRECTION: NamespaceExists/NamespaceAutoProvision are superseded by NamespaceLifecycle, which rejects non-existent namespaces AND protects core namespaces (default, kube-system, kube-public) from deletion.
+**Tags:** k8s::cka src::course-kodekloud topic::admission topic::control-plane
+
+---
+
+<!-- note:1794498397447 model:Basic -->
+**Front:** How do HPA, VPA and in-place pod resize differ for workload autoscaling?
+**Back:** HPA (Horizontal Pod Autoscaler) scales the NUMBER of replicas based on metrics (CPU/memory/custom) — more pods, same size. VPA (Vertical Pod Autoscaler) right-sizes each pod's resource REQUESTS/LIMITS — historically by evicting and recreating pods. In-place pod resize (newer, KEP-1287) adjusts container resource requests/limits WITHOUT restarting the pod — the resize happens live for Guaranteed/Burstable QoS pods. The 2025 CKA curriculum covers all three; know which knob scales out vs scales up vs resizes in place.
+**Tags:** k8s::cka src::course-kodekloud topic::autoscaling topic::workloads
+
+---
+
+<!-- note:1794498397448 model:Basic -->
+**Front:** How do you run a second scheduler alongside the default one?
+**Back:** Deploy another kube-scheduler with a distinct name: run <code>kube-scheduler --scheduler-name=myscheduler --kubeconfig=&lt;path&gt;</code> (as a pod/daemonset or standalone), then bind pods to it by setting <code>spec.schedulerName: myscheduler</code> in the pod spec — pods without schedulerName go to 'default-scheduler'. Multiple schedulers coexist via leader election per name; useful for dedicating scheduling policies to specific workloads. Check which scheduler owns a pod: <code>kubectl get pod &lt;name&gt; -o jsonpath='{.spec.schedulerName}'</code>.
+**Tags:** k8s::cka src::course-kodekloud topic::scheduler topic::scheduling
+
+---
+
+<!-- note:1794498411298 model:Cloze -->
+**Text:** kubectl output formatting for scripting/debugging:<br><br><code>kubectl get pods -o jsonpath='{.items[*].metadata.name}'<br>kubectl get pods -o custom-columns=NAME:.metadata.name,IP:.status.podIP<br>kubectl get pods --sort-by=.metadata.creationTimestamp</code><br><br>{{c1::jsonpath}} extracts fields with JSONPath expressions; {{c2::custom-columns}} builds ad-hoc tables; {{c3::--sort-by}} orders results. Also useful: <code>-o yaml</code> full object, <code>-o wide</code> adds node/IP columns, <code>--field-selector</code> and <code>--selector</code> filter server-side.
+**Back Extra:** jsonpath is exam-favorite: '{.items[0].spec.containers[0].image}' drills into nested fields; ranges like '{.items[*].status.phase}' list one field across all items.
+**Tags:** k8s::cka src::course-kodekloud topic::jsonpath topic::kubectl
+
+---
+
+<!-- note:1794498411304 model:Basic (and reversed card) -->
+**Front:** What is a mirror pod?
+**Back:** A read-only pod object the kubelet registers in the API server for every static pod it creates — named <pod>-<node-name> so kubectl can see static pods cluster-wide. You cannot edit or delete a mirror pod via the API; the kubelet's source of truth is the manifest file on the node (e.g. /etc/kubernetes/manifests). Deleting the mirror does nothing — edit/remove the manifest file instead.
+**Tags:** k8s::cka src::course-kodekloud topic::kubelet topic::staticpods
 
 ---

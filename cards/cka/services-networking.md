@@ -1,6 +1,6 @@
 # CKA - Certified Kubernetes Administrator — Services & Networking
 
-> Deck: `CKA - Certified Kubernetes Administrator` · Group: `Services & Networking` · Notes: 76 · Models: Basic, Basic (and reversed card), Cloze
+> Deck: `CKA - Certified Kubernetes Administrator` · Group: `Services & Networking` · Notes: 78 · Models: Basic, Basic (and reversed card), Cloze
 
 <!-- note:1794496839257 model:Basic -->
 **Front:** How does traffic between pods on DIFFERENT nodes actually get delivered?
@@ -531,5 +531,19 @@
 **Text:** A Service named <code>backend</code> in namespace <code>prod</code> gets the in-cluster DNS name<br><br><code>{{c1::backend}}.{{c2::prod}}.{{c3::svc}}.{{c4::cluster.local}}</code><br><br>resolving to the Service's {{c5::clusterIP}}.
 **Back Extra:** CoreDNS publishes &lt;service&gt;.&lt;namespace&gt;.svc.cluster.local for every Service; it resolves to the clusterIP. Inside the same namespace the short name (backend) is enough; from another namespace you need backend.&lt;ns&gt;.
 **Tags:** k8s::cka src::session topic::dns topic::services
+
+---
+
+<!-- note:1794498397449 model:Basic -->
+**Front:** What are the cluster DNS record formats for pods, services and nodes?
+**Back:** CoreDNS serves cluster.local: Pods get <pod-ip-with-dashes>.<namespace>.pod.cluster.local (e.g. 10-244-0-5.default.pod.cluster.local); Services get <service>.<namespace>.svc.cluster.local — short form <service>.<namespace> also resolves via search domains; Nodes get <node-ip-with-dashes>.<namespace>.node.cluster.local. Pods' /etc/resolv.conf points nameserver at the kube-dns Service ClusterIP with search domains so 'myservice' resolves to myservice.default.svc.cluster.local.
+**Tags:** k8s::cka src::course-kodekloud topic::coredns topic::networking
+
+---
+
+<!-- note:1794498397450 model:Basic -->
+**Front:** How does the Gateway API relate to Ingress, and why is it in the current CKA curriculum?
+**Back:** Gateway API is the successor-standard to Ingress: instead of one Ingress resource doing everything, it splits roles — GatewayClass (the implementation, e.g. 'istio'), Gateway (a listener/entrypoint instance), and routes like HTTPRoute/TCPRoute (L7/L4 traffic rules) — giving typed, role-based, more expressive traffic management that Ingress's single-resource model can't express. The 2025 CKA updates added 'Introduction to Gateway API'; the classic Ingress + annotations (nginx.ingress.kubernetes.io/rewrite-target etc.) remains exam content too. Know both: Ingress = single resource per host/path rules; Gateway API = Gateway + HTTPRoute separation.
+**Tags:** k8s::cka src::course-kodekloud topic::gateway-api topic::networking
 
 ---

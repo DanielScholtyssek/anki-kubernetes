@@ -1,6 +1,6 @@
 # CKA - Certified Kubernetes Administrator — Cluster Architecture, Installation & Configuration
 
-> Deck: `CKA - Certified Kubernetes Administrator` · Group: `Cluster Architecture, Installation & Configuration` · Notes: 203 · Models: Basic, Basic (and reversed card), Cloze
+> Deck: `CKA - Certified Kubernetes Administrator` · Group: `Cluster Architecture, Installation & Configuration` · Notes: 217 · Models: Basic, Basic (and reversed card), Cloze
 
 <!-- note:1794496839221 model:Basic -->
 **Front:** What happens to your application if the node it runs on fails?
@@ -1420,5 +1420,103 @@
 **Text:** Build a cluster CA with openssl — private key, signing request, then self-signed root:<br><br>{{c1::<code>openssl genrsa -out ca.key 2048</code>}}  # CA private key<br>{{c2::<code>openssl req -new -key ca.key -subj "/CN=KUBERNETES-CA" -out ca.csr</code>}}  # CSR: public key + subject, unsigned<br>{{c3::<code>openssl x509 -req -in ca.csr -signkey ca.key -days 1000 -out ca.crt</code>}}  # CA signs its OWN cert with its own key<br><br>Every other cert swaps '-signkey ca.key' for '-CA ca.crt -CAkey ca.key' — issued by the CA.
 **Back Extra:** The self-sign trick: -signkey uses the SAME ca.key that generated the CSR — only the root CA self-signs. Downstream certs get -CA/-CAkey instead, tying their trust back to ca.crt.
 **Tags:** k8s::cka src::session topic::certificates topic::security topic::tls
+
+---
+
+<!-- note:1794498397437 model:Basic -->
+**Front:** What are the three backup candidates for a Kubernetes cluster, and what does each capture?
+**Back:** (1) Resource manifests — the YAML/object definitions; export with <code>kubectl get all --all-namespaces -o yaml &gt; backup.yaml</code> (caveat: 'all' does NOT include every type — no PVCs/PVs/CRDs/ClusterRoleBindings; enumerate with <code>kubectl api-resources</code> or use Velero). (2) etcd snapshot — the authoritative cluster state INCLUDING secrets and status; the only full point-in-time restore. (3) Persistent Volume data — application data lives on the volumes, backed up separately (snapshots, file copy, provider snapshots) and must be coordinated with the etcd snapshot for consistency. Declarative manifests in git remain the best practice — etcd/PV backups are for disaster recovery.
+**Tags:** k8s::cka src::course-kodekloud topic::backup topic::cluster-maintenance
+
+---
+
+<!-- note:1794498397438 model:Basic -->
+**Front:** How do you restore an etcd snapshot on a kubeadm cluster — and what's the CORRECTION to the old etcdctl command?
+**Back:** CORRECTION: older courses/docs use <code>etcdctl snapshot restore</code>, but it's DEPRECATED since etcd 3.5 (removed in 3.6) — use <code>etcdutl snapshot restore snapshot.db --data-dir &lt;new-dir&gt;</code>. Restore creates a FRESH data directory with new member IDs — it does not rejoin an existing cluster. For kubeadm: stop the kube-apiserver, run etcdutl restore to a new dir, update the etcd static pod manifest's hostPath (<code>/etc/kubernetes/manifests/etcd.yaml</code>) and <code>etcd.local.dataDir</code> in the kubeadm-config ConfigMap to point at it, delete/restart the etcd static pod, then restart kube-apiserver. If etcd client URLs changed, apiservers need the new --etcd-servers flag.
+**Tags:** k8s::cka src::course-kodekloud topic::backup topic::etcd
+
+---
+
+<!-- note:1794498397439 model:Basic -->
+**Front:** What are the supported Kubernetes version-skew rules during upgrades?
+**Back:** kube-apiserver is the reference and must be the HIGHEST version (in HA, apiserver instances within 1 minor of each other). kube-controller-manager, kube-scheduler, cloud-controller-manager: same or up to 1 minor OLDER than apiserver. kubelet and kube-proxy: must not be newer, may be up to 3 minor versions older (only 2 for versions <1.25). kubectl: within ±1 minor of apiserver. Nothing may be NEWER than the apiserver it talks to. Kubernetes supports the latest THREE minor releases (~1 year patches) — upgrade one minor at a time and never let the cluster fall outside the window. CORRECTION vs course: the course table says kubelet/proxy max 2 behind — current policy allows 3 for ≥1.25.
+**Tags:** k8s::cka src::course-kodekloud topic::cluster-upgrade topic::versioning
+
+---
+
+<!-- note:1794498397440 model:Basic -->
+**Front:** Walk through a kubeadm cluster upgrade from control plane to workers.
+**Back:** (1) Back up etcd first + read release notes. (2) Upgrade the kubeadm BINARY on the upgrade host to the target minor (<code>apt-get install kubeadm=&lt;ver&gt;</code>). (3) <code>kubeadm upgrade plan</code> shows preflight checks + what's available. (4) <code>kubeadm upgrade apply &lt;version&gt;</code> updates the control-plane static pods (apiserver, controller-manager, scheduler) — workloads keep running but scheduling/controller actions pause briefly. (5) Per worker node, rolling: <code>kubectl drain &lt;node&gt;</code> → install kubelet/kubeadm packages → <code>kubeadm upgrade node config --kubelet-version &lt;ver&gt;</code> → <code>systemctl restart kubelet</code> → <code>kubectl uncordon &lt;node&gt;</code>. (6) Verify with <code>kubectl get nodes</code> (shows kubelet versions). Repeat per minor version.
+**Tags:** k8s::cka src::course-kodekloud topic::cluster-upgrade topic::kubeadm
+
+---
+
+<!-- note:1794498397441 model:Basic -->
+**Front:** What do <code>kubectl drain</code> and <code>kubectl uncordon</code> do, and why are they used in upgrades?
+**Back:** drain marks the node unschedulable (like cordon) AND evicts all pods from it — respecting PodDisruptionBudgets so it won't evict pods that can't be rescheduled elsewhere. uncordon marks the node schedulable again. In upgrades you drain → upgrade kubelet/kubeadm on the empty node → uncordon, one node at a time for zero-downtime rolling upgrades. cordon/uncordon alone only toggle schedulability without evicting pods.
+**Tags:** k8s::cka src::course-kodekloud topic::cluster-maintenance topic::kubectl
+
+---
+
+<!-- note:1794498397442 model:Basic -->
+**Front:** Why does kubeadm require swap to be disabled, and how do you make it persistent?
+**Back:** kubeadm preflight checks FAIL if swap is on — the kubelet can't properly account for memory and pod scheduling gets unpredictable. Disable immediately with <code>sudo swapoff -a</code>, then make it persistent by commenting out swap entries in /etc/fstab (e.g. <code>sudo sed -i.bak '/ swap / s/^/#/' /etc/fstab</code>) before running kubeadm init/join. Re-enable only if you fully understand the implications.
+**Tags:** k8s::cka src::course-kodekloud topic::cluster-setup topic::kubeadm
+
+---
+
+<!-- note:1794498397443 model:Basic -->
+**Front:** Why must the kubelet and containerd cgroup drivers match, and how do you align them on systemd systems?
+**Back:** If kubelet uses cgroupfs while the runtime uses systemd (or vice versa), the kubelet can't correctly read container resource stats and enforcement misbehaves. On systemd distros both should use the systemd driver: check init with <code>ps -p 1 -o comm=</code>, then generate containerd config with <code>containerd config default | sed 's/SystemdCgroup = false/SystemdCgroup = true/' | sudo tee /etc/containerd/config.toml</code>, restart containerd, and verify <code>grep SystemdCgroup /etc/containerd/config.toml</code>. Kubelet side is set via KubeletConfiguration or --cgroup-driver.
+**Tags:** k8s::cka src::course-kodekloud topic::cluster-setup topic::cri-oci topic::kubeadm
+
+---
+
+<!-- note:1794498397444 model:Basic -->
+**Front:** How does kubeadm achieve HA for the control plane and etcd?
+**Back:** Run an ODD number of control-plane nodes (3 or 5 — never even) so etcd always has quorum (majority: 2-of-3, 3-of-5); losing one node keeps the cluster working, losing a majority loses the datastore and the cluster can't change state (existing pods keep running but nothing new schedules). kubeadm HA uses stacked etcd (etcd runs as a static pod on each control-plane node alongside the other components) by default; external etcd topology is an alternative for larger clusters. First control-plane node inits, additional ones join with --control-plane using the certificate key from --upload-certs.
+**Tags:** k8s::cka src::course-kodekloud topic::etcd topic::ha
+
+---
+
+<!-- note:1794498411293 model:Cloze -->
+**Text:** Bootstrap a single control plane with kubeadm (v1.31 example):<br><br><code>sudo kubeadm init --apiserver-advertise-address &lt;cp-ip&gt; --pod-network-cidr 10.244.0.0/16 --upload-certs</code><br><br>{{c1::--apiserver-advertise-address}} = the IP other nodes use to reach the API server; {{c2::--pod-network-cidr}} must match your CNI's pod range (Flannel default 10.244.0.0/16); {{c3::--upload-certs}} prints a certificate key so additional control-plane nodes can join securely
+**Back Extra:** After init, kubeadm prints next steps: copy /etc/kubernetes/admin.conf to ~/.kube/config for kubectl access, install a CNI (cluster stays NotReady until pod networking exists), and the kubeadm join command for workers.
+**Tags:** k8s::cka src::course-kodekloud topic::cluster-setup topic::kubeadm
+
+---
+
+<!-- note:1794498411294 model:Cloze -->
+**Text:** Give a node kubectl access after kubeadm init:<br><br><code>mkdir -p $HOME/.kube && sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config && sudo chown $(id -u):$(id -g) $HOME/.kube/config</code><br><br>{{c1::admin.conf}} is the kubeconfig kubeadm generated containing the cluster CA + client certs — copying it to ~/.kube/config is what makes kubectl work. Until a CNI is installed, <code>kubectl get nodes</code> shows the control-plane node as NotReady.
+**Back Extra:** For worker nodes or restricted users you distribute a kubeconfig instead — never copy admin.conf to untrusted machines; it grants cluster-admin.
+**Tags:** k8s::cka src::course-kodekloud topic::kubeadm topic::kubeconfig
+
+---
+
+<!-- note:1794498411295 model:Cloze -->
+**Text:** Join a worker node to a kubeadm cluster:<br><br><code>kubeadm join &lt;cp-ip&gt;:6443 --token &lt;token&gt; --discovery-token-ca-cert-hash sha256:&lt;hash&gt;</code><br><br>{{c1::join}} needs the API server endpoint, a bootstrap {{c2::token}}, and the {{c3::discovery-token-ca-cert-hash}} proving the node trusts the cluster CA. kubeadm init prints this exact command; tokens expire (default 24h) — regenerate with <code>kubeadm token create --print-join-command</code>.
+**Back Extra:** --upload-certs on init also prints a certificate key used by 'kubeadm join --control-plane' for adding MORE control-plane nodes.
+**Tags:** k8s::cka src::course-kodekloud topic::cluster-setup topic::kubeadm
+
+---
+
+<!-- note:1794498411296 model:Cloze -->
+**Text:** Required kernel/network sysctls before kubeadm init (write to /etc/sysctl.d/k8s.conf):<br><br><code>net.ipv4.ip_forward = 1<br>net.bridge.bridge-nf-call-iptables = 1<br>net.bridge.bridge-nf-call-ip6tables = 1</code><br><br>{{c1::ip_forward=1}} lets the node route pod traffic; the two {{c2::bridge-nf-call}} settings ensure bridged pod traffic passes through iptables so Service DNAT/kube-proxy rules apply. Apply with <code>sysctl --system</code>.
+**Back Extra:** Missing these is a classic 'pods have IPs but can't reach services' root cause.
+**Tags:** k8s::cka src::course-kodekloud topic::kubeadm topic::networking
+
+---
+
+<!-- note:1794498411297 model:Cloze -->
+**Text:** Save an etcd snapshot on a kubeadm cluster:<br><br><code>ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key snapshot save snapshot.db</code><br><br>{{c1::ETCDCTL_API=3}} selects the v3 client; {{c2::--endpoints}} + the three PKI flags are REQUIRED because kubeadm's etcd is mTLS-only — without certs etcdctl can't connect. PKI lives under /etc/kubernetes/pki/etcd/ on control-plane nodes.
+**Back Extra:** Run on a control-plane node (or with --endpoints pointing at an etcd member). Verify with 'ls -l snapshot.db' and 'etcdutl snapshot status snapshot.db'.
+**Tags:** k8s::cka src::course-kodekloud topic::backup topic::etcd
+
+---
+
+<!-- note:1794498411303 model:Basic (and reversed card) -->
+**Front:** What is etcd's role in Kubernetes?
+**Back:** etcd is the cluster's authoritative distributed key-value store — ALL cluster state lives there: pod specs, service definitions, secrets, RBAC objects, everything the API server persists. Every kubectl write ultimately lands in etcd; if a majority of etcd members fail, the cluster can't change state (existing workloads keep running but nothing new schedules). kubeadm runs etcd as a static pod on control-plane nodes; back it up with etcdctl/etcdutl snapshots.
+**Tags:** k8s::cka src::course-kodekloud topic::control-plane topic::etcd
 
 ---
